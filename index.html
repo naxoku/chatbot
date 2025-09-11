@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chatbot UCT - Tu Asistente Virtual</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome para íconos -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            'uct-yellow': '#ffd700',
+            'uct-blue': '#3e8ed0',
+            'uct-green': '#48c78e',
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.5s ease-in-out',
+            'slide-up': 'slideUp 0.3s ease-out'
+          },
+          keyframes: {
+            fadeIn: { '0%': { opacity: 0 }, '100%': { opacity: 1 } },
+            slideUp: { '0%': { transform: 'translateY(20px)', opacity: 0 }, '100%': { transform: 'translateY(0)', opacity: 1 } }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { transition: all 0.3s ease; }
+    .chat-container::-webkit-scrollbar { width: 8px; }
+    .chat-container::-webkit-scrollbar-track { background: #f1f1f1; }
+    .dark .chat-container::-webkit-scrollbar-track { background: #374151; }
+    .chat-container::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+    .dark .chat-container::-webkit-scrollbar-thumb { background: #6b7280; }
+    .image-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      justify-content: center;
+      align-items: center;
+      z-index: 50;
+    }
+    .image-modal img { max-height: 90%; max-width: 90%; border-radius: 1rem; }
+  </style>
+</head>
+<body class="h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 text-gray-800 dark:text-gray-100">
+
+  <!-- Navbar -->
+  <nav class="bg-white dark:bg-gray-800 shadow-md flex-shrink-0">
+    <div class="max-w-7xl mx-auto px-4">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center space-x-3">
+          <img src="/img/ing_civil-informatica_gris.png" alt="Logo UCT" class="h-9">
+          <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100">Asistente UCT</h1>
+        </div>
+        <button id="modeToggle" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+          <i class="fas fa-moon text-xl text-gray-800 dark:text-gray-100"></i>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Chat Container -->
+  <div class="flex-1 flex items-center justify-center p-4">
+    <div class="w-full max-w-4xl h-[80vh] flex flex-col bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in">
+      
+      <!-- Mensajes -->
+      <div id="chat" class="chat-container flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-700 p-6 space-y-4"></div>
+
+      <!-- Input -->
+      <div class="flex-shrink-0 p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600">
+        <div class="flex space-x-3">
+          <input id="mensajeInput" type="text" placeholder="Escribe tu pregunta..."
+            class="flex-1 px-5 py-3 rounded-2xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-uct-blue focus:border-transparent">
+          <button id="enviarBtn" class="px-6 py-3 bg-uct-blue hover:bg-blue-700 text-white rounded-2xl font-medium flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-uct-blue">
+            <i class="fas fa-paper-plane"></i>
+            <span class="hidden sm:inline">Enviar</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="image-modal"><img src="" alt="Imagen ampliada"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="js/chatbot.js"></script>
+</body>
+</html>
