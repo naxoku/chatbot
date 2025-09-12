@@ -124,29 +124,25 @@ app.get('/checkSession', (req, res) => {
   }
 });
 
-// Ruta del chat ajustada
+// Ruta del chat
 app.post('/api/chat', async (req, res) => {
-  const { pregunta, historial } = req.body;
+  const { pregunta } = req.body;
 
   try {
-    const response = await fetch("https://skynet.uct.cl/webhook/chat", {
+    const response = await fetch("https://skynet.uct.cl/webhook/pinecone", {
       method: "POST",
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pregunta, historial })
+      body: JSON.stringify({ pregunta })
     });
 
     const data = await response.json();
+    console.log("Respuesta del webhook:", data);
 
     let respuesta = "No hay respuesta disponible.";
-    
-    // Se verifica si `data` es un array no vacío y si el primer elemento tiene la propiedad 'output'
-    if (Array.isArray(data) && data.length > 0 && typeof data[0].output === 'string') {
-      respuesta = data[0].output;
-    } else {
-      console.error("El webhook de n8n no devolvió el campo 'output' esperado.");
+    if (data && typeof data.respuesta === 'string') {
+      respuesta = data.respuesta;
     }
 
-    // Se envía la respuesta al cliente
     res.json({ respuesta: respuesta });
 
   } catch (err) {
