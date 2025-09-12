@@ -108,7 +108,7 @@ document.getElementById('loginFormSubmit').addEventListener('submit', async func
     const result = await res.json();
     if (result.success) {
       showNotification(result.message, 'success');
-      setTimeout(() => window.location.href = '../index.html', 1500);
+      setTimeout(() => window.location.href = '../chat.html', 1500);
     } else {
       showNotification(result.message, 'error');
     }

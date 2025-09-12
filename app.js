@@ -129,7 +129,8 @@ app.post('/api/chat', async (req, res) => {
   const { pregunta } = req.body;
 
   try {
-    const response = await fetch("https://skynet.uct.cl/webhook/pinecone", {
+    // const response = await fetch("https://skynet.uct.cl/webhook/pinecone", {
+    const response = await fetch("https://skynet.uct.cl/webhook/chat", {
       method: "POST",
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pregunta })
