@@ -80,7 +80,7 @@
   overflow-x: auto;
 }
 .markdown-content code {
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 0.875rem;
 }
 .markdown-content pre code {
@@ -145,4 +145,38 @@
 }
 .dark .markdown-content th {
   background-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Estilo para el botón de mapa mental */
+#generarMapaBtn {
+  background: linear-gradient(90deg, #3e8ed0 0%, #2f6cb2 100%);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#generarMapaBtn:hover {
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* NUEVOS ESTILOS para el mapa mental D3.js */
+.d3-node {
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+}
+
+.d3-node:hover {
+  transform: scale(1.1);
+}
+
+.d3-link {
+  fill: none;
+  stroke-opacity: 0.6;
+  stroke-width: 1.5px;
+}
+
+/* Estilos para texto de nodos D3 */
+.d3-node text {
+  fill: #111827; /* Texto oscuro para fondo claro */
+}
+.dark .d3-node text {
+  fill: #f3f4f6; /* Texto claro para fondo oscuro */
 }
