@@ -10,241 +10,156 @@ const ArtifactsPanel = ({
   onCollapse,
   isDarkMode,
 }) => {
-  const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredArtifacts = artifacts.filter((artifact) => {
-    const matchesFilter = filter === "all" || artifact.type === filter;
-    const matchesSearch =
-      artifact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (artifact.description &&
-        artifact.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    return matchesFilter && matchesSearch;
-  });
-
-  const getFilterButtonClass = (buttonFilter) =>
-    `text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
-      filter === buttonFilter
-        ? `bg-purple-600 text-white`
-        : `bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600`
-    }`;
-
+  // Simplified with just one example artifact type
   const typeConfig = {
     mindmap: {
       label: "Mapa Mental",
       icon: "fas fa-project-diagram",
-      color: "purple",
-    },
-    summary: {
-      label: "Resumen",
-      icon: "fas fa-file-alt",
-      color: "blue",
-    },
-    analysis: {
-      label: "Análisis",
-      icon: "fas fa-chart-bar",
-      color: "green",
-    },
-    diagram: {
-      label: "Diagrama",
-      icon: "fas fa-vector-square",
-      color: "orange",
+      color: "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/10",
     },
   };
 
-  if (!isOpen) {
-    return (
-      <button
-        onClick={onToggle}
-        className="fixed top-20 right-4 z-50 p-3 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300"
-      >
-        <i className="fas fa-layer-group text-lg"></i>
-      </button>
-    );
-  }
+  const filteredArtifacts = artifacts.filter((artifact) => {
+    const matchesSearch =
+      artifact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (artifact.description &&
+        artifact.description.toLowerCase().includes(searchTerm.toLowerCase()));
+    return matchesSearch;
+  });
+
+  
 
   return (
-    <>
-      <div
-        className={`bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 h-full flex flex-col transition-all duration-300 ease-in-out z-40 ${
-          isCollapsed ? "w-16" : "w-80"
-        } ${isOpen ? "translate-x-0" : "translate-x-full"}`}
-      >
-        {/* Header */}
-        <div
-          className={`p-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 ${
-            isCollapsed && "justify-center"
-          }`}
-        >
+    <div
+      className={`bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 h-full flex flex-col transition-all duration-300 ease-in-out ${
+        isCollapsed ? "w-16" : "w-80"
+      }`}
+    >
+      {/* Minimalist Header */}
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between">
           {!isCollapsed && (
-            <h3 className="text-xl font-semibold text-gray-800 dark:text-white">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white">
               Herramientas
             </h3>
           )}
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={onCollapse}
-              className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            >
-              <i
-                className={`fas ${
-                  isCollapsed ? "fa-expand-alt" : "fa-compress-alt"
-                }`}
-              ></i>
-            </button>
-            
-          </div>
+          <button
+  onClick={onCollapse}
+  className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200"
+  title={isCollapsed ? "Expandir" : "Colapsar"}
+>
+  <i className={`fas ${isCollapsed ? "fa-chevron-right" : "fa-chevron-left"}`}></i>
+</button>
         </div>
+      </div>
 
-        {/* Contenido (oculto si está colapsado) */}
-        {!isCollapsed && (
-          <div className="p-4 space-y-4">
-            {/* Search */}
+      {/* Content (hidden when collapsed) */}
+      {!isCollapsed && (
+        <>
+          {/* Simple Search */}
+          <div className="p-4">
             <div className="relative">
-              <i className="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+              <i className="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
               <input
                 type="text"
-                placeholder="Buscar..."
-                className="w-full pl-10 pr-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="Buscar herramientas..."
+                className="w-full pl-10 pr-4 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-
-            {/* Filter */}
-            <div>
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-                Filtrar por tipo
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setFilter("all")}
-                  className={getFilterButtonClass("all")}
-                >
-                  Todos
-                </button>
-                {Object.keys(typeConfig).map((key) => {
-                  const config = typeConfig[key];
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => setFilter(key)}
-                      className={getFilterButtonClass(key)}
-                    >
-                      <i className={`${config.icon} mr-1`}></i>
-                      {config.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
           </div>
-        )}
 
-        {/* Lista de artefactos */}
-        <div
-          className={`flex-1 overflow-y-auto custom-scrollbar p-4 space-y-2 ${
-            isCollapsed ? "justify-center" : "flex flex-col"
-          }`}
-        >
-          {filteredArtifacts.length === 0 ? (
-            <div className="text-center text-gray-500 dark:text-gray-400">
-              <i className="fas fa-box-open text-3xl mb-2"></i>
-              <p className="text-sm">
-                {searchTerm
-                  ? "No se encontraron resultados"
-                  : "No hay artefactos"}
-              </p>
-            </div>
-          ) : (
-            <>
-              {filteredArtifacts.map((artifact) => {
-                const typeConfig =
-                  typeConfig[artifact.type] || typeConfig.diagram; // Fallback a 'diagram'
-                return (
-                  <div
-                    key={artifact.id}
-                    className="group flex justify-between items-center bg-gray-50 dark:bg-gray-700 rounded-xl p-3 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
-                  >
-                    {!isCollapsed && (
-                      <div className="flex-1 flex items-center space-x-3 min-w-0">
-                        <div
-                          className={`w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg bg-${typeConfig.color}-50 dark:bg-${typeConfig.color}-900/20 text-${typeConfig.color}-600 dark:text-${typeConfig.color}-400`}
-                        >
-                          <i className={`${typeConfig.icon} text-sm`}></i>
+          {/* Artifacts List */}
+          <div className="flex-1 overflow-y-auto px-4 pb-4">
+            {filteredArtifacts.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-2xl flex items-center justify-center">
+                  <i className="fas fa-layer-group text-2xl text-gray-400"></i>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                  {searchTerm ? "Sin resultados" : "Sin herramientas"}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-500">
+                  {searchTerm ? "Intenta otro término" : "Crea tu primera herramienta"}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {filteredArtifacts.map((artifact) => {
+                  const config = typeConfig[artifact.type] || typeConfig.mindmap;
+                  return (
+                    <div
+                      key={artifact.id}
+                      className="group flex items-center justify-between p-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-purple-200 dark:hover:border-purple-800 hover:bg-purple-50/50 dark:hover:bg-purple-900/10 transition-all duration-200 cursor-pointer"
+                    >
+                      <div className="flex items-center space-x-3 flex-1 min-w-0">
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${config.color}`}>
+                          <i className={`${config.icon} text-sm`}></i>
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                             {artifact.name}
                           </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                            {typeConfig.label}
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {config.label}
                           </p>
                         </div>
                       </div>
-                    )}
-                    <div
-                      className={`flex space-x-1 ${
-                        isCollapsed ? "flex-col space-y-2" : ""
-                      }`}
-                    >
-                      <button
-                        onClick={() => onDeleteArtifact(artifact.id)}
-                        className={`p-2 rounded-full text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 transition-colors ${
-                          !isCollapsed && "opacity-0 group-hover:opacity-100"
-                        }`}
-                        title="Eliminar"
-                      >
-                        <i className="fas fa-trash-alt"></i>
-                      </button>
-                      <button
-                        onClick={() => onOpenArtifact(artifact)}
-                        className={`p-2 rounded-full text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 transition-colors ${
-                          !isCollapsed && "opacity-0 group-hover:opacity-100"
-                        }`}
-                        title="Abrir"
-                      >
-                        <i className="fas fa-eye"></i>
-                      </button>
+                      
+                      {/* Action buttons */}
+                      <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenArtifact(artifact);
+                          }}
+                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200"
+                          title="Abrir"
+                        >
+                          <i className="fas fa-eye text-xs"></i>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteArtifact(artifact.id);
+                          }}
+                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
+                          title="Eliminar"
+                        >
+                          <i className="fas fa-trash-alt text-xs"></i>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </>
-          )}
-        </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
-        {!isCollapsed && (
-          /* Footer */
-          <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-            <div className="text-center">
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                {artifacts.length > 0 ? (
-                  <>
-                    Mostrando {filteredArtifacts.length} de {artifacts.length}{" "}
-                    artefactos
-                  </>
-                ) : (
-                  "Comienza creando tu primer artefacto"
+          {/* Simple Footer */}
+          {artifacts.length > 0 && (
+            <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+              <div className="text-center">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {filteredArtifacts.length} de {artifacts.length} herramientas
+                </p>
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="mt-2 text-xs text-purple-600 dark:text-purple-400 hover:underline"
+                  >
+                    Limpiar búsqueda
+                  </button>
                 )}
               </div>
-              {artifacts.length > 0 && (
-                <button
-                  onClick={() => {
-                    setSearchTerm("");
-                    setFilter("all");
-                  }}
-                  className="text-xs text-purple-600 dark:text-purple-400 hover:underline"
-                >
-                  <i className="fas fa-refresh mr-1"></i>
-                  Mostrar todos
-                </button>
-              )}
             </div>
-          </div>
-        )}
-      </div>
-    </>
+          )}
+        </>
+      )}
+    </div>
   );
 };
 

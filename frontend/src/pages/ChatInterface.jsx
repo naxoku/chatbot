@@ -6,6 +6,7 @@ import { AppContext } from "../App";
 import Navbar from "../components/Navbar";
 import DDPERDocumentsPanel from "../components/DocumentsPanel";
 import ArtifactsPanel from "../components/ArtifactsPanel";
+import { renderMindMap } from "../utils/renderMindMap";
 import { nanoid } from "nanoid";
 
 const ChatInterface = () => {
@@ -137,6 +138,19 @@ También puedes explorar los **documentos disponibles** en el panel lateral izqu
     checkSession();
   }, [navigate]);
 
+  useEffect(() => {
+    messages.forEach((msg) => {
+      if (msg.artifact && msg.content) {
+        try {
+          const data = JSON.parse(msg.content);
+          renderMindMap(data, `mindmap-${msg.id}`);
+        } catch (e) {
+          console.error("Error renderizando mapa mental:", e);
+        }
+      }
+    });
+  }, [messages]);
+
   // Scroll automático
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -185,19 +199,11 @@ También puedes explorar los **documentos disponibles** en el panel lateral izqu
     scrollToBottom();
 
     setIsTyping(true);
-    const typingMsg = {
-      id: nanoid(),
-      sender: "bot",
-      content: "El asistente está escribiendo...",
-    };
-    setMessages((prev) => [...prev, typingMsg]);
     scrollToBottom();
 
     try {
-      // Primero buscar documentos relevantes
       const foundDocuments = searchDocuments(trimmed);
 
-      // Llamar a la API existente
       const res = await fetch("http://localhost:3000/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -208,7 +214,6 @@ También puedes explorar los **documentos disponibles** en el panel lateral izqu
       const data = await res.json();
       let botResponse = data.respuesta || "No hay respuesta disponible.";
 
-      // Si encontramos documentos relevantes, enriquecer la respuesta
       if (foundDocuments.length > 0) {
         botResponse += `\n\n📎 **Documentos relacionados encontrados:**`;
       }
@@ -222,19 +227,17 @@ También puedes explorar los **documentos disponibles** en el panel lateral izqu
         timestamp: new Date(),
       };
 
-      setMessages((prev) =>
-        prev.filter((m) => m.id !== typingMsg.id).concat(botMsg)
-      );
+      setMessages((prev) => [...prev, botMsg]);
       scrollToBottom();
     } catch (err) {
       console.error(err);
 
-      // En caso de error, al menos intentar búsqueda local
       const foundDocuments = searchDocuments(trimmed);
       let errorResponse = "Error al conectar con el servidor.";
 
       if (foundDocuments.length > 0) {
-        errorResponse = `No pude conectar con el servidor, pero encontré estos documentos que podrían ayudarte:`;
+        errorResponse =
+          "No pude conectar con el servidor, pero encontré estos documentos que podrían ayudarte:";
       } else if (
         trimmed.toLowerCase().includes("documento") &&
         trimmed.length < 20
@@ -251,19 +254,17 @@ O puedes contactar directamente a: **ddper@uct.cl**`;
 2. Contactar directamente: **ddper@uct.cl**`;
       }
 
-      setMessages((prev) =>
-        prev
-          .filter((m) => m.id !== typingMsg.id)
-          .concat({
-            id: nanoid(),
-            sender: "bot",
-            content: errorResponse,
-            documentLinks:
-              foundDocuments.length > 0 ? foundDocuments : undefined,
-            feedbackRequested: true,
-            timestamp: new Date(),
-          })
-      );
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: nanoid(),
+          sender: "bot",
+          content: errorResponse,
+          documentLinks: foundDocuments.length > 0 ? foundDocuments : undefined,
+          feedbackRequested: true,
+          timestamp: new Date(),
+        },
+      ]);
       scrollToBottom();
     } finally {
       setIsTyping(false);
@@ -295,10 +296,20 @@ O puedes contactar directamente a: **ddper@uct.cl**`;
     setShowFeedback(null);
   };
 
-  // Generar mapa mental (funcionalidad existente)
+
+  // ================== MAPA MENTAL ==================
   const generarMapaMental = async () => {
     const lastBotMsg = [...messages].reverse().find((m) => m.sender === "bot");
-    if (!lastBotMsg) return alert("No hay mensaje del bot para generar mapa.");
+
+    if (!lastBotMsg) {
+      alert("No hay mensaje del bot para generar mapa.");
+      return;
+    }
+
+    if (!lastBotMsg.content || lastBotMsg.content.trim() === "") {
+      alert("El último mensaje del bot no contiene contexto válido.");
+      return;
+    }
 
     const mapMsg = {
       id: nanoid(),
@@ -318,10 +329,12 @@ O puedes contactar directamente a: **ddper@uct.cl**`;
       });
 
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || "Error generando mapa mental");
+        // ⚡ leer texto en lugar de JSON para manejar errores
+        const errorText = await res.text();
+        throw new Error(errorText || "Error generando mapa mental");
       }
 
+      // ✅ solo parsear si la respuesta es JSON válida
       const jsonData = await res.json();
 
       const newArtifact = {
@@ -334,6 +347,7 @@ O puedes contactar directamente a: **ddper@uct.cl**`;
         createdAt: new Date(),
         description: "Mapa mental generado automáticamente",
       };
+
       addArtifact(newArtifact);
 
       setMessages((prev) =>
@@ -343,14 +357,17 @@ O puedes contactar directamente a: **ddper@uct.cl**`;
       );
       scrollToBottom();
     } catch (err) {
-      console.error(err);
+      console.error("Error al generar mapa mental:", err);
       setMessages((prev) =>
         prev.map((m) =>
-          m.id === mapMsg.id ? { ...m, content: `Error: ${err.message}` } : m
+          m.id === mapMsg.id
+            ? { ...m, content: `Error al generar mapa: ${err.message}` }
+            : m
         )
       );
     }
   };
+
 
   // Input handlers
   const handleKeyPress = (e) => {
@@ -400,7 +417,8 @@ O puedes contactar directamente a: **ddper@uct.cl**`;
     setInput(`Información sobre: ${document.title}`);
   };
 
-  // Renderizar mensaje
+  // Dentro de ChatInterface.jsx
+
   const renderMessage = (msg) => {
     if (msg.sender === "user") {
       return (
@@ -432,23 +450,23 @@ O puedes contactar directamente a: **ddper@uct.cl**`;
             <i className="fas fa-robot text-white text-sm"></i>
           </div>
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl rounded-bl-md px-4 py-3 shadow-lg break-words word-wrap min-w-0 flex-1">
+
             {/* Contenido principal */}
-            {msg.artifact ? (
-              <div className="w-full h-64 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg space-y-2">
-                <button
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                  onClick={() => alert(`Simulación: mostrar Mapa Mental`)}
-                >
-                  Ver Mapa Mental
-                </button>
+            {msg.artifact && msg.content ? (
+              <div className="w-full h-96 bg-gray-100 dark:bg-gray-700 rounded-lg relative">
+                <div
+                  id={`mindmap-${msg.id}`}
+                  className="absolute inset-0 w-full h-full"
+                />
               </div>
             ) : (
-              <div
-                className="prose prose-sm dark:prose-invert max-w-none mb-3"
-                dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(marked.parse(msg.content)),
-                }}
-              />
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                <divs
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(marked(msg.content || "")),
+                  }}
+                />
+              </div>
             )}
 
             {/* Enlaces de documentos */}
@@ -461,17 +479,16 @@ O puedes contactar directamente a: **ddper@uct.cl**`;
                   >
                     <div className="flex items-start space-x-2">
                       <i
-                        className={`fas ${
-                          link.type === "formulario"
-                            ? "fa-file-alt"
-                            : link.type === "reglamento"
+                        className={`fas ${link.type === "formulario"
+                          ? "fa-file-alt"
+                          : link.type === "reglamento"
                             ? "fa-gavel"
                             : link.type === "instructivo"
-                            ? "fa-book"
-                            : link.type === "beneficio"
-                            ? "fa-gift"
-                            : "fa-file"
-                        } text-blue-600 mt-1`}
+                              ? "fa-book"
+                              : link.type === "beneficio"
+                                ? "fa-gift"
+                                : "fa-file"
+                          } text-blue-600 mt-1`}
                       ></i>
                       <div className="flex-1">
                         <h4 className="font-medium text-gray-900 dark:text-white mb-1">
@@ -528,6 +545,7 @@ O puedes contactar directamente a: **ddper@uct.cl**`;
     );
   };
 
+
   if (!user) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -573,7 +591,7 @@ O puedes contactar directamente a: **ddper@uct.cl**`;
           <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex justify-between items-center">
             <div className="flex items-center space-x-3">
               {/* Botón para mostrar/ocultar panel de documentos */}
-             
+
 
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
@@ -618,9 +636,7 @@ O puedes contactar directamente a: **ddper@uct.cl**`;
                           style={{ animationDelay: "0.2s" }}
                         ></div>
                       </div>
-                      <span className="text-sm text-gray-500">
-                        Buscando información...
-                      </span>
+                      <span className="text-sm text-gray-500">El asistente está escribiendo...</span>
                     </div>
                   </div>
                 </div>
@@ -692,7 +708,7 @@ O puedes contactar directamente a: **ddper@uct.cl**`;
         </div>
 
         {/* Panel de herramientas/artifacts - derecha */}
-        <ArtifactsPanel 
+        <ArtifactsPanel
           artifacts={artifacts}
           onOpenArtifact={(a) => setSelectedArtifact(a)}
           onDeleteArtifact={removeArtifact}
