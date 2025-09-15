@@ -1,1 +1,14 @@
-node_modules
+# Node modules
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+
+# Logs
+*.log
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# React build
+frontend/build/

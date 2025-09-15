@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+/* Permite alternar entre modo oscuro y modo claro,
+ si no está siempre estará activo el modo oscuro */
+@custom-variant dark (&:where(.dark, .dark *));
