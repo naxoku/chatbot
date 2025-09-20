@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import LogoUCT from "../assets/logouct_blanco.png"; // Ajusta la ruta si es necesario (e.g., ./assets/ si está en el mismo dir)
 
 const Navbar = ({
   isDarkMode,
-  toggleDarkMode, // OJO: Cambié el nombre del prop para que coincida con el ChatInterface.jsx
+  toggleDarkMode,
   artifactCount = 0,
-  botStatus = "online",
   onLogout,
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -20,37 +20,6 @@ const Navbar = ({
     }
   };
 
-  const getBotStatusConfig = () => {
-    switch (botStatus) {
-      case "online":
-        return {
-          color: "green",
-          text: "En línea",
-          animate: "animate-pulse",
-        };
-      case "offline":
-        return {
-          color: "red",
-          text: "Desconectado",
-          animate: "",
-        };
-      case "processing":
-        return {
-          color: "yellow",
-          text: "Procesando...",
-          animate: "animate-pulse",
-        };
-      default:
-        return {
-          color: "gray",
-          text: "Desconocido",
-          animate: "",
-        };
-    }
-  };
-
-  const status = getBotStatusConfig();
-
   return (
     <nav
       className={`sticky top-0 z-50 shadow-sm transition-colors duration-300 ${
@@ -60,132 +29,159 @@ const Navbar = ({
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {" "}
+        {/* Padding central estándar, pero elementos pegados */}
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div className="flex-shrink-0">
-            <Link
-              to="/"
-              className="flex items-center space-x-2 text-lg font-bold"
-            >
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-300 ${
-                  isDarkMode ? "bg-white text-blue-uct-dark" : "bg-blue-uct-dark text-white"
-                }`}
-              >
-                <i className="fas fa-brain text-sm"></i>
-              </div>
-              <span className="hidden md:block">Asistente UCT</span>
+          {" "}
+          {/* justify-between para pegada a bordes */}
+          {/* Logo pegado al borde izquierdo */}
+          <div className="flex-shrink-0 ml-0">
+            {" "}
+            {/* ml-0 para pegado */}
+            <Link to="/">
+              <img
+                src={LogoUCT}
+                alt="Logo UCT"
+                className="h-auto w-5z" // Tamaño fijo en altura, ancho auto
+                style={{
+                  filter: isDarkMode ? "brightness(0) invert(1)" : "none",
+                }} // Opcional: Invierte colores en dark mode si es necesario (para logo blanco en fondo oscuro)
+              />
             </Link>
           </div>
-
-          {/* Botones del menú principal (Desktop) */}
-          <div className="hidden md:flex items-center space-x-4">
-            {/* Estado del bot */}
-            <div className="flex items-center space-x-2">
-              <span className={`w-2 h-2 rounded-full bg-${status.color}-500 ${status.animate}`}></span>
-              <span className="text-sm font-medium">{status.text}</span>
+          {/* Título Central: Ocupa espacio intermedio, centrado y prominente (como en NotebookLM) */}
+          <div className="hidden sm:flex flex-1 justify-center items-center mx-0">
+            {" "}
+            {/* flex-1 para ocupar, mx-0 sin márgenes extra */}
+            <div className="text-center">
+              <h1 className="text-lg font-bold text-gray-800 dark:text-white">
+                {" "}
+                {/* font-lg/bold para prominencia */}
+                Asistente DDPER
+              </h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Dirección de Desarrollo de Personas - UCT
+              </p>
             </div>
-
-            {/* Contador de artefactos */}
+          </div>
+          {/* Controles pegados al borde derecho */}
+          <div className="hidden md:flex items-center space-x-1 mr-0">
+            {" "}
+            {/* space-x-1 compacto, mr-0 para pegado */}
+            {/* Contador de artefactos (compacto) */}
             {artifactCount > 0 && (
-              <span className="bg-purple-600/20 text-purple-600 dark:bg-purple-800/20 dark:text-purple-400 text-sm px-2 py-1 rounded-full font-semibold">
-                Artefactos: {artifactCount}
+              <span className="bg-purple-100 dark:bg-purple-800/50 text-purple-600 dark:text-purple-400 text-xs px-2 py-1 rounded-full font-medium">
+                {artifactCount}
               </span>
             )}
-
-            {/* Botón de Dark Mode */}
+            {/* Botón de Dark Mode - Compacto */}
             <button
               onClick={toggleDarkMode}
-              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" // p-1.5 más pequeño
+              title={isDarkMode ? "Modo claro" : "Modo oscuro"}
             >
               {isDarkMode ? (
-                <i className="fas fa-sun text-xl text-yellow-400"></i>
+                <i className="fas fa-sun text-lg text-yellow-400"></i>
               ) : (
-                <i className="fas fa-moon text-xl text-gray-500"></i>
+                <i className="fas fa-moon text-lg text-gray-500"></i>
               )}
             </button>
-            {/* Botón para cerrar sesión */}
+            {/* Botón Logout - Compacto */}
             {onLogout && (
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-2 px-3 py-2 rounded-md font-medium text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900 transition-colors"
+                className="flex items-center space-x-1 px-2 py-1.5 rounded-md font-medium text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors text-sm" // Más compacto
+                title="Cerrar sesión"
               >
                 <i className="fas fa-sign-out-alt"></i>
-                <span>Cerrar Sesión</span>
+                <span className="hidden lg:block">Salir</span>{" "}
+                {/* Texto solo en lg+ para espacio */}
               </button>
             )}
           </div>
-
-          {/* Botón del menú móvil */}
-          <div className="-mr-2 flex md:hidden">
+          {/* Botón Hamburguesa (mobile, pegado der.) */}
+          <div className="flex md:hidden mr-0">
+            {" "}
+            {/* mr-0 para pegado */}
             <button
               onClick={toggleMobileMenu}
-              className="p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+              className="p-2 rounded-md text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              aria-label="Abrir menú"
             >
-              <span className="sr-only">Abrir menú principal</span>
-              <i className={`fas ${isMobileMenuOpen ? "fa-times" : "fa-bars"} text-xl`}></i>
+              <i
+                className={`fas ${
+                  isMobileMenuOpen ? "fa-times" : "fa-bars"
+                } text-lg`}
+              ></i>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Menú móvil */}
-      <div className={`${isMobileMenuOpen ? "block" : "hidden"} md:hidden`}>
-        <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-          {/* Estado del bot (Móvil) */}
-          <div className="flex items-center justify-between px-3 py-2">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Estado:
-            </span>
-            <div className="flex items-center space-x-2">
-              <span className={`w-2 h-2 rounded-full bg-${status.color}-500 ${status.animate}`}></span>
-              <span className="text-sm font-medium">{status.text}</span>
+      {/* Menú Mobile: Apilado, con logo arriba */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+          <div className="px-4 py-2 space-y-2">
+            {" "}
+            {/* Padding interno para mobile */}
+            {/* Logo en mobile (pequeño) */}
+            <div className="flex justify-center">
+              <img
+                src={LogoUCT}
+                alt="Logo UCT"
+                className="h-6 w-auto"
+                style={{
+                  filter: isDarkMode ? "brightness(0) invert(1)" : "none",
+                }}
+              />
             </div>
-          </div>
-          {/* Contador de artefactos (Móvil) */}
-          <div className="flex items-center justify-between px-3 py-2">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Artefactos:
-            </span>
-            <span className="bg-purple-100 dark:bg-purple-800 text-purple-600 dark:text-purple-300 text-sm px-2 py-1 rounded-full font-semibold">
-              {artifactCount}
-            </span>
-          </div>
-
-          {/* Botón de Dark Mode (Móvil) */}
-          <div className="flex items-center justify-between px-3 py-2">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Modo oscuro:
-            </span>
+            {/* Título en mobile */}
+            <div className="text-center border-b border-gray-200 dark:border-gray-700 pb-2">
+              <h1 className="text-base font-bold text-gray-900 dark:text-white">
+                Asistente DDPER
+              </h1>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Dirección de Desarrollo de Personas - UCT
+              </p>
+            </div>
+            {/* Contador artifacts */}
+            {artifactCount > 0 && (
+              <div className="flex justify-between items-center px-2">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Artefactos:
+                </span>
+                <span className="bg-purple-100 dark:bg-purple-800/50 text-purple-600 dark:text-purple-400 text-xs px-2 py-0.5 rounded-full">
+                  {artifactCount}
+                </span>
+              </div>
+            )}
+            {/* Dark Mode */}
             <button
               onClick={toggleDarkMode}
-              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              className="flex w-full justify-between items-center px-2 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Modo oscuro
+              </span>
               {isDarkMode ? (
-                <i className="fas fa-sun text-xl text-yellow-400"></i>
+                <i className="fas fa-sun text-lg text-yellow-400"></i>
               ) : (
-                <i className="fas fa-moon text-xl text-gray-500"></i>
+                <i className="fas fa-moon text-lg text-gray-500"></i>
               )}
             </button>
-          </div>
-
-          {/* Botón para cerrar sesión (Móvil) */}
-          {onLogout && (
-            <div className="flex items-center justify-between px-3 py-2">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Cerrar Sesión:
-              </span>
+            {/* Logout */}
+            {onLogout && (
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-2 px-3 py-2 rounded-md font-medium text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900 transition-colors"
+                className="flex w-full justify-between items-center px-2 py-2 rounded-md font-medium text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors"
               >
-                <i className="fas fa-sign-out-alt"></i>
                 <span>Cerrar Sesión</span>
+                <i className="fas fa-sign-out-alt"></i>
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </nav>
   );
 };

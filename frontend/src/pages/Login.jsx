@@ -1,7 +1,7 @@
 import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../App";
-import axios from "axios";  // Ya incluido para consistencia
+import axios from "axios"; // Ya incluido para consistencia
 
 const Login = () => {
   const { isDarkMode, toggleDarkMode } = useContext(AppContext);
@@ -39,12 +39,16 @@ const Login = () => {
     if (!validateLogin()) return;
 
     setIsLoading(true);
-    setErrors({});  // Limpia errores previos
+    setErrors({}); // Limpia errores previos
     try {
-      const response = await axios.post("/login", {
-        email: loginData.email,
-        password: loginData.password,
-      });
+      const response = await axios.post(
+        "auth/login",
+        {
+          email: loginData.email,
+          password: loginData.password,
+        },
+        { withCredentials: true }
+      );
 
       if (response.data.success) {
         if (loginData.rememberMe) {
@@ -52,15 +56,21 @@ const Login = () => {
         }
         navigate("/chat");
       } else {
-        setErrors({ general: response.data.message || "Error al iniciar sesión" });
+        setErrors({
+          general: response.data.message || "Error al iniciar sesión",
+        });
       }
     } catch (error) {
       console.error("Error en login:", error);
-      
+
       if (error.response?.status === 401 || error.response?.status === 400) {
-        setErrors({ general: error.response.data?.message || "Credenciales inválidas" });
+        setErrors({
+          general: error.response.data?.message || "Credenciales inválidas",
+        });
       } else if (error.code === "ERR_NETWORK") {
-        setErrors({ general: "Error de conexión. Verifica que el servidor esté activo." });
+        setErrors({
+          general: "Error de conexión. Verifica que el servidor esté activo.",
+        });
       } else {
         setErrors({ general: "Error de conexión. Inténtalo de nuevo." });
       }
@@ -174,7 +184,9 @@ const Login = () => {
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none transition-colors duration-200"
                 >
                   <i
-                    className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`}
+                    className={`fas ${
+                      showPassword ? "fa-eye-slash" : "fa-eye"
+                    }`}
                   ></i>
                 </button>
               </div>

@@ -1,9 +1,15 @@
 // src/components/ChatInterface/useChatLogic.js
 import { useState } from "react";
-import axios from "axios";  // Para llamadas al backend
+import axios from "axios"; // Para llamadas al backend
 import { nanoid } from "nanoid";
 
-export const useChatLogic = (ddperDocuments, navigate, addArtifact, setMessages, setInput) => {
+export const useChatLogic = (
+  ddperDocuments,
+  navigate,
+  addArtifact,
+  setMessages,
+  setInput
+) => {
   const [isTyping, setIsTyping] = useState(false);
 
   // Búsqueda semántica de documentos (lógica local)
@@ -43,7 +49,7 @@ export const useChatLogic = (ddperDocuments, navigate, addArtifact, setMessages,
     setInput("");
     // Nota: scrollToBottom debe manejarse en ChatMessages o ChatInterface
 
-    setIsTyping(true);  // Activa typing indicator
+    setIsTyping(true); // Activa typing indicator
 
     try {
       const foundDocuments = searchDocuments(trimmed);
@@ -107,7 +113,7 @@ O puedes contactar directamente a: **ddper@uct.cl**`;
         },
       ]);
     } finally {
-      setIsTyping(false);  // Desactiva typing
+      setIsTyping(false); // Desactiva typing
     }
   };
 
@@ -140,7 +146,7 @@ O puedes contactar directamente a: **ddper@uct.cl**`;
         contexto: lastBotMsg.content,
       });
 
-      const jsonData = res.data;  // Axios parsea JSON
+      const jsonData = res.data; // Axios parsea JSON
 
       // Crear y agregar artifact
       const newArtifact = {
@@ -166,7 +172,12 @@ O puedes contactar directamente a: **ddper@uct.cl**`;
       setMessages((prev) =>
         prev.map((m) =>
           m.id === mapMsg.id
-            ? { ...m, content: `Error al generar mapa: ${err.response?.data?.error || err.message}` }
+            ? {
+                ...m,
+                content: `Error al generar mapa: ${
+                  err.response?.data?.error || err.message
+                }`,
+              }
             : m
         )
       );
@@ -198,10 +209,10 @@ O puedes contactar directamente a: **ddper@uct.cl**`;
   };
 
   return {
-    isTyping,  // Para mostrar typing en ChatMessages
-    sendMessage,  // Llamar desde ChatInput
-    handleFeedback,  // Pasar a ChatMessages
-    generarMapaMental,  // Llamar desde ChatInput
-    handleQuickAction,  // Para quick buttons en ChatInput
+    isTyping, // Para mostrar typing en ChatMessages
+    sendMessage, // Llamar desde ChatInput
+    handleFeedback, // Pasar a ChatMessages
+    generarMapaMental, // Llamar desde ChatInput
+    handleQuickAction, // Para quick buttons en ChatInput
   };
 };
