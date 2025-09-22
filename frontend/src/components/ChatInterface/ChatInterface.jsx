@@ -1,13 +1,9 @@
-import React, {
-  useState,
-  useContext,
-  useEffect,
-  useRef,
-  useCallback,
-} from "react";
+import { useState, useContext, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../App";
 import { nanoid } from "nanoid";
+import ContextParameters from "./ContextParameters";
+import MindMapModal from "../MindMapModal";
 
 // Componentes locales
 import Sidebar from "./Sidebar";
@@ -15,6 +11,7 @@ import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
 import QuickActions from "./QuickActions";
 import VibrantButton from "./VibrantButton";
+import DocumentsModal from "../DocumentsModal";
 
 // Componentes externos
 import ArtifactsPanel from "../ArtifactsPanel";
@@ -23,7 +20,7 @@ import ArtifactsPanel from "../ArtifactsPanel";
 import { useChatLogic } from "./useChatLogic";
 
 // Assets
-import LogoUCT from "../../assets/Logo_dir_desarrollo_personas.png";
+const LogoUCT = "/placeholder.svg?height=40&width=120";
 
 // Datos - deberías mover estos a un archivo separado si crecen mucho
 const ddperDocuments = [
@@ -70,46 +67,11 @@ const ddperDocuments = [
 
 const quickActions = [
   {
-    id: "beneficios",
-    text: "Consultar sobre beneficios estudiantiles",
-    icon: "fas fa-graduation-cap",
-    color: "purple",
-    description: "Información sobre becas, ayudas y beneficios disponibles",
-  },
-  {
-    id: "permisos",
-    text: "Solicitar permiso académico",
-    icon: "fas fa-file-signature",
-    color: "blue",
-    description: "Tramitar permisos, licencias y documentos académicos",
-  },
-  {
-    id: "procedimientos",
-    text: "Consultar procedimientos DDPER",
-    icon: "fas fa-list-check",
-    color: "emerald",
-    description: "Información sobre procesos administrativos y normativas",
-  },
-  {
-    id: "contacto",
-    text: "Información de contacto y horarios",
-    icon: "fas fa-phone",
-    color: "orange",
-    description: "Horarios de atención, teléfonos y ubicación",
-  },
-  {
-    id: "documentos",
-    text: "Buscar documentos y formularios",
-    icon: "fas fa-folder-open",
+    id: "mapa-mental",
+    text: "Generar mapa mental",
+    icon: "fas fa-project-diagram",
     color: "teal",
-    description: "Acceder a formularios, reglamentos e instructivos",
-  },
-  {
-    id: "ayuda",
-    text: "¿Cómo usar este asistente?",
-    icon: "fas fa-question-circle",
-    color: "pink",
-    description: "Guía de uso y funcionalidades del chatbot",
+    description: "Crear un mapa mental del contenido de la conversación",
   },
 ];
 
@@ -162,6 +124,12 @@ const ChatInterface = () => {
     },
   ]);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [isDocumentsModalOpen, setIsDocumentsModalOpen] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editingTitle, setEditingTitle] = useState("");
+  const [selectedParameters, setSelectedParameters] = useState([]);
+  const [selectedArtifact, setSelectedArtifact] = useState(null);
+  const [isMindMapModalOpen, setIsMindMapModalOpen] = useState(false);
 
   const {
     isTyping,
@@ -205,13 +173,14 @@ const ChatInterface = () => {
   const closeAll = useCallback(() => {
     setIsSidebarOpen(false);
     setIsArtifactsOpen(false);
+    setIsMindMapModalOpen(false);
   }, []);
 
   const handleSendMessage = useCallback(() => {
     if (input.trim()) {
-      sendMessage(input);
+      sendMessage(input, selectedParameters);
     }
-  }, [sendMessage, input]);
+  }, [sendMessage, input, selectedParameters]);
 
   const handleInputChange = useCallback((value) => {
     setInput(value);
@@ -219,10 +188,14 @@ const ChatInterface = () => {
 
   const handleQuickActionSelect = useCallback(
     (actionText) => {
-      setInput(actionText);
-      handleQuickAction(actionText);
+      if (actionText === "Generar mapa mental" && messages.length > 1) {
+        generarMapaMental(messages);
+      } else {
+        setInput(actionText);
+        handleQuickAction(actionText);
+      }
     },
-    [handleQuickAction]
+    [handleQuickAction, generarMapaMental, messages]
   );
 
   const handleDocumentSelect = useCallback(
@@ -232,6 +205,48 @@ const ChatInterface = () => {
     },
     [isMobile]
   );
+
+  const handleTitleEdit = () => {
+    setIsEditingTitle(true);
+    setEditingTitle(currentChat?.name || "Nueva Conversación");
+  };
+
+  const handleTitleSave = () => {
+    if (editingTitle.trim()) {
+      setCurrentChat((prev) => ({ ...prev, name: editingTitle.trim() }));
+      // Update in chats array if exists
+      setChats((prev) =>
+        prev.map((chat) =>
+          chat.id === currentChat.id
+            ? { ...chat, name: editingTitle.trim() }
+            : chat
+        )
+      );
+    }
+    setIsEditingTitle(false);
+  };
+
+  const handleTitleCancel = () => {
+    setIsEditingTitle(false);
+    setEditingTitle("");
+  };
+
+  const handleParameterChange = useCallback((newParameters) => {
+    setSelectedParameters(newParameters);
+  }, []);
+
+  const handleOpenArtifact = useCallback((artifact) => {
+    if (artifact.type === "mindmap") {
+      setSelectedArtifact(artifact);
+      setIsMindMapModalOpen(true);
+      setIsArtifactsOpen(false); // Cerrar panel de artefactos
+    }
+  }, []);
+
+  const handleCloseMindMapModal = useCallback(() => {
+    setIsMindMapModalOpen(false);
+    setSelectedArtifact(null);
+  }, []);
 
   const botStatus = isTyping ? "processing" : "online";
 
@@ -272,13 +287,13 @@ const ChatInterface = () => {
   }, [closeAll]);
 
   useEffect(() => {
-    if ((isSidebarOpen || isArtifactsOpen) && isMobile) {
+    if ((isSidebarOpen || isArtifactsOpen || isMindMapModalOpen) && isMobile) {
       document.body.classList.add("overflow-hidden");
     } else {
       document.body.classList.remove("overflow-hidden");
     }
     return () => document.body.classList.remove("overflow-hidden");
-  }, [isSidebarOpen, isArtifactsOpen, isMobile]);
+  }, [isSidebarOpen, isArtifactsOpen, isMindMapModalOpen, isMobile]);
 
   if (!user) {
     return (
@@ -308,22 +323,24 @@ const ChatInterface = () => {
       }`}
     >
       {/* Overlay en móvil */}
-      {(isSidebarOpen || isArtifactsOpen) && isMobile && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={closeAll}
-        />
-      )}
+      {(isSidebarOpen ||
+        isArtifactsOpen ||
+        isDocumentsModalOpen ||
+        isMindMapModalOpen) &&
+        isMobile && (
+          <div
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={closeAll}
+          />
+        )}
 
-      {/* Sidebar */}
       <div
         className={`
-    fixed top-16 left-0 
-    h-[calc(100%-4rem)] 
-    w-80 z-40
-    transform transition-transform duration-300 ease-in-out
-    ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
-  `}
+          fixed top-0 left-0 
+          h-full w-80 z-40
+          transform transition-transform duration-300 ease-in-out
+          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+        `}
       >
         <Sidebar
           documents={ddperDocuments}
@@ -339,21 +356,136 @@ const ChatInterface = () => {
           isDarkMode={isDarkMode}
           isOpen={true}
           onClose={() => setIsSidebarOpen(false)}
+          onModalOpen={() => setIsDocumentsModalOpen(true)}
           LogoUCT={LogoUCT}
         />
       </div>
 
-      {/* Contenido principal con padding para el header */}
       <div
-        className={`flex-1 flex flex-col min-w-0 transition-all duration-300 pt-16 ${
-          !isMobile && isSidebarOpen ? "lg:pl-80" : ""
+        className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${
+          !isMobile && isSidebarOpen ? "lg:ml-80" : ""
         }`}
       >
+        <header
+          className={`
+            h-16 z-30 px-4 border-b flex items-center justify-between
+            ${
+              isDarkMode
+                ? "bg-gray-800/95 border-gray-700 backdrop-blur-sm"
+                : "bg-white/95 border-gray-200 backdrop-blur-sm"
+            }
+          `}
+        >
+          {/* Izquierda */}
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className={`p-2 rounded-lg transition-colors ${
+                isDarkMode
+                  ? "text-gray-300 hover:bg-gray-700"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+              aria-label="Toggle sidebar"
+            >
+              <i
+                className={`fas ${
+                  isSidebarOpen ? "fa-times" : "fa-bars"
+                } text-lg`}
+              />
+            </button>
+            <div className="flex items-center space-x-3">
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  botStatus === "processing"
+                    ? "bg-yellow-500 animate-pulse"
+                    : "bg-green-500"
+                }`}
+              />
+              <div>
+                {isEditingTitle ? (
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      value={editingTitle}
+                      onChange={(e) => setEditingTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleTitleSave();
+                        if (e.key === "Escape") handleTitleCancel();
+                      }}
+                      onBlur={handleTitleSave}
+                      className={`px-2 py-1 rounded text-sm font-semibold bg-transparent border-b-2 border-blue-500 focus:outline-none ${
+                        isDarkMode ? "text-white" : "text-gray-900"
+                      }`}
+                      autoFocus
+                    />
+                  </div>
+                ) : (
+                  <h2
+                    className={`font-semibold truncate cursor-pointer hover:text-blue-500 transition-colors ${
+                      isDarkMode ? "text-white" : "text-gray-900"
+                    }`}
+                    onClick={handleTitleEdit}
+                    title="Click para editar título"
+                  >
+                    {currentChat?.name || "Nueva Conversación"}
+                  </h2>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Derecha */}
+          <div className="flex items-center space-x-2">
+            {messages.length > 1 && (
+              <VibrantButton
+                color="teal"
+                label="Mapa Mental"
+                icon={() => <i className="fas fa-project-diagram"></i>}
+                onClick={() => generarMapaMental(messages)}
+                size="small"
+                disabled={isTyping}
+                className="hidden sm:flex"
+              />
+            )}
+            <button
+              onClick={toggleDarkMode}
+              className={`p-2 rounded-lg transition-colors ${
+                isDarkMode
+                  ? "text-gray-300 hover:bg-gray-700"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+              title={isDarkMode ? "Modo claro" : "Modo oscuro"}
+            >
+              <i className={`fas ${isDarkMode ? "fa-sun" : "fa-moon"}`} />
+            </button>
+            {artifacts && (
+              <button
+                onClick={() => setIsArtifactsOpen(!isArtifactsOpen)}
+                className={`p-2 rounded-lg transition-colors relative ${
+                  isDarkMode
+                    ? "text-gray-300 hover:bg-gray-700"
+                    : "text-gray-600 hover:bg-gray-100"
+                }`}
+                title="Artifacts"
+              >
+                <i
+                  className={`fas ${
+                    isArtifactsOpen ? "fa-times" : "fa-layer-group"
+                  }`}
+                />
+                {artifacts.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {artifacts.length}
+                  </span>
+                )}
+              </button>
+            )}
+          </div>
+        </header>
+
         {/* Mensajes */}
         <div className="flex-1 overflow-y-auto">
           <div className="w-full p-4">
-            {" "}
-            {/* antes: max-w-6xl mx-auto */}
             {messages.length <= 1 && (
               <QuickActions
                 quickActions={quickActions}
@@ -378,9 +510,16 @@ const ChatInterface = () => {
               : "border-gray-200 bg-white"
           }`}
         >
+          <ContextParameters
+            onParameterChange={handleParameterChange}
+            isDarkMode={isDarkMode}
+            selectedParameters={selectedParameters}
+            generarMapaMental={
+              messages.length > 1 ? () => generarMapaMental(messages) : null
+            }
+            isTyping={isTyping}
+          />
           <div className="w-full">
-            {" "}
-            {/* antes: max-w-6xl mx-auto */}
             <ChatInput
               input={input}
               onInputChange={handleInputChange}
@@ -388,136 +527,26 @@ const ChatInterface = () => {
               isTyping={isTyping}
               quickActions={messages.length > 1 ? [] : quickActions}
               onQuickAction={handleQuickActionSelect}
-              generarMapaMental={
-                messages.length > 1 ? () => generarMapaMental(messages) : null
-              }
               isDarkMode={isDarkMode}
+              selectedParameters={selectedParameters}
+              onParameterChange={handleParameterChange}
             />
           </div>
         </div>
       </div>
 
-      {/* Header fijo en todo el ancho */}
-      <header
-        className={`
-          fixed top-0 left-0 right-0 h-16 z-50
-          px-4 border-b flex items-center justify-between
-          ${
-            isDarkMode
-              ? "bg-gray-800/80 border-gray-700 backdrop-blur-sm"
-              : "bg-white/80 border-gray-200 backdrop-blur-sm"
-          }
-        `}
-      >
-        {/* Izquierda */}
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className={`p-2 rounded-lg transition-colors ${
-              isDarkMode
-                ? "text-gray-300 hover:bg-gray-700"
-                : "text-gray-600 hover:bg-gray-100"
-            }`}
-            aria-label="Toggle sidebar"
-          >
-            <i
-              className={`fas ${
-                isSidebarOpen ? "fa-times" : "fa-bars"
-              } text-lg`}
-            />
-          </button>
-          <div className="flex items-center space-x-3">
-            <div
-              className={`w-2 h-2 rounded-full ${
-                botStatus === "processing"
-                  ? "bg-yellow-500 animate-pulse"
-                  : "bg-green-500"
-              }`}
-            />
-            <div>
-              <h2
-                className={`font-semibold truncate ${
-                  isDarkMode ? "text-white" : "text-gray-900"
-                }`}
-              >
-                {currentChat?.name || "Nueva Conversación"}
-              </h2>
-              <p
-                className={`text-sm ${
-                  isDarkMode ? "text-gray-400" : "text-gray-500"
-                }`}
-              >
-                {messages.length} mensaje{messages.length !== 1 ? "s" : ""}
-                {isTyping && " • El asistente está escribiendo..."}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Derecha */}
-        <div className="flex items-center space-x-2">
-          {generarMapaMental && messages.length > 1 && (
-            <VibrantButton
-              color="teal"
-              label="Mapa Mental"
-              icon={() => <i className="fas fa-project-diagram"></i>}
-              onClick={() => generarMapaMental(messages)}
-              size="small"
-              disabled={isTyping}
-              className="hidden sm:flex"
-            />
-          )}
-          <button
-            onClick={toggleDarkMode}
-            className={`p-2 rounded-lg transition-colors ${
-              isDarkMode
-                ? "text-gray-300 hover:bg-gray-700"
-                : "text-gray-600 hover:bg-gray-100"
-            }`}
-            title={isDarkMode ? "Modo claro" : "Modo oscuro"}
-          >
-            <i className={`fas ${isDarkMode ? "fa-sun" : "fa-moon"}`} />
-          </button>
-          {artifacts && (
-            <button
-              onClick={() => setIsArtifactsOpen(!isArtifactsOpen)}
-              className={`p-2 rounded-lg transition-colors relative ${
-                isDarkMode
-                  ? "text-gray-300 hover:bg-gray-700"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
-              title="Artifacts"
-            >
-              <i
-                className={`fas ${
-                  isArtifactsOpen ? "fa-times" : "fa-layer-group"
-                }`}
-              />
-              {artifacts.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {artifacts.length}
-                </span>
-              )}
-            </button>
-          )}
-        </div>
-      </header>
-
-      {/* Panel de Artifacts */}
-      {artifacts && isArtifactsOpen && (
+      {artifacts && (
         <div
           className={`
-            ${isMobile ? "fixed w-full" : "relative w-80"}
-            top-0 right-0 h-full z-50
+            fixed top-0 right-0 
+            h-full w-80 z-40
             transform transition-transform duration-300 ease-in-out
             ${isArtifactsOpen ? "translate-x-0" : "translate-x-full"}
           `}
         >
           <ArtifactsPanel
             artifacts={artifacts}
-            onOpenArtifact={(artifact) =>
-              console.log("Abrir artifact:", artifact)
-            }
+            onOpenArtifact={handleOpenArtifact} // Conectando función para abrir artefacto
             onDeleteArtifact={removeArtifact}
             isDarkMode={isDarkMode}
             isCollapsed={!isArtifactsOpen}
@@ -526,6 +555,24 @@ const ChatInterface = () => {
           />
         </div>
       )}
+
+      {/* Documents Modal */}
+      {isDocumentsModalOpen && (
+        <DocumentsModal
+          isOpen={isDocumentsModalOpen}
+          onClose={() => setIsDocumentsModalOpen(false)}
+          documents={ddperDocuments}
+          onDocumentSelect={handleDocumentSelect}
+          isDarkMode={isDarkMode}
+        />
+      )}
+
+      <MindMapModal
+        isOpen={isMindMapModalOpen}
+        onClose={handleCloseMindMapModal}
+        artifact={selectedArtifact}
+        isDarkMode={isDarkMode}
+      />
     </div>
   );
 };

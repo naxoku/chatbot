@@ -1,6 +1,5 @@
-// src/components/ChatInterface/useChatLogic.js
 import { useState } from "react";
-import axios from "axios"; // Para llamadas al backend
+import axios from "axios";
 import { nanoid } from "nanoid";
 
 export const useChatLogic = (
@@ -12,7 +11,7 @@ export const useChatLogic = (
 ) => {
   const [isTyping, setIsTyping] = useState(false);
 
-  // Búsqueda semántica de documentos (lógica local)
+  // 🔎 Búsqueda semántica local
   const searchDocuments = (query) => {
     const queryLower = query.toLowerCase();
     const matches = ddperDocuments.filter(
@@ -33,12 +32,11 @@ export const useChatLogic = (
     }));
   };
 
-  // Enviar mensaje (lógica completa: user msg, typing, API call, bot response, error fallback)
+  // 📨 Enviar mensaje al chat normal
   const sendMessage = async (input) => {
     const trimmed = input.trim();
     if (!trimmed || isTyping) return;
 
-    // Agregar mensaje del user
     const userMsg = {
       id: nanoid(),
       sender: "user",
@@ -47,25 +45,18 @@ export const useChatLogic = (
     };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
-    // Nota: scrollToBottom debe manejarse en ChatMessages o ChatInterface
-
-    setIsTyping(true); // Activa typing indicator
+    setIsTyping(true);
 
     try {
       const foundDocuments = searchDocuments(trimmed);
 
-      // Llamada al backend con Axios
-      const res = await axios.post("/api/chat", {
-        pregunta: trimmed,
-      });
-
+      const res = await axios.post("/api/chat", { pregunta: trimmed });
       let botResponse = res.data.respuesta || "No hay respuesta disponible.";
 
       if (foundDocuments.length > 0) {
         botResponse += `\n\n📎 **Documentos relacionados encontrados:**`;
       }
 
-      // Agregar respuesta del bot
       const botMsg = {
         id: nanoid(),
         sender: "bot",
@@ -77,10 +68,9 @@ export const useChatLogic = (
       setMessages((prev) => [...prev, botMsg]);
     } catch (err) {
       console.error("Error en sendMessage:", err);
-
       const foundDocuments = searchDocuments(trimmed);
-      let errorResponse = "Error al conectar con el servidor.";
 
+      let errorResponse = "Error al conectar con el servidor.";
       if (foundDocuments.length > 0) {
         errorResponse =
           "No pude conectar con el servidor, pero encontré estos documentos que podrían ayudarte:";
@@ -100,7 +90,6 @@ O puedes contactar directamente a: **ddper@uct.cl**`;
 2. Contactar directamente: **ddper@uct.cl**`;
       }
 
-      // Agregar respuesta de error
       setMessages((prev) => [
         ...prev,
         {
@@ -113,58 +102,67 @@ O puedes contactar directamente a: **ddper@uct.cl**`;
         },
       ]);
     } finally {
-      setIsTyping(false); // Desactiva typing
+      setIsTyping(false);
     }
   };
 
-  // Generar mapa mental (lógica completa: toma último bot msg, API call, artifact)
+  // 🧠 Generar mapa mental desde último mensaje del bot
   const generarMapaMental = async (messages) => {
     const lastBotMsg = [...messages].reverse().find((m) => m.sender === "bot");
-
     if (!lastBotMsg) {
       alert("No hay mensaje del bot para generar mapa.");
       return;
     }
-
     if (!lastBotMsg.content || lastBotMsg.content.trim() === "") {
       alert("El último mensaje del bot no contiene contexto válido.");
       return;
     }
 
-    // Agregar placeholder msg para mapa
     const mapMsg = {
       id: nanoid(),
       sender: "bot",
-      content: "",
+      content: "Generando mapa mental...",
       artifact: true,
     };
     setMessages((prev) => [...prev, mapMsg]);
 
     try {
-      // Llamada al backend con Axios
-      const res = await axios.post("/api/generar-mapa-mental", {
+      // 👉 usamos la nueva ruta
+      const res = await axios.post("/api/chat/mapa-mental", {
         contexto: lastBotMsg.content,
       });
 
-      const jsonData = res.data; // Axios parsea JSON
+      // 👇 aseguramos que el JSON venga como objeto
+      let jsonData = res.data.mapaMental || {};
+      try {
+        if (typeof jsonData === "string") {
+          jsonData = JSON.parse(jsonData);
+        }
+      } catch (parseErr) {
+        console.error("❌ Error al parsear el JSON del mapa mental:", parseErr);
+        jsonData = {
+          name: "Error",
+          children: [{ name: "No se pudo generar el mapa mental" }],
+        };
+      }
 
-      // Crear y agregar artifact
       const newArtifact = {
         id: `artifact-${Date.now()}`,
         name: `Mapa Mental - ${new Date().toLocaleDateString()}`,
         type: "mindmap",
         icon: "fas fa-project-diagram",
         color: "purple",
-        data: jsonData,
+        data: jsonData, // ✅ objeto parseado
         createdAt: new Date(),
         description: "Mapa mental generado automáticamente",
       };
       addArtifact(newArtifact);
 
-      // Actualizar msg con JSON data (para renderMindMap en ChatMessages o similar)
       setMessages((prev) =>
         prev.map((m) =>
-          m.id === mapMsg.id ? { ...m, content: JSON.stringify(jsonData) } : m
+          m.id === mapMsg.id
+            ? { ...m, content: JSON.stringify(jsonData, null, 2) }
+            : m
         )
       );
     } catch (err) {
@@ -184,18 +182,8 @@ O puedes contactar directamente a: **ddper@uct.cl**`;
     }
   };
 
-  // Manejar feedback (actualiza messages para ocultar UI)
   const handleFeedback = async (messageId, isHelpful, comment = "") => {
-    const feedback = {
-      messageId,
-      isHelpful,
-      comment,
-    };
-
-    // Opcional: Enviar a backend (ej. axios.post("/api/feedback", feedback))
-    console.log("Feedback enviado:", feedback);
-
-    // Actualizar mensaje para ocultar feedback
+    console.log("Feedback enviado:", { messageId, isHelpful, comment });
     setMessages((prev) =>
       prev.map((msg) =>
         msg.id === messageId ? { ...msg, feedbackRequested: false } : msg
@@ -203,16 +191,13 @@ O puedes contactar directamente a: **ddper@uct.cl**`;
     );
   };
 
-  // Quick action (set input)
-  const handleQuickAction = (text) => {
-    setInput(text);
-  };
+  const handleQuickAction = (text) => setInput(text);
 
   return {
-    isTyping, // Para mostrar typing en ChatMessages
-    sendMessage, // Llamar desde ChatInput
-    handleFeedback, // Pasar a ChatMessages
-    generarMapaMental, // Llamar desde ChatInput
-    handleQuickAction, // Para quick buttons en ChatInput
+    isTyping,
+    sendMessage,
+    handleFeedback,
+    generarMapaMental,
+    handleQuickAction,
   };
 };

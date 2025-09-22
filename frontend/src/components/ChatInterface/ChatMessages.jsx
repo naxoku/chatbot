@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import VibrantButton from "./VibrantButton";
+// "use client"
+
+import { useState } from "react";
 
 const ChatMessages = ({ messages = [], isTyping, onFeedback, isDarkMode }) => {
   const [feedbackStates, setFeedbackStates] = useState({});
@@ -67,6 +68,69 @@ const ChatMessages = ({ messages = [], isTyping, onFeedback, isDarkMode }) => {
                 : "bg-gray-100 text-gray-900"
             }`}
           >
+            {(message.parameters || message.responseParameters) && (
+              <div
+                className={`mb-3 pb-2 border-b border-opacity-20 ${
+                  isDarkMode ? "border-gray-600" : "border-gray-300"
+                }`}
+              >
+                <div className="flex flex-wrap gap-1">
+                  {(message.parameters || message.responseParameters).map(
+                    (param) => {
+                      const paramLabels = {
+                        resumen: {
+                          label: "Resumir",
+                          icon: "fas fa-compress-alt",
+                          color: "blue",
+                        },
+                        detallado: {
+                          label: "Explicar mejor",
+                          icon: "fas fa-expand-alt",
+                          color: "green",
+                        },
+                        ejemplo: {
+                          label: "Dar ejemplo",
+                          icon: "fas fa-lightbulb",
+                          color: "orange",
+                        },
+                        continuar: {
+                          label: "Continuar",
+                          icon: "fas fa-arrow-right",
+                          color: "purple",
+                        },
+                        mapa_mental: {
+                          label: "Mapa Mental",
+                          icon: "fas fa-project-diagram",
+                          color: "teal",
+                        },
+                      };
+                      const paramInfo = paramLabels[param] || {
+                        label: param,
+                        icon: "fas fa-tag",
+                        color: "gray",
+                      };
+
+                      return (
+                        <span
+                          key={param}
+                          className={`inline-flex items-center space-x-1 px-2 py-1 rounded text-xs font-medium ${
+                            isUser
+                              ? "bg-white/20 text-white"
+                              : isDarkMode
+                              ? "bg-gray-700 text-gray-300"
+                              : "bg-gray-200 text-gray-700"
+                          }`}
+                        >
+                          <i className={`${paramInfo.icon} text-xs`}></i>
+                          <span>{paramInfo.label}</span>
+                        </span>
+                      );
+                    }
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Contenido del mensaje */}
             <div className="text-sm leading-relaxed whitespace-pre-wrap mb-2">
               {message.content}

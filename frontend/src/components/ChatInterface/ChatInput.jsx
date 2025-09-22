@@ -1,5 +1,4 @@
-import React, { useRef, useEffect } from "react";
-import VibrantButton from "./VibrantButton";
+import { useRef, useEffect } from "react";
 
 const ChatInput = ({
   input,
@@ -10,6 +9,8 @@ const ChatInput = ({
   onQuickAction,
   generarMapaMental,
   isDarkMode,
+  selectedParameters = [],
+  onParameterChange,
 }) => {
   const textareaRef = useRef(null);
 
@@ -52,43 +53,10 @@ const ChatInput = ({
     }
   };
 
-  const handleQuickActionClick = (actionText) => {
-    if (onQuickAction) {
-      onQuickAction(actionText);
-    }
-  };
-
-  const miniQuickActions = [
-    { text: "Explicar mejor", icon: "fas fa-lightbulb", color: "orange" },
-    { text: "Dar ejemplo", icon: "fas fa-code", color: "blue" },
-    { text: "Resumir", icon: "fas fa-list", color: "emerald" },
-    { text: "Continuar", icon: "fas fa-arrow-right", color: "purple" },
-  ];
-
   return (
     <div className="p-4">
-      {/* Mini quick actions */}
-      {quickActions.length === 0 && (
-        <div className="mb-4">
-          <div className="flex flex-wrap gap-2 justify-center">
-            {miniQuickActions.map((action, index) => (
-              <VibrantButton
-                key={index}
-                color={action.color}
-                label={action.text}
-                icon={() => <i className={action.icon}></i>}
-                size="small"
-                onClick={() => handleQuickActionClick(action.text)}
-                className="text-xs"
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Input principal */}
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <div className="flex space-x-3">
+      <form onSubmit={handleSubmit}>
+        <div className="flex items-end space-x-3">
           {/* Textarea */}
           <div className="flex-1 relative">
             <textarea
@@ -99,81 +67,60 @@ const ChatInput = ({
               placeholder="Escribe tu mensaje... (Ctrl + Enter para nueva línea)"
               disabled={isTyping}
               rows={1}
-              className={`w-full resize-none rounded-xl border transition-all duration-200 px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              className={`w-full resize-none rounded-xl border transition-all duration-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent overflow-hidden ${
                 isDarkMode
                   ? "bg-gray-800 border-gray-600 text-white placeholder-gray-400"
                   : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
               } ${isTyping ? "opacity-50 cursor-not-allowed" : ""}`}
-              style={{ maxHeight: "120px", minHeight: "52px" }}
+              style={{
+                maxHeight: "120px",
+                minHeight: "48px",
+                scrollbarWidth: "none",
+                msOverflowStyle: "none",
+              }}
             />
-
-            {/* Contador de caracteres */}
-            {input.length > 0 && (
-              <div
-                className={`absolute bottom-2 right-2 text-xs ${
-                  isDarkMode ? "text-gray-500" : "text-gray-400"
-                }`}
-              >
-                {input.length}/2000
-              </div>
-            )}
           </div>
 
-          {/* Botón enviar */}
-          <VibrantButton
-            color="purple"
-            icon={() => (
-              <i
-                className={`fas ${
-                  isTyping ? "fa-spinner fa-spin" : "fa-paper-plane"
-                }`}
-              ></i>
-            )}
-            variant="icon"
-            onClick={handleSubmit}
+          <button
+            type="submit"
             disabled={!input.trim() || isTyping}
-            className="flex-shrink-0 self-end"
-            size="large"
-          />
-        </div>
-
-        {/* Botones adicionales */}
-        <div className="flex items-center justify-between">
-          {/* Botón mapa mental */}
-          {generarMapaMental && (
-            <VibrantButton
-              color="teal"
-              label="Mapa Mental"
-              icon={() => <i className="fas fa-project-diagram"></i>}
-              size="small"
-              onClick={generarMapaMental}
-              disabled={isTyping}
+            className={`flex-shrink-0 w-12 h-12 rounded-xl transition-all duration-200 flex items-center justify-center ${
+              !input.trim() || isTyping
+                ? isDarkMode
+                  ? "bg-gray-700 text-gray-500 cursor-not-allowed"
+                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : isDarkMode
+                ? "bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl"
+                : "bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl"
+            }`}
+          >
+            <i
+              className={`fas ${
+                isTyping ? "fa-spinner fa-spin" : "fa-paper-plane"
+              } text-sm`}
             />
-          )}
+          </button>
         </div>
-      </form>
 
-      {/* Status bar */}
-      <div
-        className={`mt-2 text-xs flex items-center justify-between ${
-          isDarkMode ? "text-gray-500" : "text-gray-400"
-        }`}
-      >
-        <div className="flex items-center space-x-4">
-          <span>
-            <i className="fas fa-robot mr-1"></i>
-            Asistente {isTyping ? "escribiendo..." : "listo"}
-          </span>
-          <span>
-            <i className="fas fa-shield-alt mr-1"></i>
-            Conversación segura
-          </span>
-        </div>
-        <div>
-          <i className="fas fa-keyboard mr-1"></i>
-          Enter para enviar • Ctrl+Enter para nueva línea
-        </div>
-      </div>
+        {selectedParameters.length > 0 && (
+          <div className="mt-2 flex items-center justify-center space-x-2">
+            <i
+              className={`fas fa-info-circle text-xs ${
+                isDarkMode ? "text-gray-500" : "text-gray-400"
+              }`}
+            ></i>
+            <span
+              className={`text-xs ${
+                isDarkMode ? "text-gray-500" : "text-gray-400"
+              }`}
+            >
+              {selectedParameters.length} parámetro
+              {selectedParameters.length !== 1 ? "s" : ""} seleccionado
+              {selectedParameters.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+        )}
+      </form>
     </div>
   );
 };

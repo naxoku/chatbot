@@ -1,7 +1,7 @@
 import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../App";
-import axios from "axios"; // Ya incluido para consistencia
+import axios from "axios";
 
 const Login = () => {
   const { isDarkMode, toggleDarkMode } = useContext(AppContext);
@@ -81,7 +81,7 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-      {/* Toggle Dark Mode - Fijo top-right, igual que en ChatInterface */}
+      {/* Toggle Dark Mode */}
       <button
         onClick={toggleDarkMode}
         className="fixed top-4 right-4 z-50 p-3 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300"
@@ -91,7 +91,7 @@ const Login = () => {
       </button>
 
       <div className="w-full max-w-md">
-        {/* Logo y Header - Centrado, con acento sutil */}
+        {/* Logo y Header */}
         <div className="text-center mb-8">
           <div className="w-20 h-20 mx-auto mb-4 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-lg border border-gray-200 dark:border-gray-700 transition-all duration-300">
             <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center">
@@ -106,9 +106,9 @@ const Login = () => {
           </p>
         </div>
 
-        {/* Card de Login - Estilo unificado con ChatInterface */}
+        {/* Card de Login */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300">
-          {/* Header de Card - Neutro para consistencia */}
+          {/* Header de Card */}
           <div className="bg-white dark:bg-gray-800 p-6 text-center border-b border-gray-200 dark:border-gray-700">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
               Iniciar Sesión
@@ -222,7 +222,7 @@ const Login = () => {
               </button>
             </div>
 
-            {/* Submit Button - Mantengo gradiente para acento, pero con dark hover */}
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={isLoading}
@@ -240,12 +240,11 @@ const Login = () => {
           </form>
         </div>
 
-        {/* Footer - Neutro y centrado, como en ChatInterface */}
+        {/* Footer */}
         <div className="text-center mt-6 text-sm text-gray-500 dark:text-gray-400">
-          <p>© 2024 Asistente UCT. Todos los derechos reservados.</p>
-          <p className="mt-1">
-            Desarrollado con <i className="fas fa-heart text-red-500"></i> por
-            el equipo de T.I.
+          <p>
+            © {new Date().getFullYear()} Asistente UCT. Todos los derechos
+            reservados.
           </p>
         </div>
       </div>

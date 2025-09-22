@@ -1,5 +1,4 @@
-import React from "react";
-import VibrantButton from "./VibrantButton";
+//
 
 const QuickActions = ({ quickActions = [], onQuickAction, isDarkMode }) => {
   // Acciones por defecto si no se pasan
@@ -56,10 +55,10 @@ const QuickActions = ({ quickActions = [], onQuickAction, isDarkMode }) => {
   );
 
   return (
-    <div className="mb-8">
-      <div className="mb-6">
+    <div className="mb-6">
+      <div className="mb-4 text-center">
         <h3
-          className={`text-xl font-semibold mb-2 ${
+          className={`text-lg font-medium mb-1 ${
             isDarkMode ? "text-white" : "text-gray-900"
           }`}
         >
@@ -70,26 +69,24 @@ const QuickActions = ({ quickActions = [], onQuickAction, isDarkMode }) => {
             isDarkMode ? "text-gray-400" : "text-gray-600"
           }`}
         >
-          Selecciona una acción rápida para comenzar o escribe tu pregunta
-          personalizada
+          Selecciona una opción para comenzar
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
         {actions.map((action) => (
-          <div
+          <button
             key={action.id}
             onClick={() => onQuickAction(action.text)}
-            className={`group p-6 rounded-xl border cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg ${
+            className={`group p-3 rounded-lg border text-left cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-md ${
               isDarkMode
                 ? "border-gray-700 hover:border-gray-600 bg-gray-800 hover:bg-gray-750"
                 : "border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50"
             }`}
           >
-            {/* Header con ícono */}
-            <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center space-x-2 mb-2">
               <div
-                className={`inline-flex p-3 rounded-lg transition-all duration-300 group-hover:scale-110 ${
+                className={`inline-flex p-1.5 rounded-md text-sm ${
                   action.color === "purple"
                     ? "bg-purple-100 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400"
                     : action.color === "orange"
@@ -105,91 +102,37 @@ const QuickActions = ({ quickActions = [], onQuickAction, isDarkMode }) => {
                     : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
                 }`}
               >
-                <i className={`${action.icon} text-xl`}></i>
-              </div>
-              <div
-                className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  isDarkMode
-                    ? "bg-gray-700 text-gray-300"
-                    : "bg-gray-100 text-gray-600"
-                }`}
-              >
-                Acción rápida
+                <i className={`${action.icon}`}></i>
               </div>
             </div>
 
-            {/* Contenido */}
             <div>
               <h4
-                className={`font-semibold text-lg mb-2 group-hover:text-${
-                  action.color
-                }-600 transition-colors ${
+                className={`font-medium text-sm mb-1 ${
                   isDarkMode ? "text-white" : "text-gray-900"
                 }`}
               >
                 {action.text}
               </h4>
               <p
-                className={`text-sm leading-relaxed ${
+                className={`text-xs leading-relaxed ${
                   isDarkMode ? "text-gray-400" : "text-gray-600"
                 }`}
               >
                 {action.description}
               </p>
             </div>
-
-            {/* Flecha indicativa */}
-            <div className="mt-4 flex justify-end">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 group-hover:bg-${action.color}-100 dark:group-hover:bg-${action.color}-900/20`}
-              >
-                <i
-                  className={`fas fa-arrow-right text-sm ${
-                    isDarkMode
-                      ? "text-gray-500 group-hover:text-gray-300"
-                      : "text-gray-400 group-hover:text-gray-600"
-                  }`}
-                ></i>
-              </div>
-            </div>
-          </div>
+          </button>
         ))}
       </div>
 
-      {/* Separador y sugerencia para preguntas personalizadas */}
       <div className="text-center">
-        <div
-          className={`relative flex items-center justify-center mb-4 ${
-            isDarkMode ? "text-gray-600" : "text-gray-400"
-          }`}
-        >
-          <div
-            className={`flex-1 h-px ${
-              isDarkMode ? "bg-gray-700" : "bg-gray-200"
-            }`}
-          ></div>
-          <span
-            className={`px-4 text-sm font-medium ${
-              isDarkMode
-                ? "bg-gray-900 text-gray-400"
-                : "bg-gray-50 text-gray-500"
-            }`}
-          >
-            o
-          </span>
-          <div
-            className={`flex-1 h-px ${
-              isDarkMode ? "bg-gray-700" : "bg-gray-200"
-            }`}
-          ></div>
-        </div>
-
         <p
-          className={`text-sm ${
-            isDarkMode ? "text-gray-400" : "text-gray-600"
+          className={`text-xs ${
+            isDarkMode ? "text-gray-500" : "text-gray-400"
           }`}
         >
-          Escribe tu pregunta personalizada en el campo de texto de abajo
+          o escribe tu pregunta personalizada
         </p>
       </div>
     </div>

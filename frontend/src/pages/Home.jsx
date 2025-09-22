@@ -42,8 +42,9 @@ const Home = () => {
             </div>
             <span className="text-lg font-bold">Asistente UCT</span>
           </div>
-          <p className="text-gray-400 mb-4">
-            © 2024 Asistente UCT. Todos los derechos reservados.
+          <p>
+            © {new Date().getFullYear()} Asistente UCT. Todos los derechos
+            reservados.
           </p>
         </div>
       </footer>
