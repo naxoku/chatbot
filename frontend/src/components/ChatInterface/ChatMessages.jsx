@@ -1,6 +1,8 @@
 // "use client"
 
 import { useState } from "react";
+import { marked } from "marked";
+import DOMPurify from "dompurify";
 
 const ChatMessages = ({ messages = [], isTyping, onFeedback, isDarkMode }) => {
   const [feedbackStates, setFeedbackStates] = useState({});
@@ -132,9 +134,12 @@ const ChatMessages = ({ messages = [], isTyping, onFeedback, isDarkMode }) => {
             )}
 
             {/* Contenido del mensaje */}
-            <div className="text-sm leading-relaxed whitespace-pre-wrap mb-2">
-              {message.content}
-            </div>
+            <div
+              className={`prose dark:prose-invert`}
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(marked.parse(message.content)),
+              }}
+            ></div>
 
             {/* Enlaces de documentos si existen */}
             {message.documentLinks && message.documentLinks.length > 0 && (

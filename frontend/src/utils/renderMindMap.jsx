@@ -242,7 +242,9 @@ const ReactFlowMindMap = ({
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-  const nodeTypes = { custom: CustomNode };
+  const nodeTypes = {
+    custom: MemoizedCustomNode,
+  };
 
   const onConnect = useCallback(
     (params) => setEdges((eds) => addEdge(params, eds)),
@@ -354,6 +356,8 @@ export function renderMindMap(jsonData, containerId) {
     root.render(React.createElement(ReactFlowMindMap, { data: jsonData }));
   });
 }
+
+const MemoizedCustomNode = React.memo(CustomNode);
 
 export { ReactFlowMindMap };
 export default ReactFlowMindMap;
