@@ -229,6 +229,11 @@ const CustomNode = ({ data, selected }) => {
   );
 };
 
+const MemoizedCustomNode = React.memo(CustomNode);
+const nodeTypes = {
+  custom: MemoizedCustomNode,
+};
+
 const ReactFlowMindMap = ({
   data,
   layout = "horizontal",
@@ -242,16 +247,12 @@ const ReactFlowMindMap = ({
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-  const nodeTypes = {
-    custom: MemoizedCustomNode,
-  };
-
   const onConnect = useCallback(
     (params) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
   );
 
-  // 🔄 Manejar colapso/expansión de nodos
+  // Manejar colapso/expansión de nodos
   const handleToggle = useCallback(
     (nodeId, expanded) => {
       setNodes((nds) => {
@@ -342,7 +343,6 @@ const ReactFlowMindMap = ({
   );
 };
 
-// Compatibilidad con tu API actual
 export function renderMindMap(jsonData, containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
@@ -356,8 +356,6 @@ export function renderMindMap(jsonData, containerId) {
     root.render(React.createElement(ReactFlowMindMap, { data: jsonData }));
   });
 }
-
-const MemoizedCustomNode = React.memo(CustomNode);
 
 export { ReactFlowMindMap };
 export default ReactFlowMindMap;

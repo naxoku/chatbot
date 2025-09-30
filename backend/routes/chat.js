@@ -36,10 +36,10 @@ router.post("/", requireLogin, async (req, res) => {
   }
 });
 
-// Nueva ruta para generar mapa mental
+// Generar mapa mental
 router.post("/mapa-mental", requireLogin, async (req, res) => {
   const { contexto } = req.body;
-  console.log("🧠 Contexto recibido para mapa mental:", contexto);
+  console.log("Contexto recibido para mapa mental:", contexto);
 
   try {
     const response = await fetch("https://skynet.uct.cl/webhook/mapa-mental", {
@@ -48,10 +48,10 @@ router.post("/mapa-mental", requireLogin, async (req, res) => {
       body: JSON.stringify({ contexto }),
     });
 
-    console.log("👉 Status Skynet:", response.status);
+    console.log("Status Skynet:", response.status);
 
     const data = await response.json();
-    console.log("👉 Data recibida (mapa mental):", data);
+    console.log("Data recibida (mapa mental):", data);
 
     // el agente devuelve { respuesta: {...} }
     let mapaMental = data.respuesta || {};

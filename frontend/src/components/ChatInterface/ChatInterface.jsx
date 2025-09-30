@@ -75,22 +75,7 @@ const quickActions = [
   },
 ];
 
-const welcomeMessage = {
-  id: "welcome",
-  sender: "bot",
-  content: `¡Hola! Soy el asistente virtual de la Dirección de Desarrollo de Personas (DDPER) de la Universidad Católica del Temuco.
-
-Estoy aquí para ayudarte con:
-• Consultas sobre beneficios estudiantiles
-• Información sobre procedimientos administrativos  
-• Orientación sobre documentos y formularios
-• Dudas generales sobre DDPER
-• Horarios y información de contacto
-
-¿En qué puedo ayudarte hoy?`,
-  timestamp: new Date(),
-  feedbackRequested: false,
-};
+////////////////////
 
 const ChatInterface = () => {
   const { isDarkMode, toggleDarkMode, artifacts, addArtifact, removeArtifact } =
@@ -99,7 +84,7 @@ const ChatInterface = () => {
   const navigate = useNavigate();
   const hasInitialized = useRef(false);
 
-  const [messages, setMessages] = useState([welcomeMessage]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [user, setUser] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
@@ -267,11 +252,41 @@ const ChatInterface = () => {
       if (hasInitialized.current) return;
       hasInitialized.current = true;
       try {
-        setUser({
-          name: "Usuario Test",
-          email: "test@uct.cl",
-          role: "estudiante",
+        const res = await fetch("http://localhost:3000/auth/checkSession", {
+          credentials: "include", // 🔑 importante: manda cookies
         });
+        const data = await res.json();
+
+        if (data.logged_in) {
+          setUser({
+            name: data.user.nombre,
+            email: data.user.email,
+            role: data.user.rol,
+          });
+
+          // 👇 Crea mensaje de bienvenida dinámico
+          setMessages([
+            {
+              id: "welcome",
+              sender: "bot",
+              content: `¡Hola **${data.user.nombre}**! Soy el asistente virtual de la Dirección de Desarrollo de Personas (DDPER) de la Universidad Católica del Temuco.
+
+**Estoy aquí para ayudarte con:**
+
+- Consultas sobre beneficios estudiantiles  
+- Información sobre procedimientos administrativos  
+- Orientación sobre documentos y formularios  
+- Dudas generales sobre DDPER  
+- Horarios y datos de contacto  
+
+¿En qué puedo ayudarte hoy?`,
+              timestamp: new Date(),
+              feedbackRequested: false,
+            },
+          ]);
+        } else {
+          navigate("/login");
+        }
       } catch (err) {
         console.error("Error en checkSession:", err);
         navigate("/login");
@@ -279,6 +294,7 @@ const ChatInterface = () => {
     };
     checkSession();
   }, [navigate]);
+
 
   useEffect(() => {
     const handleEsc = (e) => e.key === "Escape" && closeAll();
@@ -298,16 +314,14 @@ const ChatInterface = () => {
   if (!user) {
     return (
       <div
-        className={`h-screen flex items-center justify-center ${
-          isDarkMode ? "bg-gray-900" : "bg-gray-50"
-        }`}
+        className={`h-screen flex items-center justify-center ${isDarkMode ? "bg-gray-900" : "bg-gray-50"
+          }`}
       >
         <div className="text-center">
           <i className="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i>
           <p
-            className={`text-lg ${
-              isDarkMode ? "text-gray-300" : "text-gray-700"
-            }`}
+            className={`text-lg ${isDarkMode ? "text-gray-300" : "text-gray-700"
+              }`}
           >
             Iniciando asistente DDPER...
           </p>
@@ -318,9 +332,8 @@ const ChatInterface = () => {
 
   return (
     <div
-      className={`h-screen flex ${
-        isDarkMode ? "dark bg-gray-900" : "bg-gray-50"
-      }`}
+      className={`h-screen flex ${isDarkMode ? "dark bg-gray-900" : "bg-gray-50"
+        }`}
     >
       {/* Overlay en móvil */}
       {(isSidebarOpen ||
@@ -362,17 +375,15 @@ const ChatInterface = () => {
       </div>
 
       <div
-        className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${
-          !isMobile && isSidebarOpen ? "lg:ml-80" : ""
-        }`}
+        className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${!isMobile && isSidebarOpen ? "lg:ml-80" : ""
+          }`}
       >
         <header
           className={`
             h-16 z-30 px-4 border-b flex items-center justify-between
-            ${
-              isDarkMode
-                ? "bg-gray-800/95 border-gray-700 backdrop-blur-sm"
-                : "bg-white/95 border-gray-200 backdrop-blur-sm"
+            ${isDarkMode
+              ? "bg-gray-800/95 border-gray-700 backdrop-blur-sm"
+              : "bg-white/95 border-gray-200 backdrop-blur-sm"
             }
           `}
         >
@@ -380,26 +391,23 @@ const ChatInterface = () => {
           <div className="flex items-center space-x-3">
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className={`p-2 rounded-lg transition-colors ${
-                isDarkMode
-                  ? "text-gray-300 hover:bg-gray-700"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
+              className={`p-2 rounded-lg transition-colors ${isDarkMode
+                ? "text-gray-300 hover:bg-gray-700"
+                : "text-gray-600 hover:bg-gray-100"
+                }`}
               aria-label="Toggle sidebar"
             >
               <i
-                className={`fas ${
-                  isSidebarOpen ? "fa-times" : "fa-bars"
-                } text-lg`}
+                className={`fas ${isSidebarOpen ? "fa-times" : "fa-bars"
+                  } text-lg`}
               />
             </button>
             <div className="flex items-center space-x-3">
               <div
-                className={`w-2 h-2 rounded-full ${
-                  botStatus === "processing"
-                    ? "bg-yellow-500 animate-pulse"
-                    : "bg-green-500"
-                }`}
+                className={`w-2 h-2 rounded-full ${botStatus === "processing"
+                  ? "bg-yellow-500 animate-pulse"
+                  : "bg-green-500"
+                  }`}
               />
               <div>
                 {isEditingTitle ? (
@@ -413,17 +421,15 @@ const ChatInterface = () => {
                         if (e.key === "Escape") handleTitleCancel();
                       }}
                       onBlur={handleTitleSave}
-                      className={`px-2 py-1 rounded text-sm font-semibold bg-transparent border-b-2 border-blue-500 focus:outline-none ${
-                        isDarkMode ? "text-white" : "text-gray-900"
-                      }`}
+                      className={`px-2 py-1 rounded text-sm font-semibold bg-transparent border-b-2 border-blue-500 focus:outline-none ${isDarkMode ? "text-white" : "text-gray-900"
+                        }`}
                       autoFocus
                     />
                   </div>
                 ) : (
                   <h2
-                    className={`font-semibold truncate cursor-pointer hover:text-blue-500 transition-colors ${
-                      isDarkMode ? "text-white" : "text-gray-900"
-                    }`}
+                    className={`font-semibold truncate cursor-pointer hover:text-blue-500 transition-colors ${isDarkMode ? "text-white" : "text-gray-900"
+                      }`}
                     onClick={handleTitleEdit}
                     title="Click para editar título"
                   >
@@ -449,11 +455,10 @@ const ChatInterface = () => {
             )}
             <button
               onClick={toggleDarkMode}
-              className={`p-2 rounded-lg transition-colors ${
-                isDarkMode
-                  ? "text-gray-300 hover:bg-gray-700"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
+              className={`p-2 rounded-lg transition-colors ${isDarkMode
+                ? "text-gray-300 hover:bg-gray-700"
+                : "text-gray-600 hover:bg-gray-100"
+                }`}
               title={isDarkMode ? "Modo claro" : "Modo oscuro"}
             >
               <i className={`fas ${isDarkMode ? "fa-sun" : "fa-moon"}`} />
@@ -461,17 +466,15 @@ const ChatInterface = () => {
             {artifacts && (
               <button
                 onClick={() => setIsArtifactsOpen(!isArtifactsOpen)}
-                className={`p-2 rounded-lg transition-colors relative ${
-                  isDarkMode
-                    ? "text-gray-300 hover:bg-gray-700"
-                    : "text-gray-600 hover:bg-gray-100"
-                }`}
+                className={`p-2 rounded-lg transition-colors relative ${isDarkMode
+                  ? "text-gray-300 hover:bg-gray-700"
+                  : "text-gray-600 hover:bg-gray-100"
+                  }`}
                 title="Artifacts"
               >
                 <i
-                  className={`fas ${
-                    isArtifactsOpen ? "fa-times" : "fa-layer-group"
-                  }`}
+                  className={`fas ${isArtifactsOpen ? "fa-times" : "fa-layer-group"
+                    }`}
                 />
                 {artifacts.length > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
@@ -504,11 +507,10 @@ const ChatInterface = () => {
 
         {/* Input */}
         <div
-          className={`border-t ${
-            isDarkMode
-              ? "border-gray-700 bg-gray-800"
-              : "border-gray-200 bg-white"
-          }`}
+          className={`border-t ${isDarkMode
+            ? "border-gray-700 bg-gray-800"
+            : "border-gray-200 bg-white"
+            }`}
         >
           <ContextParameters
             onParameterChange={handleParameterChange}

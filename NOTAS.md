@@ -30,3 +30,4 @@
 14. Ser capaz de modificar el título de la conversación presionando el texto del header.
 15. Que se guarde las preferencias del tema que usa el usuario (tema claro o tema oscuro).
 16. Asegurar que realmente se cierre sesión y si vuelvo a una página con login requerido (/chat por ejemplo) que me derive a una página indicando que debo estar logueado para eso.
+
