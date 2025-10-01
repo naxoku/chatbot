@@ -5,7 +5,7 @@ import "./index.css";
 import axios from "axios";
 
 axios.defaults.withCredentials = true;
-axios.defaults.baseURL = "http://localhost:3000";
+axios.defaults.baseURL = "https://chatbot-production-d56e.up.railway.app";
 
 // ¡NUEVO: Interceptor para redirigir automáticamente en 401/403 (o logged_in false en respuestas)
 axios.interceptors.response.use(

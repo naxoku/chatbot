@@ -47,7 +47,7 @@ const Login = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:3000/auth/login",
+        "https://chatbot-production-d56e.up.railway.app/auth/login",
         {
           email: loginData.email,
           password: loginData.password,

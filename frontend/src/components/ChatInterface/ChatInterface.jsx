@@ -137,7 +137,7 @@ const ChatInterface = () => {
   // Función para manejar el logout
   const handleLogout = async () => {
     try {
-      const response = await fetch("http://localhost:3000/auth/logout", {
+      const response = await fetch("https://chatbot-production-d56e.up.railway.app/auth/logout", {
         method: "POST",
         credentials: "include",
       });
@@ -288,7 +288,7 @@ const ChatInterface = () => {
       if (hasInitialized.current) return;
       hasInitialized.current = true;
       try {
-        const res = await fetch("http://localhost:3000/auth/checkSession", {
+        const res = await fetch("https://chatbot-production-d56e.up.railway.app/auth/checkSession", {
           credentials: "include",
         });
         const data = await res.json();

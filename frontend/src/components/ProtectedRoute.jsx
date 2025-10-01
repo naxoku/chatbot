@@ -12,7 +12,7 @@ const ProtectedRoute = ({ children }) => {
 
   const checkAuthentication = async () => {
     try {
-      const response = await fetch("http://localhost:3000/auth/checkSession", {
+      const response = await fetch("https://chatbot-production-d56e.up.railway.app/auth/checkSession", {
         credentials: "include",
       });
 
