@@ -15,7 +15,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
-    origin: ["http://127.0.0.1:5500", "http://localhost:5173"],
+    origin: ["http://127.0.0.1:5500", "http://localhost:5173", "https://peaceful-nature-production.up.railway.app"],
     credentials: true,
   })
 );
@@ -35,8 +35,4 @@ app.use("/api/conversaciones", convRoutes);
 
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-});
-
-app.get("/", (req, res) => {
-  res.send("🚀 Backend desplegado en Railway y funcionando!");
 });
