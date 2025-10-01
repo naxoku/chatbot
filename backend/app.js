@@ -36,3 +36,7 @@ app.use("/api/conversaciones", convRoutes);
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
 });
+
+app.get("/", (req, res) => {
+  res.send("🚀 Backend desplegado en Railway y funcionando!");
+});
