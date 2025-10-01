@@ -1,11 +1,15 @@
 import React, { useContext, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { AppContext } from "../App";
 import axios from "axios";
 
 const Login = () => {
-  const { isDarkMode, toggleDarkMode } = useContext(AppContext);
+  const { isDarkMode, toggleDarkMode, setIsAuthenticated } =
+    useContext(AppContext);
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/chat";
+
   const [loginData, setLoginData] = useState({
     email: "",
     password: "",
@@ -39,10 +43,11 @@ const Login = () => {
     if (!validateLogin()) return;
 
     setIsLoading(true);
-    setErrors({}); // Limpia errores previos
+    setErrors({});
+
     try {
       const response = await axios.post(
-        "auth/login",
+        "http://localhost:3000/auth/login",
         {
           email: loginData.email,
           password: loginData.password,
@@ -51,10 +56,20 @@ const Login = () => {
       );
 
       if (response.data.success) {
+        // Actualizar estado de autenticación
+        setIsAuthenticated(true);
+
+        // Guardar preferencia "recordarme"
         if (loginData.rememberMe) {
           localStorage.setItem("rememberMe", "true");
+          localStorage.setItem("userEmail", loginData.email);
+        } else {
+          localStorage.removeItem("rememberMe");
+          localStorage.removeItem("userEmail");
         }
-        navigate("/chat");
+
+        // Redirigir a la ruta desde donde vino o al chat
+        navigate(from, { replace: true });
       } else {
         setErrors({
           general: response.data.message || "Error al iniciar sesión",
@@ -72,12 +87,30 @@ const Login = () => {
           general: "Error de conexión. Verifica que el servidor esté activo.",
         });
       } else {
-        setErrors({ general: "Error de conexión. Inténtalo de nuevo." });
+        setErrors({
+          general:
+            error.response?.data?.message ||
+            "Error de conexión. Inténtalo de nuevo.",
+        });
       }
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Cargar email guardado si existe
+  React.useEffect(() => {
+    const savedEmail = localStorage.getItem("userEmail");
+    const rememberMe = localStorage.getItem("rememberMe");
+
+    if (rememberMe === "true" && savedEmail) {
+      setLoginData((prev) => ({
+        ...prev,
+        email: savedEmail,
+        rememberMe: true,
+      }));
+    }
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900 transition-colors duration-300">

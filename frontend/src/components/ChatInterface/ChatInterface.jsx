@@ -75,11 +75,15 @@ const quickActions = [
   },
 ];
 
-////////////////////
-
 const ChatInterface = () => {
-  const { isDarkMode, toggleDarkMode, artifacts, addArtifact, removeArtifact } =
-    useContext(AppContext);
+  const {
+    isDarkMode,
+    toggleDarkMode,
+    artifacts,
+    addArtifact,
+    removeArtifact,
+    setIsAuthenticated,
+  } = useContext(AppContext);
 
   const navigate = useNavigate();
   const hasInitialized = useRef(false);
@@ -130,6 +134,39 @@ const ChatInterface = () => {
     setInput
   );
 
+  // Función para manejar el logout
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("http://localhost:3000/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Limpiar localStorage
+        localStorage.removeItem("token");
+        localStorage.removeItem("rememberMe");
+        localStorage.removeItem("userEmail");
+
+        // Actualizar estado de autenticación
+        setIsAuthenticated(false);
+
+        // Redirigir al login
+        navigate("/login", { replace: true });
+      }
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+      // Forzar logout en frontend de todos modos
+      setIsAuthenticated(false);
+      localStorage.removeItem("token");
+      localStorage.removeItem("rememberMe");
+      localStorage.removeItem("userEmail");
+      navigate("/login", { replace: true });
+    }
+  };
+
   const handleNewChat = useCallback(() => {
     const newChat = {
       id: nanoid(),
@@ -139,7 +176,7 @@ const ChatInterface = () => {
     };
 
     setCurrentChat(newChat);
-    setMessages([welcomeMessage]);
+    // Nota: welcomeMessage ya no está definido aquí, usa el mensaje actual del estado
     setInput("");
     setChats([newChat, ...chats]);
 
@@ -149,7 +186,7 @@ const ChatInterface = () => {
   const handleSelectChat = useCallback(
     (chat) => {
       setCurrentChat(chat);
-      setMessages([welcomeMessage]);
+      // Mantener mensajes actuales o resetear según tu lógica
       if (isMobile) setIsSidebarOpen(false);
     },
     [isMobile]
@@ -199,7 +236,6 @@ const ChatInterface = () => {
   const handleTitleSave = () => {
     if (editingTitle.trim()) {
       setCurrentChat((prev) => ({ ...prev, name: editingTitle.trim() }));
-      // Update in chats array if exists
       setChats((prev) =>
         prev.map((chat) =>
           chat.id === currentChat.id
@@ -224,7 +260,7 @@ const ChatInterface = () => {
     if (artifact.type === "mindmap") {
       setSelectedArtifact(artifact);
       setIsMindMapModalOpen(true);
-      setIsArtifactsOpen(false); // Cerrar panel de artefactos
+      setIsArtifactsOpen(false);
     }
   }, []);
 
@@ -240,7 +276,7 @@ const ChatInterface = () => {
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
       if (!mobile) {
-        setIsSidebarOpen(true); // siempre abierto en desktop
+        setIsSidebarOpen(true);
       }
     };
     window.addEventListener("resize", handleResize);
@@ -253,7 +289,7 @@ const ChatInterface = () => {
       hasInitialized.current = true;
       try {
         const res = await fetch("http://localhost:3000/auth/checkSession", {
-          credentials: "include", // 🔑 importante: manda cookies
+          credentials: "include",
         });
         const data = await res.json();
 
@@ -264,7 +300,6 @@ const ChatInterface = () => {
             role: data.user.rol,
           });
 
-          // 👇 Crea mensaje de bienvenida dinámico
           setMessages([
             {
               id: "welcome",
@@ -295,7 +330,6 @@ const ChatInterface = () => {
     checkSession();
   }, [navigate]);
 
-
   useEffect(() => {
     const handleEsc = (e) => e.key === "Escape" && closeAll();
     document.addEventListener("keydown", handleEsc);
@@ -314,14 +348,16 @@ const ChatInterface = () => {
   if (!user) {
     return (
       <div
-        className={`h-screen flex items-center justify-center ${isDarkMode ? "bg-gray-900" : "bg-gray-50"
-          }`}
+        className={`h-screen flex items-center justify-center ${
+          isDarkMode ? "bg-gray-900" : "bg-gray-50"
+        }`}
       >
         <div className="text-center">
           <i className="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i>
           <p
-            className={`text-lg ${isDarkMode ? "text-gray-300" : "text-gray-700"
-              }`}
+            className={`text-lg ${
+              isDarkMode ? "text-gray-300" : "text-gray-700"
+            }`}
           >
             Iniciando asistente DDPER...
           </p>
@@ -332,10 +368,10 @@ const ChatInterface = () => {
 
   return (
     <div
-      className={`h-screen flex ${isDarkMode ? "dark bg-gray-900" : "bg-gray-50"
-        }`}
+      className={`h-screen flex ${
+        isDarkMode ? "dark bg-gray-900" : "bg-gray-50"
+      }`}
     >
-      {/* Overlay en móvil */}
       {(isSidebarOpen ||
         isArtifactsOpen ||
         isDocumentsModalOpen ||
@@ -361,10 +397,7 @@ const ChatInterface = () => {
           onNewChat={handleNewChat}
           onDocumentSelect={handleDocumentSelect}
           onSelectChat={handleSelectChat}
-          onLogout={() => {
-            localStorage.removeItem("token");
-            navigate("/login");
-          }}
+          onLogout={handleLogout}
           botStatus={botStatus}
           isDarkMode={isDarkMode}
           isOpen={true}
@@ -375,39 +408,43 @@ const ChatInterface = () => {
       </div>
 
       <div
-        className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${!isMobile && isSidebarOpen ? "lg:ml-80" : ""
-          }`}
+        className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${
+          !isMobile && isSidebarOpen ? "lg:ml-80" : ""
+        }`}
       >
         <header
           className={`
             h-16 z-30 px-4 border-b flex items-center justify-between
-            ${isDarkMode
-              ? "bg-gray-800/95 border-gray-700 backdrop-blur-sm"
-              : "bg-white/95 border-gray-200 backdrop-blur-sm"
+            ${
+              isDarkMode
+                ? "bg-gray-800/95 border-gray-700 backdrop-blur-sm"
+                : "bg-white/95 border-gray-200 backdrop-blur-sm"
             }
           `}
         >
-          {/* Izquierda */}
           <div className="flex items-center space-x-3">
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className={`p-2 rounded-lg transition-colors ${isDarkMode
-                ? "text-gray-300 hover:bg-gray-700"
-                : "text-gray-600 hover:bg-gray-100"
-                }`}
+              className={`p-2 rounded-lg transition-colors ${
+                isDarkMode
+                  ? "text-gray-300 hover:bg-gray-700"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
               aria-label="Toggle sidebar"
             >
               <i
-                className={`fas ${isSidebarOpen ? "fa-times" : "fa-bars"
-                  } text-lg`}
+                className={`fas ${
+                  isSidebarOpen ? "fa-times" : "fa-bars"
+                } text-lg`}
               />
             </button>
             <div className="flex items-center space-x-3">
               <div
-                className={`w-2 h-2 rounded-full ${botStatus === "processing"
-                  ? "bg-yellow-500 animate-pulse"
-                  : "bg-green-500"
-                  }`}
+                className={`w-2 h-2 rounded-full ${
+                  botStatus === "processing"
+                    ? "bg-yellow-500 animate-pulse"
+                    : "bg-green-500"
+                }`}
               />
               <div>
                 {isEditingTitle ? (
@@ -421,15 +458,17 @@ const ChatInterface = () => {
                         if (e.key === "Escape") handleTitleCancel();
                       }}
                       onBlur={handleTitleSave}
-                      className={`px-2 py-1 rounded text-sm font-semibold bg-transparent border-b-2 border-blue-500 focus:outline-none ${isDarkMode ? "text-white" : "text-gray-900"
-                        }`}
+                      className={`px-2 py-1 rounded text-sm font-semibold bg-transparent border-b-2 border-blue-500 focus:outline-none ${
+                        isDarkMode ? "text-white" : "text-gray-900"
+                      }`}
                       autoFocus
                     />
                   </div>
                 ) : (
                   <h2
-                    className={`font-semibold truncate cursor-pointer hover:text-blue-500 transition-colors ${isDarkMode ? "text-white" : "text-gray-900"
-                      }`}
+                    className={`font-semibold truncate cursor-pointer hover:text-blue-500 transition-colors ${
+                      isDarkMode ? "text-white" : "text-gray-900"
+                    }`}
                     onClick={handleTitleEdit}
                     title="Click para editar título"
                   >
@@ -440,7 +479,6 @@ const ChatInterface = () => {
             </div>
           </div>
 
-          {/* Derecha */}
           <div className="flex items-center space-x-2">
             {messages.length > 1 && (
               <VibrantButton
@@ -455,10 +493,11 @@ const ChatInterface = () => {
             )}
             <button
               onClick={toggleDarkMode}
-              className={`p-2 rounded-lg transition-colors ${isDarkMode
-                ? "text-gray-300 hover:bg-gray-700"
-                : "text-gray-600 hover:bg-gray-100"
-                }`}
+              className={`p-2 rounded-lg transition-colors ${
+                isDarkMode
+                  ? "text-gray-300 hover:bg-gray-700"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
               title={isDarkMode ? "Modo claro" : "Modo oscuro"}
             >
               <i className={`fas ${isDarkMode ? "fa-sun" : "fa-moon"}`} />
@@ -466,15 +505,17 @@ const ChatInterface = () => {
             {artifacts && (
               <button
                 onClick={() => setIsArtifactsOpen(!isArtifactsOpen)}
-                className={`p-2 rounded-lg transition-colors relative ${isDarkMode
-                  ? "text-gray-300 hover:bg-gray-700"
-                  : "text-gray-600 hover:bg-gray-100"
-                  }`}
+                className={`p-2 rounded-lg transition-colors relative ${
+                  isDarkMode
+                    ? "text-gray-300 hover:bg-gray-700"
+                    : "text-gray-600 hover:bg-gray-100"
+                }`}
                 title="Artifacts"
               >
                 <i
-                  className={`fas ${isArtifactsOpen ? "fa-times" : "fa-layer-group"
-                    }`}
+                  className={`fas ${
+                    isArtifactsOpen ? "fa-times" : "fa-layer-group"
+                  }`}
                 />
                 {artifacts.length > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
@@ -486,7 +527,6 @@ const ChatInterface = () => {
           </div>
         </header>
 
-        {/* Mensajes */}
         <div className="flex-1 overflow-y-auto">
           <div className="w-full p-4">
             {messages.length <= 1 && (
@@ -505,12 +545,12 @@ const ChatInterface = () => {
           </div>
         </div>
 
-        {/* Input */}
         <div
-          className={`border-t ${isDarkMode
-            ? "border-gray-700 bg-gray-800"
-            : "border-gray-200 bg-white"
-            }`}
+          className={`border-t ${
+            isDarkMode
+              ? "border-gray-700 bg-gray-800"
+              : "border-gray-200 bg-white"
+          }`}
         >
           <ContextParameters
             onParameterChange={handleParameterChange}
@@ -548,7 +588,7 @@ const ChatInterface = () => {
         >
           <ArtifactsPanel
             artifacts={artifacts}
-            onOpenArtifact={handleOpenArtifact} // Conectando función para abrir artefacto
+            onOpenArtifact={handleOpenArtifact}
             onDeleteArtifact={removeArtifact}
             isDarkMode={isDarkMode}
             isCollapsed={!isArtifactsOpen}
@@ -558,7 +598,6 @@ const ChatInterface = () => {
         </div>
       )}
 
-      {/* Documents Modal */}
       {isDocumentsModalOpen && (
         <DocumentsModal
           isOpen={isDocumentsModalOpen}
