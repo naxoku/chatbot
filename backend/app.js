@@ -9,7 +9,7 @@ const chatRoutes = require("./routes/chat");
 const convRoutes = require("./routes/conversaciones");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
