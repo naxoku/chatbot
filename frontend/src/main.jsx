@@ -3,9 +3,12 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./index.css";
 import axios from "axios";
+import { API_BASE } from "./config";
+
+const DEFAULT_URL = API_BASE; // Usa la variable de entorno
 
 axios.defaults.withCredentials = true;
-axios.defaults.baseURL = "https://chatbot-production-d56e.up.railway.app";
+axios.defaults.baseURL = DEFAULT_URL;
 
 // ¡NUEVO: Interceptor para redirigir automáticamente en 401/403 (o logged_in false en respuestas)
 axios.interceptors.response.use(

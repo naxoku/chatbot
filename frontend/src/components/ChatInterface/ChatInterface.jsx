@@ -5,6 +5,8 @@ import { nanoid } from "nanoid";
 import ContextParameters from "./ContextParameters";
 import MindMapModal from "../MindMapModal";
 
+import LogoUCT from "../../assets/logouct.png";
+
 // Componentes locales
 import Sidebar from "./Sidebar";
 import ChatMessages from "./ChatMessages";
@@ -19,10 +21,10 @@ import ArtifactsPanel from "../ArtifactsPanel";
 // Hooks
 import { useChatLogic } from "./useChatLogic";
 
+import { LOGOUT, CHECK_SESSION } from "../../config.js";
 // Assets
-const LogoUCT = "/placeholder.svg?height=40&width=120";
+//const LogoUCT = "/placeholder.svg?height=40&width=120";
 
-// Datos - deberías mover estos a un archivo separado si crecen mucho
 const ddperDocuments = [
   {
     id: 1,
@@ -137,7 +139,7 @@ const ChatInterface = () => {
   // Función para manejar el logout
   const handleLogout = async () => {
     try {
-      const response = await fetch("https://chatbot-production-d56e.up.railway.app/auth/logout", {
+      const response = await fetch(LOGOUT, {
         method: "POST",
         credentials: "include",
       });
@@ -288,7 +290,7 @@ const ChatInterface = () => {
       if (hasInitialized.current) return;
       hasInitialized.current = true;
       try {
-        const res = await fetch("https://chatbot-production-d56e.up.railway.app/auth/checkSession", {
+        const res = await fetch(CHECK_SESSION, {
           credentials: "include",
         });
         const data = await res.json();

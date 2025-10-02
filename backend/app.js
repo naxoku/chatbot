@@ -9,13 +9,13 @@ const chatRoutes = require("./routes/chat");
 const convRoutes = require("./routes/conversaciones");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
-    origin: ["http://127.0.0.1:5500", "http://localhost:5173", "https://agenteuct.up.railway.app"],
+    origin: ["http://127.0.0.1:5500", "http://localhost:5173"],
     credentials: true,
   })
 );

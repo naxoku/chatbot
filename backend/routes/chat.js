@@ -14,7 +14,10 @@ router.post("/", requireLogin, async (req, res) => {
     const response = await fetch("https://skynet.uct.cl/webhook/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pregunta }),
+      body: JSON.stringify({
+        user_id: req.session.user.usuario,   // 🔑 pasamos también el user id
+        pregunta,
+      }),
     });
 
     console.log("👉 Status Skynet:", response.status);

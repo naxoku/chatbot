@@ -2,6 +2,7 @@ import React, { useContext, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AppContext } from "../App";
 import axios from "axios";
+import { LOGIN } from "../config";
 
 const Login = () => {
   const { isDarkMode, toggleDarkMode, setIsAuthenticated } =
@@ -47,7 +48,7 @@ const Login = () => {
 
     try {
       const response = await axios.post(
-        "https://chatbot-production-d56e.up.railway.app/auth/login",
+        LOGIN,
         {
           email: loginData.email,
           password: loginData.password,

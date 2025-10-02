@@ -7,6 +7,7 @@ import NotFound from "./components/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import useTheme from "./hooks/useTheme";
 import "@fortawesome/fontawesome-free/css/all.min.css";
+import { CHECK_SESSION } from "./config";
 
 // Inicializa el contexto con valores por defecto
 export const AppContext = createContext({
@@ -32,7 +33,7 @@ const App = () => {
 
   const checkInitialAuth = async () => {
     try {
-      const response = await fetch("https://chatbot-production-d56e.up.railway.app/auth/checkSession", {
+      const response = await fetch(CHECK_SESSION, {
         credentials: "include",
       });
 

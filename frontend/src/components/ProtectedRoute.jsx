@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
+import { CHECK_SESSION } from "../config";
+
 
 const ProtectedRoute = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
@@ -12,7 +14,7 @@ const ProtectedRoute = ({ children }) => {
 
   const checkAuthentication = async () => {
     try {
-      const response = await fetch("https://chatbot-production-d56e.up.railway.app/auth/checkSession", {
+      const response = await fetch(CHECK_SESSION, {
         credentials: "include",
       });
 
