@@ -41,7 +41,7 @@ router.post("/", requireLogin, async (req, res) => {
 
 // Generar mapa mental
 router.post("/mapa-mental", requireLogin, async (req, res) => {
-  const { contexto } = req.body;
+  const { contexto, titulo } = req.body;
   console.log("Contexto recibido para mapa mental:", contexto);
 
   try {
@@ -59,12 +59,27 @@ router.post("/mapa-mental", requireLogin, async (req, res) => {
     // el agente devuelve { respuesta: {...} }
     let mapaMental = data.respuesta || {};
 
-    res.json({ mapaMental });
+    // Guardar el mapa mental en la base de datos
+    const result = await db.query(
+      `INSERT INTO mapas_mentales (usuario_id, titulo, contexto, estructura_json) 
+       VALUES ($1, $2, $3, $4) 
+       RETURNING id, fecha_creacion`,
+      [req.session.user.id, titulo || "Mapa mental sin título", contexto, JSON.stringify(mapaMental)]
+    );
+
+    // Añadir información del mapa guardado a la respuesta
+    mapaMental.id = result.rows[0].id;
+    mapaMental.fecha_creacion = result.rows[0].fecha_creacion;
+
+    res.json({ 
+      mapaMental,
+      mensaje: "Mapa mental guardado correctamente" 
+    });
   } catch (err) {
     console.error("❌ Error en mapa mental:", err);
     res
       .status(500)
-      .json({ error: "Error al generar el mapa mental con el asistente." });
+      .json({ error: "Error al generar o guardar el mapa mental." });
   }
 });
 

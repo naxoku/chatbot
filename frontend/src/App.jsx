@@ -9,7 +9,6 @@ import useTheme from "./hooks/useTheme";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import { CHECK_SESSION } from "./config";
 
-// Inicializa el contexto con valores por defecto
 export const AppContext = createContext({
   isDarkMode: false,
   toggleDarkMode: () => {},

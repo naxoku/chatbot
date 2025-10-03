@@ -127,9 +127,13 @@ O puedes contactar directamente a: **ddper@uct.cl**`;
     setMessages((prev) => [...prev, mapMsg]);
 
     try {
-      // 👉 usamos la nueva ruta
+      // Generar un título basado en el contenido
+      const titulo = `Mapa Mental - ${new Date().toLocaleDateString()}`;
+      
+      // 👉 usamos la nueva ruta y enviamos el título
       const res = await axios.post("/api/chat/mapa-mental", {
         contexto: lastBotMsg.content,
+        titulo: titulo
       });
 
       // 👇 aseguramos que el JSON venga como objeto
@@ -146,15 +150,20 @@ O puedes contactar directamente a: **ddper@uct.cl**`;
         };
       }
 
+      // Mostrar mensaje de éxito si existe
+      if (res.data.mensaje) {
+        console.log("✅ " + res.data.mensaje);
+      }
+
       const newArtifact = {
-        id: `artifact-${Date.now()}`,
-        name: `Mapa Mental - ${new Date().toLocaleDateString()}`,
+        id: jsonData.id || `artifact-${Date.now()}`,
+        name: titulo,
         type: "mindmap",
         icon: "fas fa-project-diagram",
         color: "purple",
         data: jsonData, // ✅ objeto parseado
-        createdAt: new Date(),
-        description: "Mapa mental generado automáticamente",
+        createdAt: jsonData.fecha_creacion || new Date(),
+        description: "Mapa mental guardado en la base de datos",
       };
       addArtifact(newArtifact);
 
