@@ -7,6 +7,7 @@ const path = require("path");
 const authRoutes = require("./routes/auth");
 const chatRoutes = require("./routes/chat");
 const convRoutes = require("./routes/conversaciones");
+const docRoutes = require("./routes/documentos");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,7 +16,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
-    origin: ["http://127.0.0.1:5500", "http://localhost:5173", "https://agenteuct.up.railway.app"],
+    origin: [
+      "http://127.0.0.1:5500",
+      "http://localhost:5173",
+      "https://agenteuct.up.railway.app",
+    ],
     credentials: true,
   })
 );
@@ -32,6 +37,7 @@ app.use(
 app.use("/auth", authRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/conversaciones", convRoutes);
+app.use("/api/documentos", docRoutes);
 
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);

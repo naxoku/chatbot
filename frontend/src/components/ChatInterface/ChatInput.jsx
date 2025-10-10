@@ -5,12 +5,7 @@ const ChatInput = ({
   onInputChange,
   onSendMessage,
   isTyping,
-  quickActions = [],
-  onQuickAction,
-  generarMapaMental,
   isDarkMode,
-  selectedParameters = [],
-  onParameterChange,
 }) => {
   const textareaRef = useRef(null);
 
@@ -54,7 +49,7 @@ const ChatInput = ({
   };
 
   return (
-    <div className="p-4">
+    <div className="px-4 pt-2 pb-4">
       <form onSubmit={handleSubmit}>
         <div className="flex items-end space-x-3">
           {/* Textarea */}
@@ -101,25 +96,6 @@ const ChatInput = ({
             />
           </button>
         </div>
-
-        {selectedParameters.length > 0 && (
-          <div className="mt-2 flex items-center justify-center space-x-2">
-            <i
-              className={`fas fa-info-circle text-xs ${
-                isDarkMode ? "text-gray-500" : "text-gray-400"
-              }`}
-            ></i>
-            <span
-              className={`text-xs ${
-                isDarkMode ? "text-gray-500" : "text-gray-400"
-              }`}
-            >
-              {selectedParameters.length} parámetro
-              {selectedParameters.length !== 1 ? "s" : ""} seleccionado
-              {selectedParameters.length !== 1 ? "s" : ""}
-            </span>
-          </div>
-        )}
       </form>
     </div>
   );

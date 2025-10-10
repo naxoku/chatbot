@@ -1,39 +1,74 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { API_BASE } from "../config";
 
-const DocumentsModal = ({
-  isOpen,
-  onClose,
-  documents = [],
-  onDocumentSelect,
-  isDarkMode,
-}) => {
+const DocumentsModal = ({ isOpen, onClose, onDocumentSelect, isDarkMode }) => {
+  const [documents, setDocuments] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
+  useEffect(() => {
+    if (isOpen) {
+      const fetchDocuments = async () => {
+        try {
+          const response = await axios.get(`${API_BASE}/api/documentos`);
+          setDocuments(response.data);
+        } catch (error) {
+          console.error("Error fetching documents:", error);
+        }
+      };
+      fetchDocuments();
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
-  const categories = ["all", ...new Set(documents.map((doc) => doc.category))];
+  const categories =
+    documents.length > 0
+      ? ["all", ...new Set(documents.map((doc) => doc.category))]
+      : ["all"];
 
   const filteredDocuments = documents.filter((doc) => {
-    const matchesSearch =
-      doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doc.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const searchTermLower = searchTerm.toLowerCase();
+    const titleMatch =
+      doc.title?.toLowerCase().includes(searchTermLower) || false;
+    const descriptionMatch =
+      doc.description?.toLowerCase().includes(searchTermLower) || false;
+    const keywordsMatch =
+      Array.isArray(doc.keywords) &&
       doc.keywords.some((keyword) =>
-        keyword.toLowerCase().includes(searchTerm.toLowerCase())
+        keyword.toLowerCase().includes(searchTermLower)
       );
+
+    const matchesSearch = titleMatch || descriptionMatch || keywordsMatch;
     const matchesCategory =
       selectedCategory === "all" || doc.category === selectedCategory;
+
     return matchesSearch && matchesCategory;
   });
 
-  const getDocumentIcon = (type) => {
-    switch (type) {
-      case "reglamento":
-        return "fas fa-gavel";
-      case "formulario":
-        return "fas fa-file-signature";
-      case "instructivo":
-        return "fas fa-list-check";
+  const getDocumentIcon = (url) => {
+    const extension = url?.split(".").pop()?.toLowerCase();
+    switch (extension) {
+      case "pdf":
+        return "fas fa-file-pdf";
+      case "doc":
+      case "docx":
+        return "fas fa-file-word";
+      case "xls":
+      case "xlsx":
+        return "fas fa-file-excel";
+      case "ppt":
+      case "pptx":
+        return "fas fa-file-powerpoint";
+      case "zip":
+      case "rar":
+        return "fas fa-file-archive";
+      case "png":
+      case "jpg":
+      case "jpeg":
+      case "gif":
+        return "fas fa-file-image";
       default:
         return "fas fa-file-alt";
     }
@@ -204,7 +239,7 @@ const DocumentsModal = ({
                         doc.type
                       )}`}
                     >
-                      <i className={`${getDocumentIcon(doc.type)} text-sm`}></i>
+                      <i className={`${getDocumentIcon(doc.url)} text-sm`}></i>
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3

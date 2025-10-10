@@ -1,10 +1,8 @@
 import VibrantButton from "./VibrantButton";
 
 const Sidebar = ({
-  documents,
   chats = [],
   onNewChat,
-  onDocumentSelect,
   onSelectChat,
   onLogout,
   botStatus = "online",

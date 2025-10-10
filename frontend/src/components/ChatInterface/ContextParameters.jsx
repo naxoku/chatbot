@@ -27,13 +27,6 @@ const ContextParameters = ({
       color: "blue",
       description: "Incluye ejemplos prácticos en las respuestas",
     },
-    {
-      id: "continuar",
-      label: "Continuar",
-      icon: "fas fa-arrow-right",
-      color: "purple",
-      description: "Continúa o profundiza en el tema anterior",
-    },
   ];
 
   const handleParameterToggle = (parameterId) => {
