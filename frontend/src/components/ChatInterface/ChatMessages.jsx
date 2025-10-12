@@ -1,8 +1,16 @@
 import { useState } from "react";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
+import { getDocumentIcon, getDocumentColor } from "../../utils/documentUtils";
 
-const ChatMessages = ({ messages = [], isTyping, onFeedback, isDarkMode }) => {
+const ChatMessages = ({
+  messages = [],
+  isTyping,
+  onFeedback,
+  isDarkMode,
+  onViewMindMap,
+}) => {
+  // Añadir onViewMindMap
   const [feedbackStates, setFeedbackStates] = useState({});
 
   const handleFeedback = (messageId, isHelpful, comment = "") => {
@@ -147,54 +155,98 @@ const ChatMessages = ({ messages = [], isTyping, onFeedback, isDarkMode }) => {
                 </p>
                 <div className="space-y-2">
                   {message.documentLinks.map((doc, idx) => (
-                    <div
+                    <a
                       key={idx}
-                      className={`p-2 rounded-lg text-xs ${
+                      href={doc.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`p-3 rounded-xl border cursor-pointer transition-all duration-200 hover:shadow-lg group flex items-start space-x-3 ${
                         isDarkMode
-                          ? "bg-gray-700 hover:bg-gray-600"
-                          : "bg-white hover:bg-gray-50"
-                      } transition-colors cursor-pointer border ${
-                        isDarkMode ? "border-gray-600" : "border-gray-200"
+                          ? "border-gray-700 hover:border-purple-600 hover:bg-purple-900/5"
+                          : "border-gray-200 hover:border-purple-300 hover:bg-purple-50"
                       }`}
                     >
-                      <div className="flex items-center space-x-2">
-                        <i className="fas fa-file-alt text-xs opacity-60"></i>
-                        <span className="font-medium truncate">
+                      <div
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${getDocumentColor(
+                          doc.type
+                        )}`}
+                      >
+                        <i
+                          className={`${getDocumentIcon(doc.url)} text-sm`}
+                        ></i>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3
+                          className={`font-medium text-sm mb-1 line-clamp-2 ${
+                            isDarkMode ? "text-white" : "text-gray-900"
+                          }`}
+                        >
                           {doc.title}
+                        </h3>
+                        {doc.description && (
+                          <p
+                            className={`text-xs mb-1 line-clamp-2 ${
+                              isDarkMode ? "text-gray-400" : "text-gray-600"
+                            }`}
+                          >
+                            {doc.description}
+                          </p>
+                        )}
+                        <span
+                          className={`text-xs px-2 py-1 rounded-md ${
+                            isDarkMode
+                              ? "bg-gray-700 text-gray-300"
+                              : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {doc.type}
                         </span>
                       </div>
-                      {doc.description && (
-                        <p className="mt-1 opacity-70 leading-tight">
-                          {doc.description}
-                        </p>
-                      )}
-                    </div>
+                      <i
+                        className={`fas fa-external-link-alt text-xs transition-transform duration-200 group-hover:translate-x-1 ${
+                          isDarkMode ? "text-gray-500" : "text-gray-400"
+                        }`}
+                      ></i>
+                    </a>
                   ))}
                 </div>
               </div>
             )}
 
             {/* Artifact (mapa mental) */}
-            {message.artifact && message.content && (
-              <div
-                className={`mt-3 p-3 rounded-lg border ${
-                  isDarkMode
-                    ? "border-gray-600 bg-gray-700"
-                    : "border-gray-300 bg-gray-50"
-                }`}
-              >
-                <div className="flex items-center mb-2">
-                  <i className="fas fa-project-diagram text-purple-500 mr-2"></i>
-                  <span className="text-xs font-semibold">
-                    Mapa Mental Generado
-                  </span>
+            {message.artifact &&
+              message.artifactData && ( // Usar message.artifactData para el mapa mental
+                <div
+                  className={`mt-3 p-3 rounded-lg border ${
+                    isDarkMode
+                      ? "border-gray-600 bg-gray-700"
+                      : "border-gray-300 bg-gray-50"
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center">
+                      <i className="fas fa-project-diagram text-purple-500 mr-2"></i>
+                      <span className="text-xs font-semibold">
+                        Mapa Mental Generado
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => onViewMindMap(message.artifactData)} // Pasar el objeto artifact completo
+                      className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                        isDarkMode
+                          ? "bg-purple-900/20 text-purple-400 hover:bg-purple-900/40"
+                          : "bg-purple-100 text-purple-700 hover:bg-purple-200"
+                      }`}
+                    >
+                      Ver Mapa
+                    </button>
+                  </div>
+                  <div className="text-xs opacity-75">
+                    Se ha creado un mapa mental basado en el contexto. Haz clic
+                    en "Ver Mapa" para explorarlo.
+                  </div>
                 </div>
-                <div className="text-xs opacity-75">
-                  Se ha creado un mapa mental basado en el contexto. Revisa el
-                  panel de artifacts.
-                </div>
-              </div>
-            )}
+              )}
 
             {/* Timestamp */}
             <div

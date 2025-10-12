@@ -1,0 +1,277 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "chat-semantic-search",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        1008,
+        856
+      ],
+      "id": "e73ce688-0c0c-4b46-928b-51f73a06041d",
+      "name": "Webhook Semantic Search",
+      "webhookId": "4cbf627b-0c3a-4b2d-bc6e-fb01a3f158e0"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Esta herramienta permite buscar documentos relevantes en la base de datos vectorial de Supabase. Utilízala para encontrar documentos que se relacionen con la consulta del usuario. La salida de esta herramienta incluirá el título, la URL, el tipo y la descripción de los documentos encontrados.",
+        "tableName": {
+          "__rl": true,
+          "value": "documentos",
+          "mode": "list",
+          "cachedResultName": "documentos"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        1448,
+        872
+      ],
+      "id": "7c7b5c4d-d729-443a-8314-41696670bb97",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ddQ9UToe0YIB4xqQ",
+          "name": "Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1520,
+        1024
+      ],
+      "id": "c81bea50-19b3-40f8-8cda-e4d9e67ccb64",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "RubZxzuo71mx7f1j",
+          "name": "Api Personal"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.pregunta }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=Eres un asistente experto en entregar información precisa y útil. Tu tarea es:\n\n1. Recoger el mensaje del usuario.\n2. Analizar cuidadosamente el contenido y contexto del mensaje.\n3. Responder siguiendo **exactamente** las instrucciones, solicitudes o formato que el usuario indique.\n4. Priorizar claridad, concreción y exactitud en la respuesta.\n5. Evitar información irrelevante o suposiciones no solicitadas.\n6. Mantener un estilo natural, amigable y comprensible, pero profesional.\n7. **IMPORTANTE:** Utiliza la herramienta 'Supabase Vector Store' para buscar documentos. Si encuentras documentos que son **relevantes y completos** (es decir, que tienen un título, una URL válida y una descripción clara, y no son solo fragmentos de texto), debes incluirlos en tu respuesta en un formato JSON específico. La respuesta final debe ser un objeto JSON con dos propiedades: `respuesta` (tu respuesta textual) y `documentosRecomendados` (un array de objetos, donde cada objeto representa un documento con `title`, `url`, `type` y `description`). Si no hay documentos relevantes y completos, `documentosRecomendados` debe ser un array vacío. Asegúrate de que los documentos recomendados sean verdaderamente útiles para la consulta del usuario y no solo coincidencias parciales o irrelevantes. Ejemplo: `{ \"respuesta\": \"Aquí está la información...\", \"documentosRecomendados\": [ { \"title\": \"Doc1\", \"url\": \"url1\", \"type\": \"pdf\", \"description\": \"desc1\" } ] }`\n\nSiempre verifica que tu respuesta cumpla con el objetivo del usuario antes de generar la salida.\n\nTu base de datos para revisar es el tool llamado: Supabase Vector Store."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        1288,
+        648
+      ],
+      "id": "820054a7-4b9e-4cdf-a185-1a59b9f2a7bf",
+      "name": "AI Agent3"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1216,
+        1024
+      ],
+      "id": "34f6d517-6069-4aec-9769-da673dae1b83",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "RubZxzuo71mx7f1j",
+          "name": "Api Personal"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body.user_id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        1320,
+        872
+      ],
+      "id": "fec007cb-3539-478c-8111-fe1649d35bab",
+      "name": "Simple Memory1"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.parse($json.output) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        1952,
+        656
+      ],
+      "id": "f276187b-e9aa-437b-aeab-8ecbdd20a48d",
+      "name": "ResponderMensajeBot1"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"title\": \"Chat Response with Recommended Documents\",\n  \"description\": \"Esquema para la respuesta del chat que incluye la respuesta del bot y una lista de documentos recomendados.\",\n  \"type\": \"object\",\n  \"required\": [\n    \"respuesta\",\n    \"documentosRecomendados\"\n  ],\n  \"properties\": {\n    \"respuesta\": {\n      \"type\": \"string\",\n      \"description\": \"La respuesta textual generada por el bot.\"\n    },\n    \"documentosRecomendados\": {\n      \"type\": \"array\",\n      \"description\": \"Una lista de documentos relevantes recomendados por la IA.\",\n      \"items\": {\n        \"type\": \"object\",\n        \"required\": [\n          \"title\",\n          \"url\",\n          \"type\",\n          \"description\"\n        ],\n        \"properties\": {\n          \"title\": {\n            \"type\": \"string\",\n            \"description\": \"El título del documento.\"\n          },\n          \"url\": {\n            \"type\": [\"string\", \"null\"],\n            \"format\": \"uri\",\n            \"description\": \"La URL para acceder al documento. Puede ser nula si no hay una URL directa.\"\n          },\n          \"type\": {\n            \"type\": \"string\",\n            \"description\": \"El tipo de documento (ej. 'pdf', 'text', 'reglamento', 'instructivo').\"\n          },\n          \"description\": {\n            \"type\": \"string\",\n            \"description\": \"Una breve descripción del documento.\"\n          }\n        }\n      },\n      \"default\": []\n    }\n  },\n  \"additionalProperties\": false\n}\n",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1744,
+        864
+      ],
+      "id": "aef0aa11-d0ed-4f6c-9405-c0221491f8b5",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1776,
+        1024
+      ],
+      "id": "1ed4a5fb-b436-40d3-9681-6a4f42a9038d",
+      "name": "Google Gemini Chat Model4",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "RubZxzuo71mx7f1j",
+          "name": "Api Personal"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Semantic Search": {
+      "main": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent3": {
+      "main": [
+        [
+          {
+            "node": "ResponderMensajeBot1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9dc77685c123f72110ec2479109edd39a0557c8cc90b56a8d8702f6216f232d0"
+  }
+}

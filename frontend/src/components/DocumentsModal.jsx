@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { API_BASE } from "../config";
+import { getDocumentIcon, getDocumentColor } from "../utils/documentUtils";
 
 const DocumentsModal = ({ isOpen, onClose, onDocumentSelect, isDarkMode }) => {
   const [documents, setDocuments] = useState([]);
@@ -46,46 +47,6 @@ const DocumentsModal = ({ isOpen, onClose, onDocumentSelect, isDarkMode }) => {
 
     return matchesSearch && matchesCategory;
   });
-
-  const getDocumentIcon = (url) => {
-    const extension = url?.split(".").pop()?.toLowerCase();
-    switch (extension) {
-      case "pdf":
-        return "fas fa-file-pdf";
-      case "doc":
-      case "docx":
-        return "fas fa-file-word";
-      case "xls":
-      case "xlsx":
-        return "fas fa-file-excel";
-      case "ppt":
-      case "pptx":
-        return "fas fa-file-powerpoint";
-      case "zip":
-      case "rar":
-        return "fas fa-file-archive";
-      case "png":
-      case "jpg":
-      case "jpeg":
-      case "gif":
-        return "fas fa-file-image";
-      default:
-        return "fas fa-file-alt";
-    }
-  };
-
-  const getDocumentColor = (type) => {
-    switch (type) {
-      case "reglamento":
-        return "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10";
-      case "formulario":
-        return "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/10";
-      case "instructivo":
-        return "text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/10";
-      default:
-        return "text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/10";
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

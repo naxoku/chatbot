@@ -98,7 +98,16 @@ const ChatInterface = () => {
     handleOpenArtifact,
     handleCloseMindMapModal,
     toggleDarkMode,
+    setSelectedArtifact,
   } = chatState;
+
+  const handleViewMindMap = useCallback(
+    (mindMapData) => {
+      setSelectedArtifact({ data: mindMapData }); // Establecer los datos del mapa mental
+      chatState.setIsMindMapModalOpen(true); // Abrir el modal del mapa mental
+    },
+    [setSelectedArtifact, chatState]
+  );
 
   const {
     isTyping,
@@ -325,6 +334,7 @@ const ChatInterface = () => {
               isTyping={isTyping}
               onFeedback={handleFeedback}
               isDarkMode={isDarkMode}
+              onViewMindMap={handleViewMindMap} // Pasar la nueva función
             />
           </div>
         </div>

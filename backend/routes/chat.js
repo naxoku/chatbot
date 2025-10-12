@@ -11,28 +11,32 @@ router.post("/", requireLogin, async (req, res) => {
   console.log("👉 Sesión actual:", req.session);
 
   try {
-    const response = await fetch("https://skynet.uct.cl/webhook/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        user_id: req.session.user.usuario,   // 🔑 pasamos también el user id
-        pregunta,
-      }),
-    });
+    const response = await fetch(
+      "https://skynet.uct.cl/webhook/chat-semantic-search",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: req.session.user.usuario,
+          pregunta,
+        }),
+      }
+    );
 
-    console.log("👉 Status Skynet:", response.status);
+    console.log("👉 Status Skynet (Semantic Search):", response.status);
 
     const data = await response.json();
-    console.log("👉 Data recibida:", data);
+    console.log("👉 Data recibida (Semantic Search):", data);
 
     let respuesta = data.respuesta || "No hay respuesta disponible.";
+    const documentosRecomendados = data.documentosRecomendados || [];
 
     await db.query(
       "INSERT INTO conversaciones (usuario_id, pregunta, respuesta) VALUES ($1, $2, $3)",
       [req.session.user.id, pregunta, respuesta]
     );
 
-    res.json({ respuesta });
+    res.json({ respuesta, documentosRecomendados });
   } catch (err) {
     console.error("❌ Error en chat:", err);
     res.status(500).json({ respuesta: "Error al contactar con el asistente." });
@@ -64,16 +68,21 @@ router.post("/mapa-mental", requireLogin, async (req, res) => {
       `INSERT INTO mapas_mentales (usuario_id, titulo, contexto, estructura_json) 
        VALUES ($1, $2, $3, $4) 
        RETURNING id, fecha_creacion`,
-      [req.session.user.id, titulo || "Mapa mental sin título", contexto, JSON.stringify(mapaMental)]
+      [
+        req.session.user.id,
+        titulo || "Mapa mental sin título",
+        contexto,
+        JSON.stringify(mapaMental),
+      ]
     );
 
     // Añadir información del mapa guardado a la respuesta
     mapaMental.id = result.rows[0].id;
     mapaMental.fecha_creacion = result.rows[0].fecha_creacion;
 
-    res.json({ 
+    res.json({
       mapaMental,
-      mensaje: "Mapa mental guardado correctamente" 
+      mensaje: "Mapa mental guardado correctamente",
     });
   } catch (err) {
     console.error("❌ Error en mapa mental:", err);

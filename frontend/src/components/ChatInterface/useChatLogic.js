@@ -12,26 +12,6 @@ export const useChatLogic = (
   const [isTyping, setIsTyping] = useState(false);
 
   // 🔎 Búsqueda semántica local
-  const searchDocuments = (query) => {
-    const queryLower = query.toLowerCase();
-    const matches = documents.filter(
-      (doc) =>
-        doc.keywords.some((keyword) =>
-          queryLower.includes(keyword.toLowerCase())
-        ) ||
-        doc.title.toLowerCase().includes(queryLower) ||
-        doc.description.toLowerCase().includes(queryLower) ||
-        doc.category.toLowerCase().includes(queryLower)
-    );
-
-    return matches.map((doc) => ({
-      title: doc.title,
-      url: doc.url,
-      type: doc.type,
-      description: doc.description,
-    }));
-  };
-
   // Enviar mensaje al chat normal
   const createMessage = (sender, content, options = {}) => ({
     id: nanoid(),
@@ -56,26 +36,23 @@ Si el problema persiste, puedes contactar directamente a: **ddper@uct.cl**`;
     setInput("");
     setIsTyping(true);
 
-    const foundDocuments = searchDocuments(trimmed);
-
     try {
       const res = await axios.post("/api/chat", { pregunta: trimmed });
       let botResponse = res.data.respuesta || "No hay respuesta disponible.";
-
-      if (foundDocuments.length > 0) {
-        botResponse += `\n\n📎 **Documentos relacionados encontrados:**`;
-      }
+      const documentosRecomendados = res.data.documentosRecomendados || [];
 
       const botMsg = createMessage("bot", botResponse, {
-        documentLinks: foundDocuments.length > 0 ? foundDocuments : undefined,
+        documentLinks:
+          documentosRecomendados.length > 0
+            ? documentosRecomendados
+            : undefined,
         feedbackRequested: true,
       });
       setMessages((prev) => [...prev, botMsg]);
     } catch (err) {
       console.error("Error en sendMessage:", err);
-      const errorResponse = getErrorMessage(trimmed, foundDocuments);
+      const errorResponse = getErrorMessage();
       const errorMsg = createMessage("bot", errorResponse, {
-        documentLinks: foundDocuments.length > 0 ? foundDocuments : undefined,
         feedbackRequested: true,
       });
       setMessages((prev) => [...prev, errorMsg]);
@@ -150,7 +127,13 @@ Si el problema persiste, puedes contactar directamente a: **ddper@uct.cl**`;
 
       setMessages((prev) =>
         prev.map((m) =>
-          m.id === mapMsg.id ? { ...m, content: jsonData.respuesta.mensaje } : m
+          m.id === mapMsg.id
+            ? {
+                ...m,
+                content: jsonData.respuesta.mensaje,
+                artifactData: newArtifact,
+              } // Adjuntar el artefacto completo
+            : m
         )
       );
     } catch (err) {
