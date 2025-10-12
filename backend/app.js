@@ -8,6 +8,7 @@ const authRoutes = require("./routes/auth");
 const chatRoutes = require("./routes/chat");
 const convRoutes = require("./routes/conversaciones");
 const docRoutes = require("./routes/documentos");
+const statusRoutes = require("./routes/status"); // Importar las rutas de estado
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -38,6 +39,7 @@ app.use("/auth", authRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/conversaciones", convRoutes);
 app.use("/api/documentos", docRoutes);
+app.use("/api", statusRoutes); // Usar las rutas de estado
 
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);

@@ -105,17 +105,13 @@ Si el problema persiste, puedes contactar directamente a: **ddper@uct.cl**`;
     setMessages((prev) => [...prev, mapMsg]);
 
     try {
-      // Generar un título basado en el contenido
-      const titulo = `Mapa Mental - ${new Date().toLocaleDateString()}`;
-
-      // 👉 usar nueva ruta y enviar el título
       const res = await axios.post("/api/chat/mapa-mental", {
         contexto: lastBotMsg.content,
-        titulo: titulo,
       });
 
       // Parsear el JSON recibido
       let jsonData = res.data.mapaMental || {};
+
       try {
         if (typeof jsonData === "string") {
           jsonData = JSON.parse(jsonData);
@@ -123,23 +119,30 @@ Si el problema persiste, puedes contactar directamente a: **ddper@uct.cl**`;
       } catch (parseErr) {
         console.error("❌ Error al parsear el JSON del mapa mental:", parseErr);
         jsonData = {
-          name: "Error",
-          children: [{ name: "No se pudo generar el mapa mental" }],
+          respuesta: {
+            mensaje: "Error",
+            titulo: "No se pudo generar el mapa mental",
+            datos: {
+              name: "Error",
+              children: [{ name: "No se pudo generar el mapa mental" }],
+            },
+          },
         };
       }
 
       // Mostrar mensaje de éxito si existe
-      if (res.data.mensaje) {
-        console.log("✅ " + res.data.mensaje);
+      if (jsonData.respuesta.mensaje) {
+        console.log("✅ " + jsonData.respuesta.mensaje);
       }
 
       const newArtifact = {
         id: jsonData.id || `artifact-${Date.now()}`,
-        name: titulo,
+        name:
+          jsonData.respuesta.titulo + ` - ${new Date().toLocaleDateString()}`,
         type: "mindmap",
         icon: "fas fa-project-diagram",
         color: "purple",
-        data: jsonData,
+        data: jsonData.respuesta.datos,
         createdAt: jsonData.fecha_creacion || new Date(),
         description: "Mapa mental guardado en la base de datos",
       };
@@ -147,9 +150,7 @@ Si el problema persiste, puedes contactar directamente a: **ddper@uct.cl**`;
 
       setMessages((prev) =>
         prev.map((m) =>
-          m.id === mapMsg.id
-            ? { ...m, content: JSON.stringify(jsonData, null, 2) }
-            : m
+          m.id === mapMsg.id ? { ...m, content: jsonData.respuesta.mensaje } : m
         )
       );
     } catch (err) {

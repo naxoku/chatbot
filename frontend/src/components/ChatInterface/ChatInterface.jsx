@@ -15,7 +15,7 @@ import ChatInput from "./ChatInput";
 // import QuickActions from "./QuickActions";
 import DocumentsModal from "../DocumentsModal";
 import MindMapModal from "../MindMapModal";
-import ArtifactsPanel from "../ArtifactsPanel";
+import ArtifactsModal from "../ArtifactsModal";
 import ContextParameters from "./ContextParameters";
 import LogoUCT from "../../assets/logouct.png";
 
@@ -55,6 +55,12 @@ const ChatInterface = () => {
   const hasInitialized = useRef(false);
 
   const [messages, setMessages] = useState([]);
+  const [backendStatus, setBackendStatus] = useState({
+    status: "unknown",
+    database: { status: "unknown" },
+    n8n: { status: "unknown" },
+    system: { cpuUsage: "0%", memoryUsage: "0MB / 0GB" },
+  });
 
   const chatState = useChatState();
   const {
@@ -173,6 +179,30 @@ const ChatInterface = () => {
     checkSession();
   }, [navigate, setUser]);
 
+  // Efecto para el health check del backend
+  useEffect(() => {
+    const fetchBackendStatus = async () => {
+      try {
+        const response = await axios.get(`${API_BASE}/api/status`);
+        setBackendStatus(response.data);
+      } catch (error) {
+        console.error("Error fetching backend status:", error);
+        setBackendStatus({
+          status: "offline",
+          database: { status: "offline", error: error.message },
+          n8n: { status: "offline", error: error.message },
+          system: { cpuUsage: "N/A", memoryUsage: "N/A" },
+        });
+      }
+    };
+
+    // Llamar inmediatamente y luego cada 30 segundos
+    fetchBackendStatus();
+    const intervalId = setInterval(fetchBackendStatus, 180000); // Cada 30 segundos
+
+    return () => clearInterval(intervalId); // Limpiar el intervalo al desmontar
+  }, []); // Se ejecuta una sola vez al montar el componente
+
   useEffect(() => {
     const fetchDocuments = async () => {
       try {
@@ -214,7 +244,13 @@ const ChatInterface = () => {
     return <LoadingSpinner isDarkMode={isDarkMode} />;
   }
 
-  const botStatus = isTyping ? "processing" : "online";
+  const botStatus = isTyping
+    ? "processing"
+    : backendStatus.status === "online"
+    ? "online"
+    : backendStatus.status === "degraded"
+    ? "processing" // Usamos "processing" para "degraded" en la UI
+    : "offline";
 
   return (
     <div
@@ -248,9 +284,12 @@ const ChatInterface = () => {
           botStatus={botStatus}
           isDarkMode={isDarkMode}
           isOpen={true}
+          backendStatus={backendStatus} // Pasar el estado detallado del backend
           onClose={() => setIsSidebarOpen(false)}
           onModalOpen={() => setIsDocumentsModalOpen(true)}
+          onArtifactsModalOpen={() => setIsArtifactsOpen(true)}
           LogoUCT={LogoUCT}
+          toggleDarkMode={toggleDarkMode}
         />
       </div>
 
@@ -271,7 +310,6 @@ const ChatInterface = () => {
           currentChat={currentChat}
           handleTitleEdit={handleTitleEdit}
           isDarkMode={isDarkMode}
-          toggleDarkMode={toggleDarkMode}
           artifacts={artifacts}
           isArtifactsOpen={isArtifactsOpen}
           setIsArtifactsOpen={setIsArtifactsOpen}
@@ -323,22 +361,16 @@ const ChatInterface = () => {
         </div>
       </div>
 
-      {artifacts && (
-        <div
-          className={`fixed top-0 right-0 h-full w-80 z-40 transform transition-transform duration-300 ease-in-out ${
-            isArtifactsOpen ? "translate-x-0" : "translate-x-full"
-          }`}
-        >
-          <ArtifactsPanel
-            artifacts={artifacts}
-            onOpenArtifact={handleOpenArtifact}
-            onDeleteArtifact={removeArtifact}
-            isDarkMode={isDarkMode}
-            isCollapsed={!isArtifactsOpen}
-            onCollapse={() => setIsArtifactsOpen(false)}
-            onGenerateArtifact={(prompt) => setInput(prompt)}
-          />
-        </div>
+      {isArtifactsOpen && (
+        <ArtifactsModal
+          isOpen={isArtifactsOpen}
+          onClose={() => setIsArtifactsOpen(false)}
+          artifacts={artifacts}
+          onOpenArtifact={handleOpenArtifact}
+          onDeleteArtifact={removeArtifact}
+          isDarkMode={isDarkMode}
+          onGenerateArtifact={(prompt) => setInput(prompt)}
+        />
       )}
 
       {isDocumentsModalOpen && (

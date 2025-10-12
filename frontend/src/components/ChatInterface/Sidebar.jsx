@@ -11,21 +11,26 @@ const Sidebar = ({
   onClose,
   onModalOpen,
   LogoUCT,
+  toggleDarkMode,
 }) => {
   const getBotStatusConfig = (status) => {
     switch (status) {
       case "online":
-        return { color: "green", text: "En línea", animate: "animate-pulse" };
+        return {
+          colorClass: "bg-green-500",
+          text: "En línea",
+          animate: "animate-pulse",
+        };
       case "offline":
-        return { color: "red", text: "Desconectado", animate: "" };
+        return { colorClass: "bg-red-500", text: "Desconectado", animate: "" };
       case "processing":
         return {
-          color: "yellow",
+          colorClass: "bg-yellow-500",
           text: "Procesando...",
           animate: "animate-pulse",
         };
       default:
-        return { color: "gray", text: "Desconocido", animate: "" };
+        return { colorClass: "bg-gray-500", text: "Desconocido", animate: "" };
     }
   };
 
@@ -38,22 +43,19 @@ const Sidebar = ({
       <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/10 dark:to-blue-900/10">
         <div className="flex items-center space-x-3">
           {LogoUCT && (
-            <div className="w-12 h-12 rounded-lg overflow-hidden bg-white dark:bg-gray-700 p-2 shadow-sm flex items-center justify-center">
+            <div className="w-9 h-9 rounded-lg overflow-hidden flex items-center justify-center">
               <img
                 src={LogoUCT || "../../assets/Logo_dir_desarrollo_personas.png"}
                 alt="Logo Universidad Católica del Temuco"
                 className="w-full h-full object-contain"
-                style={{
-                  filter: isDarkMode ? "brightness(0) invert(1)" : "none",
-                }}
               />
             </div>
           )}
           <div>
-            <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
+            <h3 className="font-semibold text-gray-900 dark:text-white text-xl">
               Asistente DDPER
             </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               Universidad Católica del Temuco
             </p>
           </div>
@@ -153,12 +155,12 @@ const Sidebar = ({
                 <i className="fas fa-robot text-sm text-purple-600 dark:text-purple-400"></i>
               </div>
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Asistente
+                Estado del bot
               </span>
             </div>
             <div className="flex items-center space-x-2">
               <span
-                className={`w-2 h-2 rounded-full bg-${status.color}-500 ${status.animate}`}
+                className={`w-2 h-2 rounded-full ${status.colorClass} ${status.animate}`}
               ></span>
               <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
                 {status.text}
@@ -166,6 +168,15 @@ const Sidebar = ({
             </div>
           </div>
         </div>
+
+        {/* Dark Mode Toggle */}
+        <button
+          onClick={toggleDarkMode}
+          className="w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-xl font-medium text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500/20 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+        >
+          <i className={`fas ${isDarkMode ? "fa-sun" : "fa-moon"}`}></i>
+          <span>{isDarkMode ? "Modo Claro" : "Modo Oscuro"}</span>
+        </button>
 
         {/* Enhanced logout button */}
         <button
