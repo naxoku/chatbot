@@ -12,7 +12,6 @@ import Sidebar from "./Sidebar";
 import ChatHeader from "./ChatHeader";
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
-// import QuickActions from "./QuickActions";
 import DocumentsModal from "../DocumentsModal";
 import MindMapModal from "../MindMapModal";
 import ArtifactsModal from "../ArtifactsModal";
@@ -82,13 +81,13 @@ const ChatInterface = () => {
     setInput,
     setUser,
     setDocuments,
+    setChats,
     setIsSidebarOpen,
     setIsArtifactsOpen,
     setEditingTitle,
     setIsDocumentsModalOpen,
     closeAll,
     handleNewChat,
-    handleSelectChat,
     handleInputChange,
     handleDocumentSelect,
     handleTitleEdit,
@@ -101,13 +100,31 @@ const ChatInterface = () => {
     setSelectedArtifact,
   } = chatState;
 
-  const handleViewMindMap = useCallback(
-    (mindMapData) => {
-      setSelectedArtifact({ data: mindMapData }); // Establecer los datos del mapa mental
-      chatState.setIsMindMapModalOpen(true); // Abrir el modal del mapa mental
-    },
-    [setSelectedArtifact, chatState]
-  );
+  // Función para cargar los mensajes de una conversación específica
+  const loadConversacionMessages = useCallback(async (conversacionId) => {
+    try {
+      const response = await axios.get(`${API_BASE}/api/conversaciones/${conversacionId}`);
+      if (response.data.success) {
+        const conversacion = response.data.conversacion;
+        
+        // El chat_history ya viene como un array de mensajes
+        // Asegurarse de que el mensaje de bienvenida esté siempre al inicio
+        const welcomeMessage = {
+          id: "welcome",
+          sender: "bot",
+          content: `¡Hola **${user.name}**! Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?`,
+          timestamp: new Date(),
+          feedbackRequested: false,
+        };
+        
+        const formattedMessages = [welcomeMessage, ...conversacion.chat_history].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        
+        setMessages(formattedMessages);
+      }
+    } catch (error) {
+      console.error("Error fetching conversacion messages:", error);
+    }
+  }, [user?.name, setMessages]);
 
   const {
     isTyping,
@@ -115,7 +132,55 @@ const ChatInterface = () => {
     handleFeedback,
     generarMapaMental,
     handleQuickAction,
-  } = useChatLogic(documents, navigate, addArtifact, setMessages, setInput);
+  } = useChatLogic(documents, navigate, addArtifact, setMessages, setInput, chatState, messages);
+
+  const handleSelectChat = useCallback(
+    async (chat) => {
+      chatState.setCurrentChat(chat);
+      if (chatState.isMobile) chatState.setIsSidebarOpen(false);
+      if (chat.conversacionId) {
+        await loadConversacionMessages(chat.conversacionId);
+      } else {
+        // Si es un nuevo chat o no tiene ID de conversación, limpiar mensajes
+        setMessages([
+          {
+            id: "welcome",
+            sender: "bot",
+            content: `¡Hola **${user.name}**! Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?`,
+            timestamp: new Date(),
+            feedbackRequested: false,
+          },
+        ]);
+      }
+    },
+    [chatState, loadConversacionMessages, setMessages, user?.name]
+  );
+
+  const handleViewMindMap = useCallback(
+    async (mapa) => {
+      try {
+        const response = await axios.get(`${API_BASE}/api/mapas-mentales/${mapa.id}`);
+        if (response.data.success) {
+          const fullMindMapData = response.data.mapa;
+          setSelectedArtifact({
+            id: fullMindMapData.id,
+            name: fullMindMapData.titulo,
+            type: "mindmap",
+            icon: "fas fa-project-diagram",
+            color: "purple",
+            data: fullMindMapData.estructura_json.respuesta.datos, // Asegúrate de que esta ruta sea correcta
+            createdAt: fullMindMapData.fecha_creacion,
+            description: fullMindMapData.contexto,
+          });
+          chatState.setIsMindMapModalOpen(true);
+        }
+      } catch (error) {
+        console.error("Error al cargar el mapa mental:", error);
+        alert("No se pudo cargar el mapa mental.");
+      }
+    },
+    [setSelectedArtifact, chatState] // Eliminado API_BASE de las dependencias
+  );
 
   const handleLogout = async () => {
     try {
@@ -187,6 +252,48 @@ const ChatInterface = () => {
     };
     checkSession();
   }, [navigate, setUser]);
+
+  // Cargar historial de conversaciones al iniciar sesión
+  useEffect(() => {
+    if (user) {
+      const fetchConversaciones = async () => {
+        try {
+          const response = await axios.get(`${API_BASE}/api/conversaciones`);
+          if (response.data.success) {
+            const conversaciones = response.data.conversaciones;
+            
+            // Transformar las conversaciones al formato esperado por el sidebar
+            const formattedChats = conversaciones.map(conv => {
+              const lastMessage = conv.chat_history && conv.chat_history.length > 0
+                ? conv.chat_history[conv.chat_history.length - 1].content
+                : "Sin mensajes";
+              return {
+                id: `conv-${conv.id}`,
+                name: conv.titulo || `Conversación ${conv.id}`, // Usar el título o un ID por defecto
+                lastMessage: lastMessage.substring(0, 50) + (lastMessage.length > 50 ? '...' : ''),
+                timestamp: conv.fecha_creacion,
+                mapasAsociados: conv.mapas_asociados || [],
+                conversacionId: conv.id // Guardar el ID real de la conversación
+              };
+            });
+            
+            setChats(formattedChats);
+            
+            // Si hay conversaciones, seleccionar la más reciente
+            if (formattedChats.length > 0) {
+              const latestChat = formattedChats[0];
+              handleSelectChat(latestChat);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching conversaciones:", error);
+        }
+      };
+      
+      fetchConversaciones();
+    }
+  }, [user, setChats, handleSelectChat, loadConversacionMessages]); // Agregado loadConversacionMessages a las dependencias
+
 
   // Efecto para el health check del backend
   useEffect(() => {
@@ -299,6 +406,7 @@ const ChatInterface = () => {
           onArtifactsModalOpen={() => setIsArtifactsOpen(true)}
           LogoUCT={LogoUCT}
           toggleDarkMode={toggleDarkMode}
+          onViewMapas={handleViewMindMap}
         />
       </div>
 
@@ -354,6 +462,7 @@ const ChatInterface = () => {
               messages.length > 1 ? () => generarMapaMental(messages) : null
             }
             isTyping={isTyping}
+            shouldShow={messages.some(msg => msg.sender === "user")} // Mostrar solo si hay mensajes del usuario
           />
           <div className="w-full">
             <ChatInput
@@ -403,3 +512,4 @@ const ChatInterface = () => {
 };
 
 export default ChatInterface;
+

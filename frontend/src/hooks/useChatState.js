@@ -1,5 +1,4 @@
 import { useState, useCallback, useContext } from "react";
-import { nanoid } from "nanoid";
 import { AppContext } from "../App";
 
 export const useChatState = () => {
@@ -14,6 +13,8 @@ export const useChatState = () => {
     id: "current",
     name: "Nuevo chat",
     timestamp: new Date(),
+    mapasAsociados: [],
+    conversacionId: null,
   });
   const [chats, setChats] = useState([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
@@ -25,17 +26,17 @@ export const useChatState = () => {
   const [isMindMapModalOpen, setIsMindMapModalOpen] = useState(false);
 
   const handleNewChat = useCallback(() => {
-    const newChat = {
-      id: nanoid(),
-      name: `Nueva Conversación ${chats.length + 1}`,
-      lastMessage: "",
+    setCurrentChat({
+      id: "current", // O un ID temporal que indique que es un nuevo chat
+      name: "Nueva conversación",
       timestamp: new Date(),
-    };
-    setCurrentChat(newChat);
+      mapasAsociados: [],
+      conversacionId: null, // Es crucial que sea null para indicar que no se ha guardado
+    });
     setInput("");
-    setChats((prev) => [newChat, ...prev]);
+    // No añadir a `chats` aquí, se añadirá cuando se guarde en el backend
     if (isMobile) setIsSidebarOpen(false);
-  }, [chats, isMobile]);
+  }, [isMobile]); // `chats` ya no es una dependencia aquí
 
   const handleSelectChat = useCallback(
     (chat) => {

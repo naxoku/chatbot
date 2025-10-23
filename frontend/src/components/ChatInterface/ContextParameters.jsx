@@ -4,6 +4,7 @@ const ContextParameters = ({
   selectedParameters = [],
   generarMapaMental,
   isTyping,
+  shouldShow = true, // Nueva prop para controlar la visibilidad
 }) => {
   const parameters = [
     {
@@ -70,8 +71,9 @@ const ContextParameters = ({
   };
 
   return (
-    <div className="px-4 py-2">
-      <div className="flex flex-wrap gap-2 justify-center">
+    shouldShow && (
+      <div className="px-4 py-2">
+        <div className="flex flex-wrap gap-2 justify-center">
         {parameters.map((param) => {
           const isSelected = selectedParameters.includes(param.id);
           return (
@@ -105,8 +107,9 @@ const ContextParameters = ({
             <span>Mapa Mental</span>
           </button>
         )}
+        </div>
       </div>
-    </div>
+    )
   );
 };
 

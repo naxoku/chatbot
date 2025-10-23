@@ -101,11 +101,6 @@ const ChatMessages = ({
                           icon: "fas fa-lightbulb",
                           color: "orange",
                         },
-                        continuar: {
-                          label: "Continuar",
-                          icon: "fas fa-arrow-right",
-                          color: "purple",
-                        },
                         mapa_mental: {
                           label: "Mapa Mental",
                           icon: "fas fa-project-diagram",
