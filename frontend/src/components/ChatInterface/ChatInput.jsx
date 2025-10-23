@@ -8,6 +8,7 @@ const ChatInput = ({
   isDarkMode,
 }) => {
   const textareaRef = useRef(null);
+  const isSubmittingRef = useRef(false); // ✅ Prevenir envíos duplicados
 
   // Auto resize del textarea
   useEffect(() => {
@@ -20,8 +21,21 @@ const ChatInput = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // ✅ Prevenir múltiples envíos simultáneos
+    if (isSubmittingRef.current) {
+      console.warn("⚠️ Ya hay un mensaje enviándose");
+      return;
+    }
+
     if (input.trim() && !isTyping && onSendMessage) {
+      isSubmittingRef.current = true;
       onSendMessage();
+      
+      // Resetear después de un pequeño delay
+      setTimeout(() => {
+        isSubmittingRef.current = false;
+      }, 500);
     }
   };
 
@@ -43,7 +57,21 @@ const ChatInput = ({
       } else {
         // Enter normal → enviar
         e.preventDefault();
-        onSendMessage(); // Llamar directamente a onSendMessage
+        
+        // ✅ Verificar que no se esté enviando ya
+        if (isSubmittingRef.current) {
+          console.warn("⚠️ Ya hay un mensaje enviándose");
+          return;
+        }
+
+        if (input.trim() && !isTyping) {
+          isSubmittingRef.current = true;
+          onSendMessage();
+          
+          setTimeout(() => {
+            isSubmittingRef.current = false;
+          }, 500);
+        }
       }
     }
   };

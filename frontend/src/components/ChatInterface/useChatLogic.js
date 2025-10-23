@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import axios from "axios";
 import { nanoid } from "nanoid";
-import { API_BASE } from "../../config"; // Importar API_BASE
+import { API_BASE } from "../../config";
 
 export const useChatLogic = (
   documents,
@@ -9,14 +9,20 @@ export const useChatLogic = (
   addArtifact,
   setMessages,
   setInput,
-  chatState, // Recibir chatState completo
-  messages // Recibir messages del estado de ChatInterface
+  chatState,
+  messages
 ) => {
-  const { currentChat, setCurrentChat, setChats } = chatState; // Desestructurar de chatState
+  const { currentChat, setCurrentChat, setChats } = chatState;
   const [isTyping, setIsTyping] = useState(false);
+  
+  const conversacionIdRef = useRef(currentChat.conversacionId);
+  const isSendingRef = useRef(false);
 
-  // 🔎 Búsqueda semántica local
-  // Enviar mensaje al chat normal
+  // Actualizar ref cuando cambie currentChat
+  if (conversacionIdRef.current !== currentChat.conversacionId) {
+    conversacionIdRef.current = currentChat.conversacionId;
+  }
+
   const createMessage = (sender, content, options = {}) => ({
     id: nanoid(),
     sender,
@@ -35,76 +41,88 @@ Si el problema persiste, puedes contactar directamente a: **ddper@uct.cl**`;
     const trimmed = input.trim();
     if (!trimmed || isTyping) return;
 
-    const userMsg = createMessage("user", trimmed);
-    let updatedMessages = [...messages, userMsg]; // Usar messages del estado local
-    setMessages(updatedMessages);
-    setInput("");
+    if (isSendingRef.current) {
+      console.warn("⚠️ Ya hay un mensaje enviándose, ignorando duplicado");
+      return;
+    }
+
+    isSendingRef.current = true;
     setIsTyping(true);
 
+    const userMsg = createMessage("user", trimmed);
+    let updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
+    setInput("");
+
     try {
-      // Enviar mensaje al backend
+      // ✅ Enviar al backend, que maneja TODO el guardado
+      const conversacionActualId = conversacionIdRef.current;
+      
+      console.log(`📝 Enviando mensaje... conversacionId: ${conversacionActualId}`);
+
       const chatResponse = await axios.post("/api/chat", {
         pregunta: trimmed,
         documentos: documents,
         parametros: selectedParameters,
+        conversacionId: conversacionActualId, // ← Enviar el ID actual
       });
 
       let botResponseContent = chatResponse.data.respuesta || "No hay respuesta disponible.";
       const documentosRecomendados = chatResponse.data.documentosRecomendados || [];
+      const conversacionId = chatResponse.data.conversacionId; // ← Backend devuelve el ID
 
-      updatedMessages = [...updatedMessages, {
+      console.log(`✅ Respuesta recibida. conversacionId: ${conversacionId}`);
+
+      const botMsg = {
         id: nanoid(),
         sender: "bot",
         content: botResponseContent,
         timestamp: new Date(),
         documentLinks: documentosRecomendados.length > 0 ? documentosRecomendados : undefined,
         feedbackRequested: true,
-      }];
-      setMessages(updatedMessages);
-      // Guardar o actualizar la conversación en la base de datos
-      const chatHistoryToSave = updatedMessages.filter(msg => msg.id !== "welcome");
-      const conversationData = {
-        chat_history: chatHistoryToSave,
-        mapas_mentales_ids: currentChat.mapasAsociados ? currentChat.mapasAsociados.map(m => m.id) : [],
       };
 
-      if (!currentChat.conversacionId) {
-        // Crear nueva conversación
-        const newConversationTitle = trimmed.substring(0, 50) + (trimmed.length > 50 ? '...' : '');
-        conversationData.titulo = newConversationTitle;
+      updatedMessages = [...updatedMessages, botMsg];
+      setMessages(updatedMessages);
 
-        const res = await axios.post(`${API_BASE}/api/conversaciones`, conversationData);
-        if (res.data.success) {
-          const newConv = res.data.conversacion;
-          const newChatEntry = {
-            id: `conv-${newConv.id}`,
-            name: newConv.titulo,
-            lastMessage: trimmed,
-            timestamp: newConv.fecha_creacion,
-            mapasAsociados: [],
-            conversacionId: newConv.id,
-          };
-          setCurrentChat(newChatEntry); // Actualizar currentChat con el ID de la nueva conversación
-          setChats((prev) => [newChatEntry, ...prev]);
-        }
+      // ✅ Actualizar el estado local SOLO si es conversación nueva
+      const isNewConversation = !conversacionActualId;
+
+      if (isNewConversation) {
+        const newChatEntry = {
+          id: `conv-${conversacionId}`,
+          name: trimmed.substring(0, 50) + (trimmed.length > 50 ? '...' : ''),
+          lastMessage: trimmed.substring(0, 50) + (trimmed.length > 50 ? '...' : ''),
+          timestamp: new Date(),
+          mapasAsociados: [],
+          conversacionId: conversacionId,
+        };
+
+        // Actualizar refs y estado
+        conversacionIdRef.current = conversacionId;
+        setCurrentChat(newChatEntry);
+        setChats((prev) => [newChatEntry, ...prev]);
+        
+        console.log("✅ Estado local actualizado - Nueva conversación:", conversacionId);
       } else {
-        // Actualizar conversación existente
-        conversationData.titulo = currentChat.name; // Mantener el título existente
-        const res = await axios.put(`${API_BASE}/api/conversaciones/${currentChat.conversacionId}`, conversationData);
-        if (res.data.success) {
-          setChats((prev) =>
-            prev.map((chat) =>
-              chat.conversacionId === currentChat.conversacionId
-                ? { ...chat, lastMessage: trimmed, timestamp: res.data.conversacion.fecha_creacion }
-                : chat
-            )
-          );
-        }
+        // Actualizar última mensaje en la lista
+        setChats((prev) =>
+          prev.map((chat) =>
+            chat.conversacionId === conversacionActualId
+              ? {
+                  ...chat,
+                  lastMessage: trimmed.substring(0, 50) + (trimmed.length > 50 ? '...' : ''),
+                  timestamp: new Date(),
+                }
+              : chat
+          )
+        );
+        
+        console.log("✅ Estado local actualizado - Conversación existente:", conversacionActualId);
       }
 
-      // El mensaje del bot ya fue agregado anteriormente, no es necesario agregarlo de nuevo
     } catch (err) {
-      console.error("Error en sendMessage:", err);
+      console.error("❌ Error en sendMessage:", err);
       const errorResponse = getErrorMessage();
       const errorMsg = createMessage("bot", errorResponse, {
         feedbackRequested: true,
@@ -112,10 +130,10 @@ Si el problema persiste, puedes contactar directamente a: **ddper@uct.cl**`;
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
       setIsTyping(false);
+      isSendingRef.current = false;
     }
   };
 
-  // Generar mapa mental desde último mensaje del bot
   const generarMapaMental = async (messages) => {
     const lastBotMsg = [...messages].reverse().find((m) => m.sender === "bot");
     if (!lastBotMsg) {
@@ -127,7 +145,8 @@ Si el problema persiste, puedes contactar directamente a: **ddper@uct.cl**`;
       return;
     }
 
-    if (!currentChat.conversacionId) {
+    const conversacionActualId = conversacionIdRef.current;
+    if (!conversacionActualId) {
       alert("Debes guardar la conversación antes de generar un mapa mental.");
       return;
     }
@@ -144,13 +163,12 @@ Si el problema persiste, puedes contactar directamente a: **ddper@uct.cl**`;
       const res = await axios.post(`${API_BASE}/api/mapas-mentales`, {
         titulo: `Mapa Mental de ${currentChat.name}`,
         contexto: lastBotMsg.content,
-        estructura_json: {}, // Se actualizará después con la respuesta del bot
-        conversacion_id: currentChat.conversacionId,
+        estructura_json: {},
+        conversacion_id: conversacionActualId,
       });
 
       const newMindMapId = res.data.mapa.id;
 
-      // Ahora, enviar el contexto al endpoint de generación de mapas mentales
       const mapGenResponse = await axios.post("/api/chat/mapa-mental", {
         contexto: lastBotMsg.content,
       });
@@ -175,35 +193,39 @@ Si el problema persiste, puedes contactar directamente a: **ddper@uct.cl**`;
         };
       }
 
-      // Mostrar mensaje de éxito si existe
-      if (jsonData.respuesta.mensaje) {
+      if (jsonData.respuesta?.mensaje) {
         console.log("✅ " + jsonData.respuesta.mensaje);
       }
 
-      // Actualizar el mapa mental con la estructura JSON generada
       await axios.put(`${API_BASE}/api/mapas-mentales/${newMindMapId}`, {
         titulo: `Mapa Mental de ${currentChat.name}`,
         contexto: lastBotMsg.content,
         estructura_json: jsonData,
-        conversacion_id: currentChat.conversacionId,
+        conversacion_id: conversacionActualId,
       });
 
-      // Actualizar la conversación para incluir el ID del nuevo mapa mental
-      const updatedMapasMentalesIds = [...(currentChat.mapasAsociados || []), { id: newMindMapId, titulo: `Mapa Mental de ${currentChat.name}`, fecha_creacion: new Date() }];
-      await axios.put(`${API_BASE}/api/conversaciones/${currentChat.conversacionId}`, {
+      const nuevoMapa = {
+        id: newMindMapId,
+        titulo: `Mapa Mental de ${currentChat.name}`,
+        fecha_creacion: new Date()
+      };
+      
+      const updatedMapasMentalesIds = [...(currentChat.mapasAsociados || []), nuevoMapa];
+
+      await axios.put(`${API_BASE}/api/conversaciones/${conversacionActualId}`, {
         chat_history: messages.filter(msg => msg.id !== "welcome"),
         titulo: currentChat.name,
         mapas_mentales_ids: updatedMapasMentalesIds.map(m => m.id),
       });
 
-      // Actualizar el estado del chat en el frontend
       setCurrentChat((prev) => ({
         ...prev,
         mapasAsociados: updatedMapasMentalesIds,
       }));
+
       setChats((prev) =>
         prev.map((chat) =>
-          chat.conversacionId === currentChat.conversacionId
+          chat.conversacionId === conversacionActualId
             ? { ...chat, mapasAsociados: updatedMapasMentalesIds }
             : chat
         )
@@ -228,12 +250,12 @@ Si el problema persiste, puedes contactar directamente a: **ddper@uct.cl**`;
                 ...m,
                 content: jsonData.respuesta.mensaje,
                 artifactData: newArtifact,
-              } // Adjuntar el artefacto completo
+              }
             : m
         )
       );
     } catch (err) {
-      console.error("Error al generar mapa mental:", err);
+      console.error("❌ Error al generar mapa mental:", err);
       setMessages((prev) =>
         prev.map((m) =>
           m.id === mapMsg.id

@@ -1,6 +1,8 @@
 const express = require("express");
+const { nanoid } = require("nanoid");
 const db = require("../db");
 const requireLogin = require("../middleware/auth");
+const { normalizeMessages } = require("../middleware/normalizeMessages");
 
 const router = express.Router();
 
@@ -9,7 +11,6 @@ router.post("/", requireLogin, async (req, res) => {
   const { pregunta, conversacionId } = req.body;
   console.log("👉 Pregunta recibida:", pregunta);
   console.log("👉 ID de conversación:", conversacionId);
-  console.log("👉 Sesión actual:", req.session);
 
   try {
     const response = await fetch(
@@ -32,45 +33,63 @@ router.post("/", requireLogin, async (req, res) => {
     let respuesta = data.respuesta || "No hay respuesta disponible.";
     const documentosRecomendados = data.documentosRecomendados || [];
 
-    const nuevoMensaje = { role: "user", content: pregunta, timestamp: new Date().toISOString() };
-    const nuevaRespuesta = { role: "assistant", content: respuesta, timestamp: new Date().toISOString() };
+    // ✅ NORMALIZAR: Siempre usar estructura 'sender' + 'id'
+    const nuevoMensaje = {
+      id: nanoid(),
+      sender: "user",
+      content: pregunta,
+      timestamp: new Date().toISOString(),
+    };
+
+    const nuevaRespuesta = {
+      id: nanoid(),
+      sender: "bot",
+      content: respuesta,
+      timestamp: new Date().toISOString(),
+      feedbackRequested: true,
+      ...(documentosRecomendados.length > 0 && { documentLinks: documentosRecomendados }),
+    };
 
     if (conversacionId) {
-      // Si se proporciona un ID de conversación, añadimos el mensaje a la existente
+      // Actualizar conversación existente
       const result = await db.query(
         "SELECT chat_history FROM conversaciones WHERE id = $1 AND usuario_id = $2",
         [conversacionId, req.session.user.id]
       );
 
       if (result.rows.length > 0) {
-        const chatHistory = result.rows[0].chat_history || [];
+        let chatHistory = result.rows[0].chat_history || [];
+        
+        // ✅ Normalizar mensajes existentes antes de añadir nuevos
+        chatHistory = normalizeMessages(chatHistory);
         chatHistory.push(nuevoMensaje, nuevaRespuesta);
 
         await db.query(
           "UPDATE conversaciones SET chat_history = $1 WHERE id = $2",
           [JSON.stringify(chatHistory), conversacionId]
         );
-        res.json({ respuesta, documentosRecomendados, conversacionId });
+        
+        console.log("✅ Conversación actualizada:", conversacionId);
+        return res.json({ respuesta, documentosRecomendados, conversacionId });
       } else {
-        // La conversación no pertenece al usuario, se crea una nueva
-        const titulo = pregunta.split(' ').slice(0, 3).join(' ') + '...';
-        const nuevoChatHistory = [nuevoMensaje, nuevaRespuesta];
-        const newResult = await db.query(
-          "INSERT INTO conversaciones (usuario_id, titulo, chat_history) VALUES ($1, $2, $3) RETURNING id",
-          [req.session.user.id, titulo, JSON.stringify(nuevoChatHistory)]
-        );
-        res.json({ respuesta, documentosRecomendados, conversacionId: newResult.rows[0].id });
+        // La conversación no existe o no pertenece al usuario
+        console.warn("⚠️ Conversación no encontrada, creando nueva");
       }
-    } else {
-      // Si no se proporciona un ID, se crea una nueva conversación
-      const titulo = pregunta.split(' ').slice(0, 3).join(' ') + '...';
-      const nuevoChatHistory = [nuevoMensaje, nuevaRespuesta];
-      const result = await db.query(
-        "INSERT INTO conversaciones (usuario_id, titulo, chat_history) VALUES ($1, $2, $3) RETURNING id",
-        [req.session.user.id, titulo, JSON.stringify(nuevoChatHistory)]
-      );
-      res.json({ respuesta, documentosRecomendados, conversacionId: result.rows[0].id });
     }
+
+    // Crear nueva conversación
+    const titulo = pregunta.substring(0, 50) + (pregunta.length > 50 ? '...' : '');
+    const nuevoChatHistory = [nuevoMensaje, nuevaRespuesta];
+    
+    const newResult = await db.query(
+      "INSERT INTO conversaciones (usuario_id, titulo, chat_history, mapas_mentales_ids) VALUES ($1, $2, $3, $4) RETURNING id",
+      [req.session.user.id, titulo, JSON.stringify(nuevoChatHistory), JSON.stringify([])]
+    );
+    
+    const newConversacionId = newResult.rows[0].id;
+    console.log("✅ Nueva conversación creada:", newConversacionId);
+    
+    res.json({ respuesta, documentosRecomendados, conversacionId: newConversacionId });
   } catch (err) {
     console.error("❌ Error en chat:", err);
     res.status(500).json({ respuesta: "Error al contactar con el asistente." });
@@ -80,11 +99,13 @@ router.post("/", requireLogin, async (req, res) => {
 // Generar mapa mental
 router.post("/mapa-mental", requireLogin, async (req, res) => {
   const { contexto, titulo, conversacionId } = req.body;
-  console.log("Contexto recibido para mapa mental:", contexto);
-  console.log("ID de conversación para asociar mapa:", conversacionId);
+  console.log("📝 Contexto recibido para mapa mental:", contexto?.substring(0, 100));
+  console.log("📝 ID de conversación para asociar mapa:", conversacionId);
 
   if (!conversacionId) {
-    return res.status(400).json({ error: "El ID de la conversación es obligatorio para crear un mapa mental." });
+    return res.status(400).json({ 
+      error: "El ID de la conversación es obligatorio para crear un mapa mental." 
+    });
   }
 
   try {
@@ -94,12 +115,11 @@ router.post("/mapa-mental", requireLogin, async (req, res) => {
       body: JSON.stringify({ contexto }),
     });
 
-    console.log("Status Skynet:", response.status);
+    console.log("👉 Status Skynet (Mapa Mental):", response.status);
 
     const data = await response.json();
-    console.log("Data recibida (mapa mental):", data);
+    console.log("👉 Data recibida (mapa mental):", JSON.stringify(data).substring(0, 200));
 
-    // el agente devuelve { respuesta: {...} }
     let mapaMental = data.respuesta || {};
 
     // Guardar el mapa mental en la base de datos
@@ -117,14 +137,17 @@ router.post("/mapa-mental", requireLogin, async (req, res) => {
     );
 
     const nuevoMapaId = result.rows[0].id;
+    console.log("✅ Mapa mental guardado con ID:", nuevoMapaId);
 
-    // Actualizar la conversación para añadir el ID del mapa mental a la lista
+    // Actualizar la conversación para añadir el ID del mapa mental
     await db.query(
       `UPDATE conversaciones
        SET mapas_mentales_ids = COALESCE(mapas_mentales_ids, '[]'::jsonb) || $1::jsonb
        WHERE id = $2 AND usuario_id = $3`,
       [JSON.stringify([nuevoMapaId]), conversacionId, req.session.user.id]
     );
+
+    console.log("✅ Mapa asociado a conversación:", conversacionId);
 
     // Añadir información del mapa guardado a la respuesta
     mapaMental.id = nuevoMapaId;
@@ -136,9 +159,10 @@ router.post("/mapa-mental", requireLogin, async (req, res) => {
     });
   } catch (err) {
     console.error("❌ Error en mapa mental:", err);
-    res
-      .status(500)
-      .json({ error: "Error al generar o guardar el mapa mental." });
+    res.status(500).json({ 
+      error: "Error al generar o guardar el mapa mental.",
+      details: err.message 
+    });
   }
 });
 

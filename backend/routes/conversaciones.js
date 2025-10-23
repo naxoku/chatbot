@@ -1,6 +1,7 @@
 const express = require("express");
 const db = require("../db");
 const requireLogin = require("../middleware/auth");
+const { normalizeMessages, validateChatHistory } = require("../middleware/normalizeMessages");
 
 const router = express.Router();
 
@@ -8,12 +9,19 @@ const router = express.Router();
 router.get("/", requireLogin, async (req, res) => {
   try {
     const result = await db.query(
-      "SELECT id, titulo, chat_history, mapas_mentales_ids, fecha_creacion FROM conversaciones WHERE usuario_id = $1 ORDER BY fecha_creacion ASC",
+      "SELECT id, titulo, chat_history, mapas_mentales_ids, fecha_creacion FROM conversaciones WHERE usuario_id = $1 ORDER BY fecha_creacion DESC",
       [req.session.user.id]
     );
-    res.json({ success: true, conversaciones: result.rows });
+    
+    // Normalizar mensajes en todas las conversaciones antes de enviar
+    const conversacionesNormalizadas = result.rows.map(conv => ({
+      ...conv,
+      chat_history: normalizeMessages(conv.chat_history || [])
+    }));
+    
+    res.json({ success: true, conversaciones: conversacionesNormalizadas });
   } catch (err) {
-    console.error("Error al obtener conversaciones:", err);
+    console.error("❌ Error al obtener conversaciones:", err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -30,9 +38,15 @@ router.get("/:id", requireLogin, async (req, res) => {
       return res.status(404).json({ success: false, error: "Conversación no encontrada" });
     }
     
-    res.json({ success: true, conversacion: result.rows[0] });
+    // Normalizar mensajes antes de enviar
+    const conversacion = {
+      ...result.rows[0],
+      chat_history: normalizeMessages(result.rows[0].chat_history || [])
+    };
+    
+    res.json({ success: true, conversacion });
   } catch (err) {
-    console.error("Error al obtener conversación:", err);
+    console.error("❌ Error al obtener conversación:", err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -40,22 +54,56 @@ router.get("/:id", requireLogin, async (req, res) => {
 // Guardar conversación
 router.post("/", requireLogin, async (req, res) => {
   const { chat_history, titulo, mapas_mentales_ids } = req.body;
+  
   try {
+    // ✅ Normalizar mensajes antes de guardar
+    const normalizedChatHistory = normalizeMessages(chat_history || []);
+    
+    // Validar que la estructura sea correcta
+    if (!validateChatHistory(normalizedChatHistory)) {
+      console.error("❌ Chat history con formato inválido:", normalizedChatHistory);
+      return res.status(400).json({ 
+        success: false, 
+        error: "Formato de chat_history inválido" 
+      });
+    }
+    
     const result = await db.query(
       "INSERT INTO conversaciones (usuario_id, chat_history, titulo, mapas_mentales_ids) VALUES ($1, $2, $3, $4) RETURNING *",
-      [req.session.user.id, JSON.stringify(chat_history), titulo, mapas_mentales_ids || '[]']
+      [
+        req.session.user.id,
+        JSON.stringify(normalizedChatHistory),
+        titulo,
+        JSON.stringify(mapas_mentales_ids || [])
+      ]
     );
+    
+    console.log(`✅ Conversación creada: ID ${result.rows[0].id}`);
+    
     res.json({ success: true, conversacion: result.rows[0] });
   } catch (err) {
-    console.error("Error al guardar conversación:", err);
+    console.error("❌ Error al guardar conversación:", err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// Actualizar conversación existente (para añadir mensajes o mapas mentales)
+// Actualizar conversación existente
 router.put("/:id", requireLogin, async (req, res) => {
   const { chat_history, mapas_mentales_ids, titulo } = req.body;
+  
   try {
+    // ✅ Normalizar mensajes antes de actualizar
+    const normalizedChatHistory = normalizeMessages(chat_history || []);
+    
+    // Validar que la estructura sea correcta
+    if (!validateChatHistory(normalizedChatHistory)) {
+      console.error("❌ Chat history con formato inválido:", normalizedChatHistory);
+      return res.status(400).json({ 
+        success: false, 
+        error: "Formato de chat_history inválido" 
+      });
+    }
+    
     const result = await db.query(
       `UPDATE conversaciones
        SET chat_history = $1,
@@ -63,16 +111,71 @@ router.put("/:id", requireLogin, async (req, res) => {
            titulo = $3
        WHERE id = $4 AND usuario_id = $5
        RETURNING *`,
-      [JSON.stringify(chat_history), mapas_mentales_ids, titulo, req.params.id, req.session.user.id]
+      [
+        JSON.stringify(normalizedChatHistory),
+        JSON.stringify(mapas_mentales_ids || []),
+        titulo,
+        req.params.id,
+        req.session.user.id
+      ]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ success: false, error: "Conversación no encontrada o no autorizada" });
+      return res.status(404).json({ 
+        success: false, 
+        error: "Conversación no encontrada o no autorizada" 
+      });
     }
 
+    console.log(`✅ Conversación actualizada: ID ${req.params.id}`);
+    
     res.json({ success: true, conversacion: result.rows[0] });
   } catch (err) {
-    console.error("Error al actualizar conversación:", err);
+    console.error("❌ Error al actualizar conversación:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ✅ NUEVO: Endpoint para migrar conversaciones existentes (ejecutar una sola vez)
+router.post("/migrate", requireLogin, async (req, res) => {
+  if (req.session.user.rol !== "admin") {
+    return res.status(403).json({ 
+      success: false, 
+      error: "Solo administradores pueden ejecutar migraciones" 
+    });
+  }
+
+  try {
+    // Obtener todas las conversaciones
+    const result = await db.query("SELECT id, chat_history FROM conversaciones");
+    
+    let migratedCount = 0;
+    let errorCount = 0;
+
+    for (const conv of result.rows) {
+      try {
+        const normalizedHistory = normalizeMessages(conv.chat_history || []);
+        
+        await db.query(
+          "UPDATE conversaciones SET chat_history = $1 WHERE id = $2",
+          [JSON.stringify(normalizedHistory), conv.id]
+        );
+        
+        migratedCount++;
+      } catch (err) {
+        console.error(`❌ Error al migrar conversación ${conv.id}:`, err);
+        errorCount++;
+      }
+    }
+
+    res.json({ 
+      success: true, 
+      message: `Migración completada: ${migratedCount} exitosas, ${errorCount} errores`,
+      migrated: migratedCount,
+      errors: errorCount
+    });
+  } catch (err) {
+    console.error("❌ Error en migración:", err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
