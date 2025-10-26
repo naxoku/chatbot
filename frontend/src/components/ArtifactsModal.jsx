@@ -17,8 +17,9 @@ const ArtifactsModal = ({
     mindmap: {
       label: "Mapa Mental",
       icon: "fas fa-project-diagram",
-      color:
-        "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/10",
+      color: isDarkMode
+        ? "text-purple-400 bg-purple-900/20"
+        : "text-purple-600 bg-purple-50",
     },
   };
 
@@ -39,69 +40,60 @@ const ArtifactsModal = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Overlay */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* Modal */}
       <div
-        className={`relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl shadow-2xl border transition-all duration-300 ${
+        className={`relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl shadow-2xl ${
           isDarkMode
-            ? "bg-gray-800 border-gray-700"
-            : "bg-white border-gray-200"
+            ? "bg-[#1a1a1a] border border-gray-800"
+            : "bg-white border border-gray-200"
         }`}
       >
-        {/* Header */}
         <div
-          className={`flex items-center justify-between p-6 border-b ${
-            isDarkMode ? "border-gray-700" : "border-gray-200"
+          className={`flex items-center justify-between p-5 border-b ${
+            isDarkMode ? "border-gray-800" : "border-gray-200"
           }`}
         >
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl flex items-center justify-center">
-              <i className="fas fa-layer-group text-white text-lg"></i>
-            </div>
-            <div>
-              <h2
-                className={`text-xl font-semibold ${
-                  isDarkMode ? "text-white" : "text-gray-900"
-                }`}
-              >
-                Artefactos
-              </h2>
-              <p
-                className={`text-sm ${
-                  isDarkMode ? "text-gray-400" : "text-gray-600"
-                }`}
-              >
-                {filteredArtifacts.length} de {artifacts.length} artefactos
-              </p>
-            </div>
+          <div>
+            <h2
+              className={`text-base font-semibold ${
+                isDarkMode ? "text-white" : "text-gray-900"
+              }`}
+            >
+              Artefactos
+            </h2>
+            <p
+              className={`text-xs mt-0.5 ${
+                isDarkMode ? "text-gray-500" : "text-gray-500"
+              }`}
+            >
+              {filteredArtifacts.length} de {artifacts.length} artefactos
+            </p>
           </div>
           <button
             onClick={onClose}
             className={`p-2 rounded-lg transition-colors ${
               isDarkMode
-                ? "text-gray-400 hover:text-gray-200 hover:bg-gray-700"
-                : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                ? "text-gray-500 hover:text-white hover:bg-gray-800"
+                : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
             }`}
           >
             <i className="fas fa-times text-lg"></i>
           </button>
         </div>
 
-        {/* Search */}
         <div
-          className={`p-6 border-b ${
-            isDarkMode ? "border-gray-700" : "border-gray-200"
+          className={`p-5 border-b ${
+            isDarkMode ? "border-gray-800" : "border-gray-200"
           }`}
         >
           <div className="relative">
             <i
-              className={`fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-sm ${
-                isDarkMode ? "text-gray-500" : "text-gray-400"
+              className={`fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-xs ${
+                isDarkMode ? "text-gray-600" : "text-gray-400"
               }`}
             ></i>
             <input
@@ -109,27 +101,27 @@ const ArtifactsModal = ({
               placeholder="Buscar artefactos..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm transition-all duration-200 ${
+              className={`w-full pl-9 pr-4 py-2 rounded-lg border text-sm ${
                 isDarkMode
-                  ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-purple-500 focus:ring-purple-500/20"
-                  : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500 focus:border-purple-500 focus:ring-purple-500/20"
-              } focus:outline-none focus:ring-2`}
+                  ? "bg-gray-800 border-gray-700 text-white placeholder-gray-600 focus:border-gray-600"
+                  : "bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500 focus:border-gray-300"
+              } focus:outline-none`}
             />
           </div>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-5">
           {filteredArtifacts.length === 0 ? (
             <div className="text-center py-12">
               <div
-                className={`w-16 h-16 mx-auto mb-4 rounded-xl flex items-center justify-center ${
-                  isDarkMode ? "bg-gray-700" : "bg-gray-100"
+                className={`w-12 h-12 mx-auto mb-3 rounded-xl flex items-center justify-center ${
+                  isDarkMode ? "bg-gray-800" : "bg-gray-100"
                 }`}
               >
                 <i
-                  className={`fas fa-layer-group text-2xl ${
-                    isDarkMode ? "text-gray-500" : "text-gray-400"
+                  className={`fas fa-layer-group text-lg ${
+                    isDarkMode ? "text-gray-600" : "text-gray-400"
                   }`}
                 ></i>
               </div>
@@ -142,7 +134,7 @@ const ArtifactsModal = ({
               </p>
               <p
                 className={`text-xs mb-4 ${
-                  isDarkMode ? "text-gray-500" : "text-gray-500"
+                  isDarkMode ? "text-gray-600" : "text-gray-500"
                 }`}
               >
                 {searchTerm
@@ -152,32 +144,36 @@ const ArtifactsModal = ({
               {!searchTerm && (
                 <button
                   onClick={handleGenerate}
-                  className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white text-sm rounded-xl transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
+                  className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                    isDarkMode
+                      ? "bg-blue-600 hover:bg-blue-700 text-white"
+                      : "bg-blue-500 hover:bg-blue-600 text-white"
+                  }`}
                 >
-                  <i className="fas fa-plus mr-2"></i>
+                  <i className="fas fa-plus mr-2 text-xs"></i>
                   Crear Artefacto
                 </button>
               )}
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {filteredArtifacts.map((artifact) => {
                 const config = typeConfig[artifact.type] || typeConfig.mindmap;
                 return (
                   <div
                     key={artifact.id || artifact.name}
-                    className={`group flex items-center justify-between p-4 rounded-xl border transition-all duration-200 cursor-pointer hover:shadow-sm ${
+                    className={`group flex items-center justify-between p-3 rounded-lg border cursor-pointer ${
                       isDarkMode
-                        ? "border-gray-700 hover:border-purple-600 hover:bg-purple-900/5"
-                        : "border-gray-200 hover:border-purple-300 hover:bg-purple-50"
+                        ? "border-gray-800 hover:border-gray-700 hover:bg-gray-800/50"
+                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                     }`}
                     onClick={() => onOpenArtifact?.(artifact)}
                   >
                     <div className="flex items-center space-x-3 flex-1 min-w-0">
                       <div
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center ${config.color} shadow-sm`}
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center ${config.color}`}
                       >
-                        <i className={`${config.icon} text-sm`}></i>
+                        <i className={`${config.icon} text-xs`}></i>
                       </div>
                       <div className="flex-1 min-w-0">
                         <p
@@ -189,26 +185,25 @@ const ArtifactsModal = ({
                         </p>
                         <p
                           className={`text-xs truncate ${
-                            isDarkMode ? "text-gray-400" : "text-gray-500"
+                            isDarkMode ? "text-gray-500" : "text-gray-500"
                           }`}
                         >
                           {artifact.description || config.label}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           onOpenArtifact?.(artifact);
                         }}
-                        className={`p-2 rounded-lg transition-all duration-200 ${
+                        className={`p-1.5 rounded-lg ${
                           isDarkMode
-                            ? "text-gray-400 hover:text-blue-400 hover:bg-blue-900/20"
+                            ? "text-gray-500 hover:text-blue-400 hover:bg-blue-900/20"
                             : "text-gray-400 hover:text-blue-600 hover:bg-blue-50"
                         }`}
                         title="Abrir"
-                        aria-label="Abrir artefacto"
                       >
                         <i className="fas fa-eye text-xs"></i>
                       </button>
@@ -217,13 +212,12 @@ const ArtifactsModal = ({
                           e.stopPropagation();
                           onDeleteArtifact?.(artifact.id);
                         }}
-                        className={`p-2 rounded-lg transition-all duration-200 ${
+                        className={`p-1.5 rounded-lg ${
                           isDarkMode
-                            ? "text-gray-400 hover:text-red-400 hover:bg-red-900/20"
+                            ? "text-gray-500 hover:text-red-400 hover:bg-red-900/20"
                             : "text-gray-400 hover:text-red-600 hover:bg-red-50"
                         }`}
                         title="Eliminar"
-                        aria-label="Eliminar artefacto"
                       >
                         <i className="fas fa-trash-alt text-xs"></i>
                       </button>

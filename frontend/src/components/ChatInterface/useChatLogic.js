@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { nanoid } from "nanoid";
-import { API_BASE } from "../../config";
 
 export const useChatLogic = (
   documents,
@@ -49,7 +48,11 @@ Si el problema persiste, puedes contactar directamente a: **ddper@uct.cl**`;
     setIsTyping(true);
 
     const userMsg = createMessage("user", trimmed, {
-      quotedMessage: quotedMessage,
+      ...(quotedMessage && {
+        quotedMessageId: quotedMessage.id,
+        quotedMessageContent: quotedMessage.content,
+        quotedMessageSender: quotedMessage.sender,
+      }),
     });
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
@@ -66,9 +69,11 @@ Si el problema persiste, puedes contactar directamente a: **ddper@uct.cl**`;
         documentos: documents,
         parametros: selectedParameters,
         conversacionId: conversacionActualId,
-        quotedMessageId: quotedMessage ? quotedMessage.id : undefined, // Enviar ID del mensaje citado
-        quotedMessageContent: quotedMessage ? quotedMessage.content : undefined, // Enviar contenido del mensaje citado
-        quotedMessageSender: quotedMessage ? quotedMessage.sender : undefined, // Enviar remitente del mensaje citado
+        ...(quotedMessage && {
+          quotedMessageId: quotedMessage.id,
+          quotedMessageContent: quotedMessage.content,
+          quotedMessageSender: quotedMessage.sender,
+        }),
       });
 
       const {

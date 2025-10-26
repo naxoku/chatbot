@@ -30,8 +30,12 @@ router.post("/", requireLogin, async (req, res) => {
     const data = await response.json();
     console.log("👉 Data recibida (Semantic Search):", data);
 
-    let respuesta = data.respuesta || "No hay respuesta disponible.";
-    const documentosRecomendados = data.documentosRecomendados || [];
+    const respuesta =
+      data.respuesta ||
+      data.output?.respuesta ||
+      "No hay respuesta disponible.";
+    const documentosRecomendados =
+      data.documentosRecomendados || data.output?.documentosRecomendados || [];
 
     // ✅ NORMALIZAR: Siempre usar estructura 'sender' + 'id'
     const nuevoMensaje = {
@@ -144,7 +148,7 @@ router.post("/mapa-mental", requireLogin, async (req, res) => {
       JSON.stringify(data).substring(0, 200)
     );
 
-    let mapaMental = data.respuesta || {};
+    const mapaMental = data.respuesta || {};
 
     // Guardar el mapa mental en la base de datos
     const result = await db.query(

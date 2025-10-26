@@ -38,11 +38,12 @@ export const useSessionManager = (setUser, setMessages) => {
             role: data.user.rol,
           });
 
-          setMessages([
+          setMessages((prev) => [
+            ...prev,
             {
               id: "welcome",
               sender: "bot",
-              content: `¡Hola **${data.user.nombre}**! Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?`,
+              content: `¡Hola **${data.user.nombre}**! ¿En qué puedo ayudarte hoy?`,
               timestamp: new Date(),
               feedbackRequested: false,
             },

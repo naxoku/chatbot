@@ -1,5 +1,3 @@
-import Tooltip from "../ToolTip";
-
 const ChatHeader = ({
   isSidebarOpen,
   setIsSidebarOpen,
@@ -10,107 +8,72 @@ const ChatHeader = ({
   setIsArtifactsOpen,
   onOpenHelp,
 }) => {
+  const currentChatArtifacts =
+    artifacts?.filter(
+      (a) => a.conversacionId === currentChat?.conversacionId
+    ) || [];
+  const showArtifactsBadge = currentChatArtifacts.length > 0;
+
   return (
     <header
-      className={`
-        h-16 z-30 px-4 border-b flex items-center justify-between
-        ${
-          isDarkMode
-            ? "bg-gray-800 border-gray-700"
-            : "bg-white border-gray-200"
-        }
-      `}
+      className={`h-14 px-4 border-b flex items-center justify-between ${
+        isDarkMode ? "bg-[#1a1a1a] border-gray-800" : "bg-white border-gray-200"
+      }`}
     >
-      <div className="flex items-center space-x-3">
-        {/* Botón para abrir/cerrar sidebar */}
-        <Tooltip
-          content="Abrir/cerrar menú lateral"
-          position="bottom"
-          isDarkMode={isDarkMode}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className={`p-2 rounded-lg transition-colors ${
+            isDarkMode
+              ? "text-gray-400 hover:bg-gray-800 hover:text-gray-300"
+              : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+          }`}
+          aria-label="Toggle sidebar"
         >
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className={`p-2 rounded-lg transition-colors ${
-              isDarkMode
-                ? "text-gray-300 hover:bg-gray-700"
-                : "text-gray-600 hover:bg-gray-100"
-            }`}
-            aria-label="Toggle sidebar"
-          >
-            <i className="fas fa-bars text-lg" />
-          </button>
-        </Tooltip>
+          <i className="fas fa-bars text-sm" />
+        </button>
 
-        {/* Título de la conversación */}
-        <div>
-          <h2
-            className={`font-semibold truncate ${
-              isDarkMode ? "text-white" : "text-gray-900"
-            }`}
-          >
-            {currentChat?.name || "Nueva Conversación"}
-          </h2>
-        </div>
+        <h2
+          className={`font-medium text-sm truncate ${
+            isDarkMode ? "text-white" : "text-gray-900"
+          }`}
+        >
+          {currentChat?.name || "Nueva Conversación"}
+        </h2>
       </div>
 
-      {/* Botones de la derecha */}
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center gap-1">
         {onOpenHelp && (
-          <Tooltip
-            content={
-              <div>
-                <p className="font-semibold mb-1">Centro de Ayuda</p>
-                <p className="text-xs">Presiona Ctrl+K para abrir</p>
-              </div>
-            }
-            position="bottom"
-            isDarkMode={isDarkMode}
+          <button
+            onClick={onOpenHelp}
+            className={`p-2 rounded-lg transition-colors ${
+              isDarkMode
+                ? "text-gray-400 hover:bg-gray-800 hover:text-gray-300"
+                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+            }`}
+            aria-label="Abrir centro de ayuda"
           >
-            <button
-              onClick={onOpenHelp}
-              className={`p-2 rounded-lg transition-colors ${
-                isDarkMode
-                  ? "text-gray-300 hover:bg-gray-700"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
-              aria-label="Abrir centro de ayuda"
-            >
-              <i className="fas fa-question-circle text-lg" />
-            </button>
-          </Tooltip>
+            <i className="fas fa-question-circle text-sm" />
+          </button>
         )}
 
-        {/* Botón de artefactos */}
         {artifacts && (
-          <Tooltip
-            content={
-              <div>
-                <p className="font-semibold mb-1">Artefactos</p>
-                <p className="text-xs">
-                  Mapas mentales y otros contenidos generados
-                </p>
-              </div>
-            }
-            position="bottom"
-            isDarkMode={isDarkMode}
+          <button
+            onClick={() => setIsArtifactsOpen(!isArtifactsOpen)}
+            className={`p-2 rounded-lg transition-colors relative ${
+              isDarkMode
+                ? "text-gray-400 hover:bg-gray-800 hover:text-gray-300"
+                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+            }`}
+            aria-label="Ver artefactos"
           >
-            <button
-              onClick={() => setIsArtifactsOpen(!isArtifactsOpen)}
-              className={`p-2 rounded-lg transition-colors relative ${
-                isDarkMode
-                  ? "text-gray-300 hover:bg-gray-700"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
-              aria-label="Ver artefactos"
-            >
-              <i className="fas fa-layer-group text-lg" />
-              {artifacts.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {artifacts.length}
-                </span>
-              )}
-            </button>
-          </Tooltip>
+            <i className="fas fa-layer-group text-sm" />
+            {showArtifactsBadge && (
+              <span className="absolute -top-0.5 -right-0.5 bg-blue-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-medium">
+                {currentChatArtifacts.length}
+              </span>
+            )}
+          </button>
         )}
       </div>
     </header>

@@ -27,7 +27,7 @@ const ChatMessages = ({
   const quickActions = [
     {
       id: "resumen",
-      text: "Resumir   mensaje",
+      text: "Resumir mensaje",
       icon: "fas fa-compress-alt",
       color: "blue",
       description: "Crear un resumen del contenido del mensaje",
@@ -83,37 +83,28 @@ const ChatMessages = ({
 
   // Componente de Skeleton para mensajes cargando
   const SkeletonMessage = () => (
-    <div className="flex justify-start mb-6">
+    <div className="flex justify-start mb-3">
       <div className="flex max-w-[85%]">
-        {/* Avatar skeleton */}
-        <div className="flex-shrink-0 mr-3">
-          <div
-            className={`w-8 h-8 rounded-full animate-pulse ${
-              isDarkMode ? "bg-gray-700" : "bg-gray-300"
-            }`}
-          />
-        </div>
-
         {/* Mensaje skeleton */}
         <div
-          className={`rounded-2xl px-4 py-3 space-y-3 w-96 ${
-            isDarkMode ? "bg-gray-800 border border-gray-700" : "bg-gray-100"
+          className={`rounded-lg px-3 py-2 space-y-2 w-96 ${
+            isDarkMode ? "bg-gray-800" : "bg-gray-100"
           }`}
         >
           <div
-            className={`h-4 rounded animate-pulse ${
+            className={`h-3 rounded animate-pulse ${
               isDarkMode ? "bg-gray-700" : "bg-gray-300"
             }`}
             style={{ width: "90%" }}
           />
           <div
-            className={`h-4 rounded animate-pulse ${
+            className={`h-3 rounded animate-pulse ${
               isDarkMode ? "bg-gray-700" : "bg-gray-300"
             }`}
             style={{ width: "75%" }}
           />
           <div
-            className={`h-4 rounded animate-pulse ${
+            className={`h-3 rounded animate-pulse ${
               isDarkMode ? "bg-gray-700" : "bg-gray-300"
             }`}
             style={{ width: "85%" }}
@@ -133,78 +124,64 @@ const ChatMessages = ({
         key={message.id || index}
         className={`flex ${
           isUser ? "justify-end" : "justify-start"
-        } mb-6 group`}
+        } mb-3 group`}
       >
         <div
           className={`flex max-w-[85%] ${
             isUser ? "flex-row-reverse" : "flex-row"
           }`}
         >
-          {/* Avatar */}
-          <div className={`flex-shrink-0 ${isUser ? "ml-3" : "mr-3"}`}>
-            <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                isUser
-                  ? "bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/30"
-                  : isDarkMode
-                  ? "bg-gradient-to-br from-purple-600 to-purple-700 shadow-lg shadow-purple-600/30"
-                  : "bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg shadow-purple-500/30"
-              }`}
-            >
-              <i
-                className={`${
-                  isUser ? "fas fa-user" : "fas fa-robot"
-                } text-sm text-white`}
-              ></i>
-            </div>
-          </div>
-
           {/* Mensaje */}
           <div className="flex-1 min-w-0">
             {/* Indicador de mensaje citado */}
             {message.quotedMessageId && (
               <div
-                className={`mb-2 px-3 py-2.5 rounded-lg border-l-4 ${
+                className={`mb-2 px-3 py-2 rounded-lg border-l-2 text-xs ${
                   isUser
-                    ? "bg-blue-400/10 border-blue-400 text-blue-100"
+                    ? isDarkMode
+                      ? "bg-blue-900/20 border-blue-500 text-blue-300"
+                      : "bg-blue-50 border-blue-400 text-blue-700"
                     : isDarkMode
-                    ? "bg-purple-900/20 border-purple-500 text-purple-300"
-                    : "bg-purple-50 border-purple-400 text-purple-700"
+                    ? "bg-gray-800 border-gray-600 text-gray-400"
+                    : "bg-gray-100 border-gray-400 text-gray-600"
                 }`}
               >
-                <div className="flex items-center gap-1.5 text-xs mb-1">
-                  <i className="fas fa-reply"></i>
-                  <span className="font-medium">Respondiendo a:</span>
-                  <span className="font-semibold">
-                    {message.quotedMessageSender || "Asistente"}
+                <div className="flex items-center gap-1.5 mb-1 font-medium">
+                  <i className="fas fa-reply text-xs"></i>
+                  <span>
+                    {message.quotedMessageSender === "user"
+                      ? "Tú"
+                      : "Asistente"}
                   </span>
                 </div>
-                <p className="text-xs line-clamp-2">
+                <p className="line-clamp-2 opacity-80">
                   {message.quotedMessageContent || "Contenido no disponible"}
                 </p>
               </div>
             )}
 
             <div
-              className={`rounded-2xl px-4 py-3 relative ${
+              className={`rounded-lg px-3 py-2 ${
                 isContext
                   ? isDarkMode
-                    ? "bg-gray-700/50 border border-gray-600 text-gray-400 italic"
-                    : "bg-gray-100 border border-gray-300 text-gray-600 italic"
+                    ? "bg-gray-800/50 text-gray-500 italic"
+                    : "bg-gray-100 text-gray-500 italic"
                   : isUser
-                  ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20"
+                  ? isDarkMode
+                    ? "bg-blue-600 text-white"
+                    : "bg-blue-500 text-white"
                   : isDarkMode
-                  ? "bg-gray-800 text-gray-100 border border-gray-700"
-                  : "bg-white text-gray-900 border border-gray-200 shadow-sm"
+                  ? "bg-gray-800 text-gray-100"
+                  : "bg-gray-100 text-gray-900"
               }`}
             >
               {/* Parámetros (no para mensajes de contexto) */}
               {!isContext &&
                 (message.parameters || message.responseParameters) && (
                   <div
-                    className={`mb-3 pb-3 border-b ${
+                    className={`mb-2 pb-2 border-b ${
                       isUser
-                        ? "border-white/20"
+                        ? "border-white/10"
                         : isDarkMode
                         ? "border-gray-700"
                         : "border-gray-200"
@@ -239,12 +216,12 @@ const ChatMessages = ({
                           return (
                             <span
                               key={param}
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs ${
                                 isUser
                                   ? "bg-white/20 text-white"
                                   : isDarkMode
-                                  ? "bg-gray-700/50 text-gray-300"
-                                  : "bg-gray-100 text-gray-700"
+                                  ? "bg-gray-700 text-gray-300"
+                                  : "bg-gray-200 text-gray-700"
                               }`}
                             >
                               <i className={`${paramInfo.icon} text-xs`}></i>
@@ -259,42 +236,35 @@ const ChatMessages = ({
 
               {/* Contenido del mensaje con estilos mejorados para markdown */}
               <div
-                className={`message-content ${
-                  isUser
-                    ? "text-white"
-                    : isDarkMode
-                    ? "text-gray-100"
-                    : "text-gray-900"
-                }`}
+                className="message-content"
                 dangerouslySetInnerHTML={{
                   __html: DOMPurify.sanitize(marked.parse(message.content)),
                 }}
               />
 
-              {/* Enlaces de documentos (no para mensajes de contexto) */}
               {!isContext &&
                 message.documentLinks &&
                 message.documentLinks.length > 0 && (
                   <div
-                    className={`mt-4 pt-4 border-t ${
+                    className={`mt-3 pt-3 border-t ${
                       isUser
-                        ? "border-white/20"
+                        ? "border-white/10"
                         : isDarkMode
                         ? "border-gray-700"
                         : "border-gray-200"
                     }`}
                   >
                     <p
-                      className={`text-xs font-semibold mb-3 flex items-center gap-2 ${
+                      className={`text-xs font-medium mb-2.5 flex items-center gap-1.5 ${
                         isUser
-                          ? "text-white/90"
+                          ? "text-white/80"
                           : isDarkMode
-                          ? "text-gray-300"
-                          : "text-gray-700"
+                          ? "text-gray-400"
+                          : "text-gray-600"
                       }`}
                     >
                       <i className="fas fa-paperclip"></i>
-                      Documentos relacionados:
+                      Documentos relacionados
                     </p>
                     <div className="space-y-2">
                       {message.documentLinks.map((doc, idx) => (
@@ -303,96 +273,95 @@ const ChatMessages = ({
                           href={doc.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={`block p-3 rounded-xl border transition-all duration-200 hover:shadow-lg group/doc ${
+                          className={`group/doc flex items-center gap-3 p-3 rounded-lg border transition-all ${
                             isDarkMode
-                              ? "border-gray-700 hover:border-purple-600 bg-gray-700/30 hover:bg-gray-700/50"
-                              : "border-gray-200 hover:border-purple-300 bg-gray-50 hover:bg-purple-50"
+                              ? "border-gray-700 hover:border-gray-600 bg-gray-900/30 hover:bg-gray-900/50"
+                              : "border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50"
                           }`}
                         >
-                          <div className="flex items-start gap-3">
-                            <div
-                              className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${getDocumentColor(
-                                doc.type
-                              )}`}
-                            >
-                              <i
-                                className={`${getDocumentIcon(
-                                  doc.url
-                                )} text-sm`}
-                              ></i>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h3
-                                className={`font-medium text-sm mb-1 line-clamp-1 ${
-                                  isDarkMode ? "text-white" : "text-gray-900"
-                                }`}
-                              >
-                                {doc.title}
-                              </h3>
-                              {doc.description && (
-                                <p
-                                  className={`text-xs mb-2 line-clamp-2 ${
-                                    isDarkMode
-                                      ? "text-gray-400"
-                                      : "text-gray-600"
-                                  }`}
-                                >
-                                  {doc.description}
-                                </p>
-                              )}
-                              <span
-                                className={`inline-block text-xs px-2 py-0.5 rounded-md ${
-                                  isDarkMode
-                                    ? "bg-gray-600 text-gray-300"
-                                    : "bg-gray-200 text-gray-600"
-                                }`}
-                              >
-                                {doc.type}
-                              </span>
-                            </div>
+                          <div
+                            className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${getDocumentColor(
+                              doc.type
+                            )}`}
+                          >
                             <i
-                              className={`fas fa-external-link-alt text-xs transition-transform duration-200 group-hover/doc:translate-x-1 group-hover/doc:-translate-y-1 ${
-                                isDarkMode ? "text-gray-500" : "text-gray-400"
-                              }`}
+                              className={`${getDocumentIcon(doc.url)} text-sm`}
                             ></i>
                           </div>
+                          <div className="flex-1 min-w-0">
+                            <h3
+                              className={`font-medium text-sm mb-0.5 line-clamp-1 ${
+                                isDarkMode ? "text-white" : "text-gray-900"
+                              }`}
+                            >
+                              {doc.title}
+                            </h3>
+                            {doc.description && (
+                              <p
+                                className={`text-xs line-clamp-1 ${
+                                  isDarkMode ? "text-gray-500" : "text-gray-500"
+                                }`}
+                              >
+                                {doc.description}
+                              </p>
+                            )}
+                          </div>
+                          <i
+                            className={`fas fa-arrow-right text-xs transition-transform group-hover/doc:translate-x-0.5 ${
+                              isDarkMode ? "text-gray-600" : "text-gray-400"
+                            }`}
+                          ></i>
                         </a>
                       ))}
                     </div>
                   </div>
                 )}
 
-              {/* Artifact (mapa mental) (no para mensajes de contexto) */}
               {!isContext && message.artifact && message.artifactData && (
                 <div
-                  className={`mt-4 p-3 rounded-xl border ${
+                  className={`mt-3 p-3 rounded-lg border transition-all ${
                     isDarkMode
-                      ? "border-purple-800/50 bg-purple-900/20"
-                      : "border-purple-200 bg-purple-50"
+                      ? "border-purple-800/30 bg-purple-900/10 hover:bg-purple-900/20"
+                      : "border-purple-200 bg-purple-50 hover:bg-purple-100"
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 flex-1 min-w-0">
                       <div
                         className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                          isDarkMode ? "bg-purple-900/50" : "bg-purple-100"
+                          isDarkMode ? "bg-purple-900/30" : "bg-purple-100"
                         }`}
                       >
-                        <i className="fas fa-project-diagram text-sm text-purple-500"></i>
+                        <i
+                          className={`fas fa-project-diagram text-sm ${
+                            isDarkMode ? "text-purple-400" : "text-purple-600"
+                          }`}
+                        ></i>
                       </div>
-                      <span
-                        className={`text-xs font-semibold ${
-                          isDarkMode ? "text-purple-300" : "text-purple-700"
-                        }`}
-                      >
-                        Mapa Mental Generado
-                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p
+                          className={`text-sm font-medium ${
+                            isDarkMode ? "text-purple-300" : "text-purple-700"
+                          }`}
+                        >
+                          Mapa Mental
+                        </p>
+                        <p
+                          className={`text-xs ${
+                            isDarkMode
+                              ? "text-purple-400/60"
+                              : "text-purple-600/60"
+                          }`}
+                        >
+                          Visualización generada
+                        </p>
+                      </div>
                     </div>
                     <button
                       onClick={() => onViewMindMap(message.artifactData)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1.5 ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 ${
                         isDarkMode
-                          ? "bg-purple-900/50 text-purple-300 hover:bg-purple-900/70"
+                          ? "bg-purple-900/30 text-purple-300 hover:bg-purple-900/50"
                           : "bg-purple-100 text-purple-700 hover:bg-purple-200"
                       }`}
                     >
@@ -400,54 +369,38 @@ const ChatMessages = ({
                       <i className="fas fa-arrow-right text-xs"></i>
                     </button>
                   </div>
-                  <p
-                    className={`text-xs ${
-                      isDarkMode ? "text-purple-400/80" : "text-purple-600/80"
-                    }`}
-                  >
-                    Se ha creado un mapa mental basado en el contexto. Haz clic
-                    en "Ver Mapa" para explorarlo.
-                  </p>
                 </div>
               )}
 
               {/* Timestamp (no para mensajes de contexto) */}
               {!isContext && (
                 <div
-                  className={`text-xs mt-3 flex items-center gap-1.5 ${
+                  className={`text-xs mt-2 flex items-center gap-2 ${
                     isUser
-                      ? "justify-end text-white/70"
+                      ? "justify-end text-white/60"
                       : isDarkMode
                       ? "text-gray-500"
-                      : "text-gray-400"
+                      : "text-gray-500"
                   }`}
                 >
                   {/* Botón de copiar (solo para mensajes del bot) */}
                   {!isUser && (
-                    <button
-                      onClick={() =>
-                        handleCopyMessage(message.content, message.id)
-                      }
-                      className={`p-1.5 rounded-lg ${
-                        isDarkMode
-                          ? "hover:bg-gray-700 text-gray-400 hover:text-gray-200"
-                          : "hover:bg-gray-100 text-gray-500 hover:text-gray-700"
-                      }`}
-                      title="Copiar mensaje"
-                    >
-                      <i
-                        className={`fas ${
-                          copiedMessageId === message.id
-                            ? "fa-check"
-                            : "fa-copy"
-                        } text-xs`}
-                      ></i>
-                    </button>
-                  )}
-
-                  {/* Botón de acciones rápidas (solo para mensajes del bot, no para mensajes de contexto) */}
-                  {!isUser && !isContext && (
-                    <div className="relative">
+                    <>
+                      <button
+                        onClick={() =>
+                          handleCopyMessage(message.content, message.id)
+                        }
+                        className={`p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-colors`}
+                        title="Copiar mensaje"
+                      >
+                        <i
+                          className={`fas ${
+                            copiedMessageId === message.id
+                              ? "fa-check"
+                              : "fa-copy"
+                          } text-xs`}
+                        ></i>
+                      </button>
                       <MessageQuickActions
                         message={message}
                         onQuickAction={onQuickAction}
@@ -455,10 +408,8 @@ const ChatMessages = ({
                         isDarkMode={isDarkMode}
                         quickActions={quickActions}
                       />
-                    </div>
+                    </>
                   )}
-
-                  <i className="far fa-clock text-xs"></i>
                   <span>
                     {message.timestamp
                       ? new Date(message.timestamp).toLocaleTimeString(
@@ -479,60 +430,48 @@ const ChatMessages = ({
               !isContext &&
               message.feedbackRequested &&
               !feedbackState?.submitted && (
-                <div className="mt-3 ml-2">
-                  <p
-                    className={`text-xs font-medium mb-2 ${
-                      isDarkMode ? "text-gray-400" : "text-gray-600"
+                <div className="mt-2 flex items-center gap-2">
+                  <span
+                    className={`text-xs ${
+                      isDarkMode ? "text-gray-500" : "text-gray-500"
                     }`}
                   >
-                    ¿Te fue útil esta respuesta?
-                  </p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleFeedback(message.id, true)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-                        isDarkMode
-                          ? "bg-green-900/20 text-green-400 hover:bg-green-900/40 border border-green-800/50"
-                          : "bg-green-50 text-green-700 hover:bg-green-100 border border-green-200"
-                      }`}
-                    >
-                      <i className="fas fa-thumbs-up"></i>
-                      <span>Sí</span>
-                    </button>
-                    <button
-                      onClick={() => handleFeedback(message.id, false)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-                        isDarkMode
-                          ? "bg-red-900/20 text-red-400 hover:bg-red-900/40 border border-red-800/50"
-                          : "bg-red-50 text-red-700 hover:bg-red-100 border border-red-200"
-                      }`}
-                    >
-                      <i className="fas fa-thumbs-down"></i>
-                      <span>No</span>
-                    </button>
-                  </div>
+                    ¿Útil?
+                  </span>
+                  <button
+                    onClick={() => handleFeedback(message.id, true)}
+                    className={`p-1.5 rounded hover:bg-green-500/10 transition-colors ${
+                      isDarkMode
+                        ? "text-gray-500 hover:text-green-400"
+                        : "text-gray-500 hover:text-green-600"
+                    }`}
+                  >
+                    <i className="fas fa-thumbs-up text-xs"></i>
+                  </button>
+                  <button
+                    onClick={() => handleFeedback(message.id, false)}
+                    className={`p-1.5 rounded hover:bg-red-500/10 transition-colors ${
+                      isDarkMode
+                        ? "text-gray-500 hover:text-red-400"
+                        : "text-gray-500 hover:text-red-600"
+                    }`}
+                  >
+                    <i className="fas fa-thumbs-down text-xs"></i>
+                  </button>
                 </div>
               )}
 
             {/* Feedback enviado (no para mensajes de contexto) */}
             {!isUser && !isContext && feedbackState?.submitted && (
-              <div className="mt-3 ml-2">
-                <div
-                  className={`flex items-center gap-2 text-xs px-3 py-2 rounded-lg ${
-                    isDarkMode
-                      ? "bg-gray-800/50 text-gray-400"
-                      : "bg-gray-100 text-gray-600"
+              <div className="mt-2">
+                <span
+                  className={`text-xs ${
+                    isDarkMode ? "text-gray-600" : "text-gray-500"
                   }`}
                 >
-                  <i
-                    className={`fas ${
-                      feedbackState.isHelpful
-                        ? "fa-check-circle text-green-500"
-                        : "fa-info-circle text-blue-500"
-                    }`}
-                  ></i>
-                  <span>Gracias por tu feedback</span>
-                </div>
+                  <i className="fas fa-check text-xs mr-1"></i>
+                  Gracias por tu feedback
+                </span>
               </div>
             )}
           </div>
@@ -542,66 +481,62 @@ const ChatMessages = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Estado vacío */}
       {messages.length === 0 && !isTyping && (
         <div
-          className={`text-center py-16 ${
-            isDarkMode ? "text-gray-400" : "text-gray-500"
+          className={`text-center py-20 ${
+            isDarkMode ? "text-gray-500" : "text-gray-500"
           }`}
         >
           <div
-            className={`w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center ${
-              isDarkMode
-                ? "bg-gradient-to-br from-purple-900/30 to-blue-900/30"
-                : "bg-gradient-to-br from-purple-100 to-blue-100"
+            className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${
+              isDarkMode ? "bg-gray-800" : "bg-gray-200"
             }`}
           >
-            <i
-              className={`fas fa-comments text-4xl ${
-                isDarkMode ? "text-purple-400" : "text-purple-600"
-              }`}
-            ></i>
+            <i className="fas fa-comments text-2xl"></i>
           </div>
           <h3
-            className={`text-2xl font-semibold mb-2 ${
-              isDarkMode ? "text-gray-200" : "text-gray-800"
+            className={`text-xl font-medium mb-1 ${
+              isDarkMode ? "text-gray-300" : "text-gray-700"
             }`}
           >
-            ¡Hola! 👋
+            ¿En qué puedo ayudarte?
           </h3>
-          <p className="text-lg mb-1">¿En qué puedo ayudarte hoy?</p>
-          <p className="text-sm opacity-75">
-            Selecciona una acción rápida o escribe tu pregunta
-          </p>
+          <p className="text-sm">Escribe tu pregunta para comenzar</p>
         </div>
       )}
 
-      {/* Renderizar mensajes */}
       {messages.map((message, index) => renderMessage(message, index))}
 
-      {/* Skeleton para cuando se cargan mensajes (cambio de conversación) */}
       {isLoadingMessages && <SkeletonMessage />}
 
-      {/* Puntos animados para cuando el bot está escribiendo */}
       {isTyping && !isLoadingMessages && (
-        <div className="flex justify-start mb-6">
+        <div className="flex justify-start mb-3">
           <div className="flex max-w-[85%]">
-            <div className="flex-shrink-0 mr-3">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  isDarkMode ? "bg-gray-700" : "bg-gray-200"
-                }`}
-              >
-                <i className="fas fa-robot text-xs text-gray-500"></i>
-              </div>
-            </div>
             <div
-              className={`flex items-center px-4 py-2 rounded-2xl ${
+              className={`flex items-center gap-1 px-3 py-2 rounded-lg ${
                 isDarkMode ? "bg-gray-800" : "bg-gray-100"
               }`}
             >
-              <span className="animate-dots">Escribiendo</span>
+              <div
+                className={`w-1.5 h-1.5 rounded-full animate-bounce ${
+                  isDarkMode ? "bg-gray-400" : "bg-gray-500"
+                }`}
+                style={{ animationDelay: "0s", animationDuration: "1s" }}
+              ></div>
+              <div
+                className={`w-1.5 h-1.5 rounded-full animate-bounce ${
+                  isDarkMode ? "bg-gray-400" : "bg-gray-500"
+                }`}
+                style={{ animationDelay: "0.2s", animationDuration: "1s" }}
+              ></div>
+              <div
+                className={`w-1.5 h-1.5 rounded-full animate-bounce ${
+                  isDarkMode ? "bg-gray-400" : "bg-gray-500"
+                }`}
+                style={{ animationDelay: "0.4s", animationDuration: "1s" }}
+              ></div>
             </div>
           </div>
         </div>

@@ -1,4 +1,3 @@
-import VibrantButton from "./VibrantButton";
 import ChatActions from "./ChatActions";
 
 const Sidebar = ({
@@ -16,7 +15,7 @@ const Sidebar = ({
   onViewMapas,
   onDeleteChat,
   onRenameChat,
-  currentChatId, // Agregar prop para el chat actual
+  currentChatId,
 }) => {
   const getBotStatusConfig = (status) => {
     switch (status) {
@@ -24,7 +23,7 @@ const Sidebar = ({
         return {
           colorClass: "bg-green-500",
           text: "En línea",
-          animate: "animate-pulse",
+          animate: "",
         };
       case "offline":
         return { colorClass: "bg-red-500", text: "Desconectado", animate: "" };
@@ -32,7 +31,7 @@ const Sidebar = ({
         return {
           colorClass: "bg-yellow-500",
           text: "Procesando...",
-          animate: "animate-pulse",
+          animate: "",
         };
       default:
         return { colorClass: "bg-gray-500", text: "Desconocido", animate: "" };
@@ -41,305 +40,304 @@ const Sidebar = ({
 
   const status = getBotStatusConfig(botStatus);
 
+  const groupChatsByDate = (chats) => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const lastWeek = new Date(today);
+    lastWeek.setDate(lastWeek.getDate() - 7);
+    const lastMonth = new Date(today);
+    lastMonth.setMonth(lastMonth.getMonth() - 1);
+
+    const groups = {
+      today: [],
+      yesterday: [],
+      lastWeek: [],
+      lastMonth: [],
+      older: [],
+    };
+
+    chats.forEach((chat) => {
+      const chatDate = new Date(
+        chat.fechaCreacion || chat.createdAt || Date.now()
+      );
+      const chatDateOnly = new Date(
+        chatDate.getFullYear(),
+        chatDate.getMonth(),
+        chatDate.getDate()
+      );
+
+      if (chatDateOnly.getTime() === today.getTime()) {
+        groups.today.push(chat);
+      } else if (chatDateOnly.getTime() === yesterday.getTime()) {
+        groups.yesterday.push(chat);
+      } else if (chatDate >= lastWeek) {
+        groups.lastWeek.push(chat);
+      } else if (chatDate >= lastMonth) {
+        groups.lastMonth.push(chat);
+      } else {
+        groups.older.push(chat);
+      }
+    });
+
+    return groups;
+  };
+
+  const groupedChats = groupChatsByDate(chats);
+
+  const renderChatGroup = (title, chats) => {
+    if (chats.length === 0) return null;
+
+    return (
+      <div className="mb-4">
+        <h4
+          className={`text-xs font-semibold mb-2 px-2 ${
+            isDarkMode ? "text-gray-500" : "text-gray-500"
+          }`}
+        >
+          {title}
+        </h4>
+        <div className="space-y-1">
+          {chats.map((chat) => {
+            const isActive =
+              currentChatId === chat.conversacionId ||
+              currentChatId === chat.id;
+
+            return (
+              <div
+                key={chat.id}
+                className={`group rounded-lg transition-colors ${
+                  isActive
+                    ? isDarkMode
+                      ? "bg-gray-800"
+                      : "bg-gray-100"
+                    : isDarkMode
+                    ? "hover:bg-gray-800/50"
+                    : "hover:bg-gray-50"
+                }`}
+              >
+                <div className="flex items-center gap-2 p-2.5">
+                  <button
+                    onClick={() => onSelectChat(chat)}
+                    className="flex-1 text-left min-w-0"
+                  >
+                    <p
+                      className={`truncate text-sm ${
+                        isActive
+                          ? isDarkMode
+                            ? "text-white font-medium"
+                            : "text-gray-900 font-medium"
+                          : isDarkMode
+                          ? "text-gray-400"
+                          : "text-gray-600"
+                      }`}
+                    >
+                      {chat.name}
+                    </p>
+                  </button>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <ChatActions
+                      chat={chat}
+                      onDelete={onDeleteChat}
+                      onRename={onRenameChat}
+                      isDarkMode={isDarkMode}
+                    />
+                  </div>
+                </div>
+
+                {/* Mapas mentales */}
+                {chat.mapasAsociados && chat.mapasAsociados.length > 0 && (
+                  <div
+                    className={`px-2.5 pb-2.5 border-t ${
+                      isDarkMode ? "border-gray-800" : "border-gray-200"
+                    }`}
+                  >
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {chat.mapasAsociados.map((mapa) => (
+                        <button
+                          key={mapa.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onViewMapas(mapa);
+                          }}
+                          className={`text-xs px-2 py-1 rounded flex items-center gap-1 transition-colors ${
+                            isDarkMode
+                              ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                          }`}
+                          title={mapa.titulo}
+                        >
+                          <i className="fas fa-project-diagram text-xs"></i>
+                          <span className="max-w-[100px] truncate">
+                            {mapa.titulo}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="relative flex flex-col h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-xl">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/10 dark:to-blue-900/10">
-        <div className="flex items-center space-x-3">
+    <div
+      className={`relative flex flex-col h-full ${
+        isDarkMode
+          ? "bg-[#1a1a1a] border-r border-gray-800"
+          : "bg-white border-r border-gray-200"
+      }`}
+    >
+      <div
+        className={`flex items-center justify-between p-4 border-b ${
+          isDarkMode ? "border-gray-800" : "border-gray-200"
+        }`}
+      >
+        <div className="flex items-center space-x-2.5">
           {LogoUCT && (
-            <div className="w-9 h-9 rounded-lg overflow-hidden flex items-center justify-center">
+            <div className="w-7 h-7 rounded overflow-hidden flex items-center justify-center">
               <img
-                src={LogoUCT || "../../assets/Logo_dir_desarrollo_personas.png"}
-                alt="Logo Universidad Católica del Temuco"
+                src={LogoUCT || "/placeholder.svg"}
+                alt="Logo"
                 className="w-full h-full object-contain"
               />
             </div>
           )}
-          <div>
-            <h3 className="font-semibold text-gray-900 dark:text-white text-xl">
-              Asistente DDPER
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Universidad Católica del Temuco
-            </p>
-          </div>
+          <h3
+            className={`font-semibold text-sm ${
+              isDarkMode ? "text-white" : "text-gray-900"
+            }`}
+          >
+            Asistente DDPER
+          </h3>
         </div>
         <button
           onClick={onClose}
-          className="p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/50 transition-all duration-200 lg:hidden"
+          className={`p-1.5 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-colors lg:hidden ${
+            isDarkMode ? "text-gray-400" : "text-gray-600"
+          }`}
         >
-          <i className="fas fa-times"></i>
+          <i className="fas fa-times text-sm"></i>
         </button>
       </div>
 
-      {/* Action Buttons */}
-      <div className="p-4 space-y-3">
-        <VibrantButton
-          color="purple"
-          label="Nueva Conversación"
-          icon={() => <i className="fas fa-plus"></i>}
+      <div className="p-3">
+        <button
           onClick={onNewChat}
-          className="w-full justify-center shadow-sm hover:shadow-md transition-shadow duration-200"
-        />
-        <VibrantButton
-          color="blue"
-          label="Ver Documentos"
-          icon={() => <i className="fas fa-folder-open"></i>}
-          onClick={onModalOpen}
-          className="w-full justify-center shadow-sm hover:shadow-md transition-shadow duration-200"
-        />
+          className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-medium text-sm transition-colors ${
+            isDarkMode
+              ? "bg-gray-800 hover:bg-gray-700 text-white border border-gray-700"
+              : "bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-200"
+          }`}
+        >
+          <i className="fas fa-plus text-sm"></i>
+          <span>Nueva Conversación</span>
+        </button>
       </div>
 
-      <div className="mx-4">
-        <div className="h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-600 to-transparent"></div>
-      </div>
-
-      {/* Chat List */}
-      <div className="flex-1 p-4 overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-            Conversaciones Recientes
-          </h4>
-          <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
-            {chats.length}
-          </span>
-        </div>
-
-        <div className="space-y-2">
-          {
-            chats.length === 0 ? (
-              <div className="text-center py-8">
-                <div className="w-12 h-12 mx-auto mb-3 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center">
-                  <i className="fas fa-comments text-xl text-gray-400 dark:text-gray-500"></i>
-                </div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
-                  No hay conversaciones
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-500">
-                  Crea una nueva para empezar
-                </p>
-              </div>
-            ) : (
-              chats.map((chat) => {
-                const isActive =
-                  currentChatId === chat.conversacionId ||
-                  currentChatId === chat.id;
-
-                return (
-                  <div
-                    key={chat.id}
-                    className={`
-                    border rounded-xl
-                    hover:shadow-md
-                    transition-all duration-200 
-                    group
-                    ${
-                      isActive
-                        ? isDarkMode
-                          ? "bg-gradient-to-r from-purple-900/30 to-blue-900/30 border-purple-700"
-                          : "bg-gradient-to-r from-purple-50 to-blue-50 border-purple-300"
-                        : isDarkMode
-                        ? "bg-gray-800/50 border-gray-700 hover:border-gray-600"
-                        : "bg-white border-gray-200 hover:border-gray-300"
-                    }
-                  `}
-                  >
-                    {/* Chat Main Content */}
-                    <div className="flex items-start gap-3 p-3">
-                      {/* Avatar/Icon */}
-                      <button
-                        onClick={() => onSelectChat(chat)}
-                        className="
-                        w-10 h-10 rounded-lg 
-                        bg-gradient-to-br from-purple-100 to-blue-100 
-                        dark:from-purple-900/30 dark:to-blue-900/30 
-                        flex items-center justify-center 
-                        flex-shrink-0
-                        group-hover:scale-105
-                        transition-transform duration-200
-                      "
-                      >
-                        <i
-                          className={`fas fa-comment text-sm ${
-                            isActive
-                              ? "text-white"
-                              : "text-purple-600 dark:text-purple-400"
-                          }`}
-                        ></i>
-                      </button>
-
-                      {/* Text Content */}
-                      <button
-                        onClick={() => onSelectChat(chat)}
-                        className={`
-                        flex-1 text-left min-w-0
-                        focus:outline-none focus:ring-2 focus:ring-purple-500/20 rounded-lg
-                        -ml-1 -my-1 p-1
-                      `}
-                      >
-                        <p
-                          className={`
-                          truncate font-medium 
-                          text-sm
-                          transition-colors duration-200
-                          ${
-                            isActive
-                              ? "text-purple-700 dark:text-purple-300 font-semibold"
-                              : "text-gray-800 dark:text-gray-200 group-hover:text-purple-600 dark:group-hover:text-purple-400"
-                          }
-                        `}
-                        >
-                          {chat.name}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                          {chat.lastMessage || "Sin mensajes"}
-                          {chat.timestamp && (
-                            <span className="ml-2">
-                              •{" "}
-                              {new Date(chat.timestamp).toLocaleDateString(
-                                "es-CL"
-                              )}
-                            </span>
-                          )}
-                        </p>
-                      </button>
-
-                      {/* Actions Menu */}
-                      <div className="flex-shrink-0 -mr-1">
-                        <ChatActions
-                          chat={chat}
-                          onDelete={onDeleteChat}
-                          onRename={onRenameChat}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Mind Maps Section */}
-                    {chat.mapasAsociados && chat.mapasAsociados.length > 0 && (
-                      <div
-                        className="
-                        px-3 pb-3 pt-2
-                        border-t border-gray-100 dark:border-gray-700/50
-                        bg-gradient-to-r from-purple-50/30 to-blue-50/30
-                        dark:from-purple-900/10 dark:to-blue-900/10
-                      "
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-medium text-gray-600 dark:text-gray-400 flex items-center gap-1">
-                            <i className="fas fa-project-diagram text-purple-600 dark:text-purple-400"></i>
-                            Mapas mentales ({chat.mapasAsociados.length})
-                          </span>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {chat.mapasAsociados.map((mapa) => (
-                            <button
-                              key={mapa.id}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onViewMapas(mapa);
-                              }}
-                              className="
-                              text-xs px-3 py-1.5
-                              bg-white dark:bg-gray-800
-                              border border-purple-200 dark:border-purple-800
-                              text-purple-700 dark:text-purple-300
-                              rounded-lg
-                              hover:bg-purple-50 dark:hover:bg-purple-900/30
-                              hover:border-purple-300 dark:hover:border-purple-700
-                              hover:shadow-sm
-                              transition-all duration-200
-                              font-medium
-                              flex items-center gap-1.5
-                            "
-                              title={`${mapa.titulo} - ${new Date(
-                                mapa.fecha_creacion
-                              ).toLocaleDateString()}`}
-                            >
-                              <i className="fas fa-project-diagram"></i>
-                              <span className="max-w-[120px] truncate">
-                                {mapa.titulo}
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ); // Cierra el return() de la línea 164
-              }) // Cierra el callback .map() de la línea 126
-            ) // Cierra el paréntesis del "else" del ternario de la línea 125
-          }{" "}
-          {/* Cierra la expresión JSX del ternario de la línea 112 */}
-        </div>
-      </div>
-
-      <div className="mx-4">
-        <div className="h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-600 to-transparent"></div>
-      </div>
-
-      {/* Footer Controls */}
-      <div className="p-4 space-y-3">
-        {/* Bot Status */}
-        <div className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-xl">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-lg bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm">
-                <i className="fas fa-robot text-sm text-purple-600 dark:text-purple-400"></i>
-              </div>
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Estado del bot
-              </span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span
-                className={`w-2 h-2 rounded-full ${status.colorClass} ${status.animate}`}
-              ></span>
-              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                {status.text}
-              </span>
-            </div>
+      <div className="flex-1 overflow-y-auto px-3">
+        {chats.length === 0 ? (
+          <div className="text-center py-12">
+            <i
+              className={`fas fa-comments text-2xl mb-2 ${
+                isDarkMode ? "text-gray-700" : "text-gray-300"
+              }`}
+            ></i>
+            <p
+              className={`text-sm ${
+                isDarkMode ? "text-gray-600" : "text-gray-500"
+              }`}
+            >
+              No hay conversaciones
+            </p>
           </div>
-        </div>
+        ) : (
+          <>
+            {renderChatGroup("Hoy", groupedChats.today)}
+            {renderChatGroup("Ayer", groupedChats.yesterday)}
+            {renderChatGroup("Últimos 7 días", groupedChats.lastWeek)}
+            {renderChatGroup("Últimos 30 días", groupedChats.lastMonth)}
+            {renderChatGroup("Más antiguas", groupedChats.older)}
+          </>
+        )}
+      </div>
 
-        {/* Dark Mode Toggle */}
+      <div
+        className={`p-3 border-t space-y-2 ${
+          isDarkMode ? "border-gray-800" : "border-gray-200"
+        }`}
+      >
+        <button
+          onClick={onModalOpen}
+          className={`w-full flex items-center gap-2 py-2 px-3 rounded-lg text-sm transition-colors ${
+            isDarkMode
+              ? "text-gray-400 hover:bg-gray-800 hover:text-gray-300"
+              : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+          }`}
+        >
+          <i className="fas fa-folder-open text-sm"></i>
+          <span>Documentos</span>
+        </button>
+
         <button
           onClick={toggleDarkMode}
-          className="
-            w-full flex items-center justify-center space-x-2 
-            py-3 px-4 rounded-xl 
-            font-medium text-gray-600 dark:text-gray-300 
-            hover:text-gray-800 dark:hover:text-white 
-            hover:bg-gray-100 dark:hover:bg-gray-700/50 
-            transition-all duration-200 
-            focus:outline-none focus:ring-2 focus:ring-gray-500/20 
-            border border-gray-200 dark:border-gray-700 
-            hover:border-gray-300 dark:hover:border-gray-600
-          "
+          className={`w-full flex items-center gap-2 py-2 px-3 rounded-lg text-sm transition-colors ${
+            isDarkMode
+              ? "text-gray-400 hover:bg-gray-800 hover:text-gray-300"
+              : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+          }`}
         >
-          <i className={`fas ${isDarkMode ? "fa-sun" : "fa-moon"}`}></i>
+          <i className={`fas ${isDarkMode ? "fa-sun" : "fa-moon"} text-sm`}></i>
           <span>{isDarkMode ? "Modo Claro" : "Modo Oscuro"}</span>
         </button>
 
-        {/* Logout Button */}
         <button
           onClick={onLogout}
-          className="
-            w-full flex items-center justify-center space-x-2 
-            py-3 px-4 rounded-xl 
-            font-medium text-red-600 dark:text-red-400 
-            hover:text-red-700 dark:hover:text-red-300 
-            hover:bg-red-50 dark:hover:bg-red-900/10 
-            transition-all duration-200 
-            focus:outline-none focus:ring-2 focus:ring-red-500/20 
-            border border-red-200 dark:border-red-800 
-            hover:border-red-300 dark:hover:border-red-700
-          "
+          className={`w-full flex items-center gap-2 py-2 px-3 rounded-lg text-sm transition-colors ${
+            isDarkMode
+              ? "text-red-400 hover:bg-red-900/20"
+              : "text-red-600 hover:bg-red-50"
+          }`}
         >
-          <i className="fas fa-sign-out-alt"></i>
+          <i className="fas fa-sign-out-alt text-sm"></i>
           <span>Cerrar Sesión</span>
         </button>
+
+        <div
+          className={`flex items-center gap-2 py-2.5 px-3 rounded-lg text-xs ${
+            isDarkMode
+              ? "bg-gray-800/50 border border-gray-800"
+              : "bg-gray-50 border border-gray-200"
+          }`}
+        >
+          <div className="flex items-center gap-2 flex-1">
+            <div className="relative">
+              <div
+                className={`w-2 h-2 rounded-full ${status.colorClass}`}
+              ></div>
+              {botStatus === "online" && (
+                <div
+                  className={`absolute inset-0 w-2 h-2 rounded-full ${status.colorClass} animate-ping opacity-75`}
+                ></div>
+              )}
+            </div>
+            <span className={isDarkMode ? "text-gray-400" : "text-gray-600"}>
+              Bot: {status.text}
+            </span>
+          </div>
+          <i
+            className={`fas fa-robot text-xs ${
+              isDarkMode ? "text-gray-600" : "text-gray-400"
+            }`}
+          ></i>
+        </div>
       </div>
     </div>
   );

@@ -27,11 +27,19 @@ const MessageQuickActions = ({
   }, [isOpen]);
 
   const handleActionClick = (action) => {
-    // Si es la acción de responder, usar la función onQuoteMessage
     if (action.id === "responder") {
+      // Acción de responder: establecer el mensaje citado
       onQuoteMessage(message);
-    } else {
+    } else if (action.id === "mapa-mental") {
+      // Generar mapa mental directamente, sin modificar el input
       onQuickAction(action, message);
+    } else {
+      // Otras acciones: establecer el mensaje citado Y el texto en el input
+      onQuoteMessage(message);
+      // Usar setTimeout para asegurar que el mensaje citado se establece primero
+      setTimeout(() => {
+        onQuickAction(action, message);
+      }, 0);
     }
     setIsOpen(false);
   };

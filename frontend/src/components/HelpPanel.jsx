@@ -1,47 +1,32 @@
 import { useState } from "react";
 
-/**
- * Panel de Ayuda Rápida
- *
- * Muestra información útil para el usuario:
- * - Shortcuts de teclado
- * - Tips de uso
- * - Funcionalidades disponibles
- */
 const HelpPanel = ({ isDarkMode, onClose }) => {
   const [activeTab, setActiveTab] = useState("shortcuts");
 
   const shortcuts = [
     { keys: ["Enter"], description: "Enviar mensaje" },
-    { keys: ["Shift", "Enter"], description: "Nueva línea en el mensaje" },
-    { keys: ["Esc"], description: "Cerrar modales abiertos" },
-    { keys: ["Ctrl", "K"], description: "Abrir panel de ayuda" },
+    { keys: ["Shift", "Enter"], description: "Nueva línea" },
+    { keys: ["Esc"], description: "Cerrar modales" },
   ];
 
   const tips = [
     {
-      title: "Parámetros de Contexto",
+      title: "Acciones Rápidas",
       description:
-        "Usa los botones de contexto (Resumir, Explicar mejor, etc.) para modificar cómo el asistente responde a tus preguntas.",
-      icon: "fas fa-sliders-h",
+        "Usa los botones de acción en cada mensaje para resumir, explicar mejor o generar mapas mentales.",
+      icon: "fas fa-bolt",
     },
     {
       title: "Mapas Mentales",
       description:
-        "Genera mapas mentales de cualquier conversación para visualizar mejor la información. Haz clic en el botón de mapa mental en la barra superior.",
+        "Visualiza información compleja con mapas mentales interactivos.",
       icon: "fas fa-project-diagram",
     },
     {
       title: "Documentos",
       description:
-        "Puedes consultar documentos específicos desde el sidebar. El asistente buscará información relevante en ellos.",
+        "Consulta documentos específicos desde el sidebar para obtener información precisa.",
       icon: "fas fa-folder-open",
-    },
-    {
-      title: "Feedback",
-      description:
-        "Ayúdanos a mejorar dando feedback sobre las respuestas. Usa los botones de pulgar arriba/abajo.",
-      icon: "fas fa-comment-dots",
     },
   ];
 
@@ -49,69 +34,68 @@ const HelpPanel = ({ isDarkMode, onClose }) => {
     {
       name: "Búsqueda Semántica",
       description:
-        "El asistente busca información relevante en la base de conocimientos usando IA avanzada.",
+        "El asistente busca información relevante usando IA avanzada.",
       icon: "fas fa-search",
     },
     {
-      name: "Conversaciones Persistentes",
-      description:
-        "Todas tus conversaciones se guardan automáticamente. Puedes volver a ellas en cualquier momento.",
+      name: "Conversaciones Guardadas",
+      description: "Todas tus conversaciones se guardan automáticamente.",
       icon: "fas fa-save",
     },
     {
       name: "Modo Oscuro",
-      description:
-        "Cambia entre modo claro y oscuro según tu preferencia desde el sidebar.",
+      description: "Cambia entre modo claro y oscuro desde el sidebar.",
       icon: "fas fa-moon",
     },
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
       <div
         className={`w-full max-w-2xl rounded-2xl shadow-2xl ${
-          isDarkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"
+          isDarkMode
+            ? "bg-[#1a1a1a] border border-gray-800"
+            : "bg-white border border-gray-200"
         } max-h-[80vh] overflow-hidden flex flex-col`}
       >
-        {/* Header */}
         <div
-          className={`p-6 border-b ${
-            isDarkMode ? "border-gray-700" : "border-gray-200"
+          className={`p-5 border-b ${
+            isDarkMode ? "border-gray-800" : "border-gray-200"
           }`}
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                <i className="fas fa-question-circle text-white text-lg"></i>
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold">Centro de Ayuda</h2>
-                <p
-                  className={`text-sm ${
-                    isDarkMode ? "text-gray-400" : "text-gray-600"
-                  }`}
-                >
-                  Aprende a usar el asistente DDPER
-                </p>
-              </div>
+            <div>
+              <h2
+                className={`text-base font-semibold ${
+                  isDarkMode ? "text-white" : "text-gray-900"
+                }`}
+              >
+                Centro de Ayuda
+              </h2>
+              <p
+                className={`text-xs mt-0.5 ${
+                  isDarkMode ? "text-gray-500" : "text-gray-500"
+                }`}
+              >
+                Aprende a usar el asistente
+              </p>
             </div>
             <button
               onClick={onClose}
               className={`p-2 rounded-lg transition-colors ${
                 isDarkMode
-                  ? "hover:bg-gray-700 text-gray-400 hover:text-white"
+                  ? "hover:bg-gray-800 text-gray-500 hover:text-white"
                   : "hover:bg-gray-100 text-gray-600 hover:text-gray-900"
               }`}
             >
-              <i className="fas fa-times text-xl"></i>
+              <i className="fas fa-times text-lg"></i>
             </button>
           </div>
         </div>
 
-        {/* Tabs */}
         <div
           className={`flex border-b ${
-            isDarkMode ? "border-gray-700" : "border-gray-200"
+            isDarkMode ? "border-gray-800" : "border-gray-200"
           }`}
         >
           {[
@@ -122,42 +106,37 @@ const HelpPanel = ({ isDarkMode, onClose }) => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 px-4 py-3 font-medium transition-colors ${
+              className={`flex-1 px-4 py-3 text-sm font-medium ${
                 activeTab === tab.id
                   ? isDarkMode
-                    ? "bg-gray-700 text-white border-b-2 border-blue-500"
+                    ? "bg-gray-800 text-white border-b-2 border-blue-500"
                     : "bg-gray-50 text-gray-900 border-b-2 border-blue-600"
                   : isDarkMode
-                  ? "text-gray-400 hover:text-white hover:bg-gray-700/50"
+                  ? "text-gray-500 hover:text-white hover:bg-gray-800/50"
                   : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
               }`}
             >
-              <i className={`${tab.icon} mr-2`}></i>
+              <i className={`${tab.icon} mr-2 text-xs`}></i>
               {tab.label}
             </button>
           ))}
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-5">
           {activeTab === "shortcuts" && (
-            <div className="space-y-3">
-              <p
-                className={`text-sm mb-4 ${
-                  isDarkMode ? "text-gray-400" : "text-gray-600"
-                }`}
-              >
-                Usa estos atajos de teclado para navegar más rápido:
-              </p>
+            <div className="space-y-2">
               {shortcuts.map((shortcut, index) => (
                 <div
                   key={index}
-                  className={`flex items-center justify-between p-4 rounded-lg ${
-                    isDarkMode ? "bg-gray-700/50" : "bg-gray-50"
+                  className={`flex items-center justify-between p-3 rounded-lg ${
+                    isDarkMode ? "bg-gray-800/50" : "bg-gray-50"
                   }`}
                 >
                   <span
-                    className={isDarkMode ? "text-gray-300" : "text-gray-700"}
+                    className={`text-sm ${
+                      isDarkMode ? "text-gray-300" : "text-gray-700"
+                    }`}
                   >
                     {shortcut.description}
                   </span>
@@ -165,10 +144,10 @@ const HelpPanel = ({ isDarkMode, onClose }) => {
                     {shortcut.keys.map((key, i) => (
                       <kbd
                         key={i}
-                        className={`px-3 py-1 rounded font-mono text-sm ${
+                        className={`px-2 py-1 rounded text-xs font-mono ${
                           isDarkMode
-                            ? "bg-gray-600 text-gray-200 border border-gray-500"
-                            : "bg-white text-gray-700 border border-gray-300 shadow-sm"
+                            ? "bg-gray-700 text-gray-200 border border-gray-600"
+                            : "bg-white text-gray-700 border border-gray-300"
                         }`}
                       >
                         {key}
@@ -181,30 +160,35 @@ const HelpPanel = ({ isDarkMode, onClose }) => {
           )}
 
           {activeTab === "tips" && (
-            <div className="space-y-4">
-              <p
-                className={`text-sm mb-4 ${
-                  isDarkMode ? "text-gray-400" : "text-gray-600"
-                }`}
-              >
-                Consejos para aprovechar al máximo el asistente:
-              </p>
+            <div className="space-y-2">
               {tips.map((tip, index) => (
                 <div
                   key={index}
-                  className={`p-4 rounded-lg ${
-                    isDarkMode ? "bg-gray-700/50" : "bg-gray-50"
+                  className={`p-3 rounded-lg ${
+                    isDarkMode ? "bg-gray-800/50" : "bg-gray-50"
                   }`}
                 >
                   <div className="flex items-start space-x-3">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                      <i className={`${tip.icon} text-white`}></i>
+                    <div
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                        isDarkMode
+                          ? "bg-blue-900/30 text-blue-400"
+                          : "bg-blue-100 text-blue-600"
+                      }`}
+                    >
+                      <i className={`${tip.icon} text-xs`}></i>
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold mb-1">{tip.title}</h3>
+                      <h3
+                        className={`font-medium text-sm mb-1 ${
+                          isDarkMode ? "text-white" : "text-gray-900"
+                        }`}
+                      >
+                        {tip.title}
+                      </h3>
                       <p
-                        className={`text-sm ${
-                          isDarkMode ? "text-gray-400" : "text-gray-600"
+                        className={`text-xs ${
+                          isDarkMode ? "text-gray-500" : "text-gray-600"
                         }`}
                       >
                         {tip.description}
@@ -217,30 +201,35 @@ const HelpPanel = ({ isDarkMode, onClose }) => {
           )}
 
           {activeTab === "features" && (
-            <div className="space-y-4">
-              <p
-                className={`text-sm mb-4 ${
-                  isDarkMode ? "text-gray-400" : "text-gray-600"
-                }`}
-              >
-                Funcionalidades principales del asistente:
-              </p>
+            <div className="space-y-2">
               {features.map((feature, index) => (
                 <div
                   key={index}
-                  className={`p-4 rounded-lg ${
-                    isDarkMode ? "bg-gray-700/50" : "bg-gray-50"
+                  className={`p-3 rounded-lg ${
+                    isDarkMode ? "bg-gray-800/50" : "bg-gray-50"
                   }`}
                 >
                   <div className="flex items-start space-x-3">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0">
-                      <i className={`${feature.icon} text-white`}></i>
+                    <div
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                        isDarkMode
+                          ? "bg-emerald-900/30 text-emerald-400"
+                          : "bg-emerald-100 text-emerald-600"
+                      }`}
+                    >
+                      <i className={`${feature.icon} text-xs`}></i>
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold mb-1">{feature.name}</h3>
+                      <h3
+                        className={`font-medium text-sm mb-1 ${
+                          isDarkMode ? "text-white" : "text-gray-900"
+                        }`}
+                      >
+                        {feature.name}
+                      </h3>
                       <p
-                        className={`text-sm ${
-                          isDarkMode ? "text-gray-400" : "text-gray-600"
+                        className={`text-xs ${
+                          isDarkMode ? "text-gray-500" : "text-gray-600"
                         }`}
                       >
                         {feature.description}
@@ -253,20 +242,17 @@ const HelpPanel = ({ isDarkMode, onClose }) => {
           )}
         </div>
 
-        {/* Footer */}
         <div
           className={`p-4 border-t ${
-            isDarkMode
-              ? "border-gray-700 bg-gray-700/30"
-              : "border-gray-200 bg-gray-50"
+            isDarkMode ? "border-gray-800" : "border-gray-200"
           }`}
         >
           <p
-            className={`text-sm text-center ${
-              isDarkMode ? "text-gray-400" : "text-gray-600"
+            className={`text-xs text-center ${
+              isDarkMode ? "text-gray-500" : "text-gray-600"
             }`}
           >
-            ¿Necesitas más ayuda? Contacta a{" "}
+            ¿Necesitas más ayuda?{" "}
             <a
               href="mailto:ddper@uct.cl"
               className="text-blue-500 hover:underline"

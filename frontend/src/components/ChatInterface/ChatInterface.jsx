@@ -149,11 +149,12 @@ const ChatInterface = () => {
   const handleNewChatClick = useCallback(() => {
     handleNewChat(setMessages);
     if (user) {
-      setMessages([
+      setMessages((prev) => [
+        ...prev,
         {
           id: "welcome",
           sender: "bot",
-          content: `¡Hola **${user.name}**! Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?`,
+          content: `¡Hola **${user.name}**! ¿En qué puedo ayudarte hoy?`,
           timestamp: new Date(),
           feedbackRequested: false,
         },
@@ -177,11 +178,12 @@ const ChatInterface = () => {
         await loadConversacionMessages(chat.conversacionId);
       } else {
         // Nueva conversación: mostrar solo mensaje de bienvenida
-        setMessages([
+        setMessages((prev) => [
+          ...prev,
           {
             id: "welcome",
             sender: "bot",
-            content: `¡Hola **${user.name}**! Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?`,
+            content: `¡Hola **${user.name}**! ¿En qué puedo ayudarte hoy?`,
             timestamp: new Date(),
             feedbackRequested: false,
           },
@@ -368,18 +370,16 @@ const ChatInterface = () => {
    * Si no, establece el texto en el input incluyendo el contexto del mensaje
    */
   const handleQuickActionSelect = useCallback(
-    (action, message) => {
+    (action) => {
       if (action.id === "mapa-mental") {
-        // Generar mapa mental directamente, sin modificar el input
         const convId = conversationIdRef.current || currentChat.conversacionId;
         generarMapaMental(messages, convId);
       } else {
-        // Establecer el mensaje citado y el texto en el input
-        setQuotedMessage(message);
+        // El mensaje citado ya fue establecido en MessageQuickActions
         setInput(action.text);
       }
     },
-    [generarMapaMental, messages, setInput, currentChat, setQuotedMessage]
+    [generarMapaMental, messages, setInput, currentChat]
   );
 
   // --------------------------------------------------------------------------
@@ -494,7 +494,7 @@ const ChatInterface = () => {
   return (
     <div
       className={`h-screen flex ${
-        isDarkMode ? "dark bg-gray-900" : "bg-gray-50"
+        isDarkMode ? "dark bg-[#1a1a1a]" : "bg-white"
       }`}
     >
       {/* Overlay para cerrar modales en móvil */}
@@ -535,6 +535,7 @@ const ChatInterface = () => {
           LogoUCT={LogoUCT}
           toggleDarkMode={toggleDarkMode}
           onViewMapas={handleViewMindMap}
+          currentChatId={currentChat?.conversacionId || currentChat?.id}
         />
       </div>
 
@@ -566,7 +567,7 @@ const ChatInterface = () => {
 
         {/* Área de mensajes - Scrollable */}
         <div className="flex-1 overflow-y-auto">
-          <div className="w-full p-4">
+          <div className="max-w-3xl mx-auto w-full px-4 py-6">
             {isTyping && (
               <div className="mb-4">
                 <LoadingIndicator
@@ -592,12 +593,10 @@ const ChatInterface = () => {
         {/* Área de input - Campo de texto */}
         <div
           className={`border-t ${
-            isDarkMode
-              ? "border-gray-700 bg-gray-800"
-              : "border-gray-200 bg-white"
+            isDarkMode ? "border-gray-800" : "border-gray-200"
           }`}
         >
-          <div className="w-full">
+          <div className="max-w-3xl mx-auto w-full">
             <ChatInput
               input={input}
               onInputChange={handleInputChange}
