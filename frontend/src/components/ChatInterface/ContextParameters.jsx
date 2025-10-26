@@ -4,7 +4,7 @@ const ContextParameters = ({
   selectedParameters = [],
   generarMapaMental,
   isTyping,
-  shouldShow = true, // Nueva prop para controlar la visibilidad
+  shouldShow = true,
 }) => {
   const parameters = [
     {
@@ -74,39 +74,39 @@ const ContextParameters = ({
     shouldShow && (
       <div className="px-4 py-2">
         <div className="flex flex-wrap gap-2 justify-center">
-        {parameters.map((param) => {
-          const isSelected = selectedParameters.includes(param.id);
-          return (
-            <button
-              key={param.id}
-              onClick={() => handleParameterToggle(param.id)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-full border text-sm font-medium ${getColorClasses(
-                param.color,
-                isSelected
-              )}`}
-              title={param.description}
-            >
-              <i className={param.icon}></i>
-              <span>{param.label}</span>
-            </button>
-          );
-        })}
+          {parameters.map((param) => {
+            const isSelected = selectedParameters.includes(param.id);
+            return (
+              <button
+                key={param.id}
+                onClick={() => handleParameterToggle(param.id)}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-full border text-sm font-medium ${getColorClasses(
+                  param.color,
+                  isSelected
+                )}`}
+                title={param.description}
+              >
+                <i className={param.icon}></i>
+                <span>{param.label}</span>
+              </button>
+            );
+          })}
 
-        {generarMapaMental && (
-          <button
-            type="button"
-            onClick={() => generarMapaMental()}
-            disabled={isTyping}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-full border text-sm font-medium ${getColorClasses(
-              "teal",
-              false
-            )} ${isTyping ? "opacity-50 cursor-not-allowed" : ""}`}
-            title="Generar mapa mental del contenido"
-          >
-            <i className="fas fa-project-diagram"></i>
-            <span>Mapa Mental</span>
-          </button>
-        )}
+          {generarMapaMental && (
+            <button
+              type="button"
+              onClick={() => generarMapaMental()}
+              disabled={isTyping}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-full border text-sm font-medium ${getColorClasses(
+                "teal",
+                false
+              )} ${isTyping ? "opacity-50 cursor-not-allowed" : ""}`}
+              title="Generar mapa mental del contenido"
+            >
+              <i className="fas fa-project-diagram"></i>
+              <span>Mapa Mental</span>
+            </button>
+          )}
         </div>
       </div>
     )
