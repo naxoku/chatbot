@@ -7,8 +7,8 @@ const ChatInput = ({
   onSendMessage,
   isTyping,
   isDarkMode,
-  quickActions = [],
-  onQuickAction,
+  quotedMessage,
+  setQuotedMessage,
 }) => {
   const textareaRef = useRef(null);
   const isSubmittingRef = useRef(false);
@@ -115,35 +115,49 @@ const ChatInput = ({
         isDarkMode ? "border-gray-700" : "border-gray-200"
       }`}
     >
-      {/* Quick Actions - Mostrar solo si existen */}
-      {quickActions.length > 0 && (
-        <div
-          className={`p-3 border-b ${
-            isDarkMode ? "border-gray-700" : "border-gray-200"
-          }`}
-        >
-          <div className="flex flex-wrap gap-2 justify-center">
-            {quickActions.map((action) => (
-              <button
-                key={action.id}
-                onClick={() => onQuickAction(action.text)}
-                className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  isDarkMode
-                    ? "bg-gray-700 hover:bg-gray-600 text-gray-200 border border-gray-600"
-                    : "bg-white hover:bg-gray-50 text-gray-700 border border-gray-300"
-                }`}
-              >
-                <i className={`${action.icon} text-${action.color}-500`}></i>
-                <span>{action.text}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Input principal con sugerencias integradas */}
       <div className="p-3">
         <form onSubmit={handleSubmit} className="space-y-2">
+          {/* Mensaje citado */}
+          {quotedMessage && (
+            <div
+              className={`relative flex items-start p-3 rounded-lg border-l-4 ${
+                isDarkMode
+                  ? "bg-gray-800 border-blue-500 text-gray-300"
+                  : "bg-blue-50 border-blue-400 text-gray-700"
+              }`}
+            >
+              <div className="flex-1 overflow-hidden">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <i className="fas fa-reply text-xs"></i>
+                  <p className="text-xs font-semibold">
+                    Respondiendo a:{" "}
+                    <span
+                      className={`${
+                        isDarkMode ? "text-blue-400" : "text-blue-600"
+                      }`}
+                    >
+                      {quotedMessage.sender === "user" ? "Tú" : "Asistente"}
+                    </span>
+                  </p>
+                </div>
+                <p className="text-sm line-clamp-2">{quotedMessage.content}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setQuotedMessage(null)}
+                className={`ml-3 p-1.5 rounded-full transition-colors ${
+                  isDarkMode
+                    ? "hover:bg-gray-700 text-gray-400 hover:text-white"
+                    : "hover:bg-gray-200 text-gray-500 hover:text-gray-800"
+                }`}
+                title="Eliminar mensaje citado"
+              >
+                <i className="fas fa-times text-xs"></i>
+              </button>
+            </div>
+          )}
+
           {showSuggestions && (
             <div
               className={`p-3 rounded-lg ${
@@ -217,33 +231,6 @@ const ChatInput = ({
             </div>
 
             <div className="flex flex-col gap-2">
-              <Tooltip
-                content={
-                  <div>
-                    <p className="font-semibold mb-1">Sugerencias Rápidas</p>
-                    <p className="text-xs">Presiona Ctrl+K o haz clic aquí</p>
-                  </div>
-                }
-                position="top"
-                isDarkMode={isDarkMode}
-              >
-                <button
-                  type="button"
-                  onClick={() => setShowSuggestions(!showSuggestions)}
-                  className={`w-12 h-12 rounded-lg transition-colors flex items-center justify-center ${
-                    showSuggestions
-                      ? isDarkMode
-                        ? "bg-blue-600 text-white"
-                        : "bg-blue-600 text-white"
-                      : isDarkMode
-                      ? "bg-gray-700 text-gray-400 hover:text-gray-200 hover:bg-gray-600"
-                      : "bg-gray-100 text-gray-600 hover:text-gray-800 hover:bg-gray-200"
-                  }`}
-                >
-                  <i className="fas fa-magic text-sm"></i>
-                </button>
-              </Tooltip>
-
               <Tooltip
                 content={
                   <div>

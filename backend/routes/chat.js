@@ -39,6 +39,11 @@ router.post("/", requireLogin, async (req, res) => {
       sender: "user",
       content: pregunta,
       timestamp: new Date().toISOString(),
+      ...(req.body.quotedMessageId && {
+        quotedMessageId: req.body.quotedMessageId,
+        quotedMessageContent: req.body.quotedMessageContent,
+        quotedMessageSender: req.body.quotedMessageSender || "bot",
+      }),
     };
 
     const nuevaRespuesta = {
@@ -47,7 +52,9 @@ router.post("/", requireLogin, async (req, res) => {
       content: respuesta,
       timestamp: new Date().toISOString(),
       feedbackRequested: true,
-      ...(documentosRecomendados.length > 0 && { documentLinks: documentosRecomendados }),
+      ...(documentosRecomendados.length > 0 && {
+        documentLinks: documentosRecomendados,
+      }),
     };
 
     if (conversacionId) {
@@ -59,7 +66,7 @@ router.post("/", requireLogin, async (req, res) => {
 
       if (result.rows.length > 0) {
         let chatHistory = result.rows[0].chat_history || [];
-        
+
         // ✅ Normalizar mensajes existentes antes de añadir nuevos
         chatHistory = normalizeMessages(chatHistory);
         chatHistory.push(nuevoMensaje, nuevaRespuesta);
@@ -68,7 +75,7 @@ router.post("/", requireLogin, async (req, res) => {
           "UPDATE conversaciones SET chat_history = $1 WHERE id = $2",
           [JSON.stringify(chatHistory), conversacionId]
         );
-        
+
         console.log("✅ Conversación actualizada:", conversacionId);
         return res.json({ respuesta, documentosRecomendados, conversacionId });
       } else {
@@ -78,18 +85,28 @@ router.post("/", requireLogin, async (req, res) => {
     }
 
     // Crear nueva conversación
-    const titulo = pregunta.substring(0, 50) + (pregunta.length > 50 ? '...' : '');
+    const titulo =
+      pregunta.substring(0, 50) + (pregunta.length > 50 ? "..." : "");
     const nuevoChatHistory = [nuevoMensaje, nuevaRespuesta];
-    
+
     const newResult = await db.query(
       "INSERT INTO conversaciones (usuario_id, titulo, chat_history, mapas_mentales_ids) VALUES ($1, $2, $3, $4) RETURNING id",
-      [req.session.user.id, titulo, JSON.stringify(nuevoChatHistory), JSON.stringify([])]
+      [
+        req.session.user.id,
+        titulo,
+        JSON.stringify(nuevoChatHistory),
+        JSON.stringify([]),
+      ]
     );
-    
+
     const newConversacionId = newResult.rows[0].id;
     console.log("✅ Nueva conversación creada:", newConversacionId);
-    
-    res.json({ respuesta, documentosRecomendados, conversacionId: newConversacionId });
+
+    res.json({
+      respuesta,
+      documentosRecomendados,
+      conversacionId: newConversacionId,
+    });
   } catch (err) {
     console.error("❌ Error en chat:", err);
     res.status(500).json({ respuesta: "Error al contactar con el asistente." });
@@ -99,12 +116,16 @@ router.post("/", requireLogin, async (req, res) => {
 // Generar mapa mental
 router.post("/mapa-mental", requireLogin, async (req, res) => {
   const { contexto, titulo, conversacionId } = req.body;
-  console.log("📝 Contexto recibido para mapa mental:", contexto?.substring(0, 100));
+  console.log(
+    "📝 Contexto recibido para mapa mental:",
+    contexto?.substring(0, 100)
+  );
   console.log("📝 ID de conversación para asociar mapa:", conversacionId);
 
   if (!conversacionId) {
-    return res.status(400).json({ 
-      error: "El ID de la conversación es obligatorio para crear un mapa mental." 
+    return res.status(400).json({
+      error:
+        "El ID de la conversación es obligatorio para crear un mapa mental.",
     });
   }
 
@@ -118,7 +139,10 @@ router.post("/mapa-mental", requireLogin, async (req, res) => {
     console.log("👉 Status Skynet (Mapa Mental):", response.status);
 
     const data = await response.json();
-    console.log("👉 Data recibida (mapa mental):", JSON.stringify(data).substring(0, 200));
+    console.log(
+      "👉 Data recibida (mapa mental):",
+      JSON.stringify(data).substring(0, 200)
+    );
 
     let mapaMental = data.respuesta || {};
 
@@ -155,13 +179,14 @@ router.post("/mapa-mental", requireLogin, async (req, res) => {
 
     res.json({
       mapaMental,
-      mensaje: "Mapa mental guardado y asociado a la conversación correctamente",
+      mensaje:
+        "Mapa mental guardado y asociado a la conversación correctamente",
     });
   } catch (err) {
     console.error("❌ Error en mapa mental:", err);
-    res.status(500).json({ 
+    res.status(500).json({
       error: "Error al generar o guardar el mapa mental.",
-      details: err.message 
+      details: err.message,
     });
   }
 });

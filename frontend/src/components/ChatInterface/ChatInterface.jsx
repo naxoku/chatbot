@@ -22,7 +22,6 @@ import ChatInput from "./ChatInput";
 import DocumentsModal from "../DocumentsModal";
 import MindMapModal from "../MindMapModal";
 import ArtifactsModal from "../ArtifactsModal";
-import ContextParameters from "./ContextParameters";
 import HelpPanel from "../HelpPanel";
 import LoadingIndicator from "../LoadingIndicator";
 import LogoUCT from "../../assets/logouct.png";
@@ -31,17 +30,6 @@ import LogoUCT from "../../assets/logouct.png";
 // CONFIGURACIÓN
 // ============================================================================
 import { LOGOUT, API_BASE } from "../../config.js";
-
-// Acciones rápidas disponibles para el usuario
-const quickActions = [
-  {
-    id: "mapa-mental",
-    text: "Generar mapa mental",
-    icon: "fas fa-project-diagram",
-    color: "teal",
-    description: "Crear un mapa mental del contenido de la conversación",
-  },
-];
 
 // ============================================================================
 // COMPONENTE DE CARGA
@@ -80,6 +68,8 @@ const ChatInterface = () => {
   const [messages, setMessages] = useState([]);
   const [documentsList, setDocumentsList] = useState([]);
   const [isHelpPanelOpen, setIsHelpPanelOpen] = useState(false);
+  const [quotedMessage, setQuotedMessage] = useState(null); // Nuevo estado para el mensaje citado
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const conversationIdRef = useRef(null);
 
   // --------------------------------------------------------------------------
@@ -95,7 +85,6 @@ const ChatInterface = () => {
     chats,
     isMobile,
     isDocumentsModalOpen,
-    selectedParameters,
     selectedArtifact,
     isMindMapModalOpen,
     isDarkMode,
@@ -109,7 +98,6 @@ const ChatInterface = () => {
     handleNewChat,
     handleInputChange,
     handleDocumentSelect,
-    handleParameterChange,
     handleOpenArtifact,
     handleCloseMindMapModal,
     toggleDarkMode,
@@ -138,20 +126,17 @@ const ChatInterface = () => {
   const backendStatus = useBackendStatus();
 
   // Lógica principal del chat (envío de mensajes, feedback, mapas mentales)
-  const {
-    isTyping,
-    sendMessage,
-    handleFeedback,
-    generarMapaMental,
-    handleQuickAction,
-  } = useChatLogic(
-    documentsList,
-    navigate,
-    addArtifact,
-    setMessages,
-    setInput,
-    chatState
-  );
+  const { isTyping, sendMessage, handleFeedback, generarMapaMental } =
+    useChatLogic(
+      documentsList,
+      navigate,
+      addArtifact,
+      setMessages,
+      setInput,
+      chatState,
+      quotedMessage,
+      setQuotedMessage
+    );
 
   // --------------------------------------------------------------------------
   // HANDLERS - GESTIÓN DE CONVERSACIONES
@@ -185,6 +170,8 @@ const ChatInterface = () => {
       chatState.setCurrentChat(chat);
       if (chatState.isMobile) chatState.setIsSidebarOpen(false);
 
+      setIsLoadingMessages(true);
+
       if (chat.conversacionId) {
         // Conversación existente: cargar mensajes desde el backend
         await loadConversacionMessages(chat.conversacionId);
@@ -200,6 +187,8 @@ const ChatInterface = () => {
           },
         ]);
       }
+
+      setIsLoadingMessages(false);
     },
     [chatState, loadConversacionMessages, setMessages, user?.name]
   );
@@ -366,29 +355,31 @@ const ChatInterface = () => {
    */
   const handleSendMessage = useCallback(async () => {
     if (input.trim()) {
-      const newConvId = await sendMessage(input, selectedParameters);
+      const newConvId = await sendMessage(input);
       if (newConvId) {
         conversationIdRef.current = newConvId;
       }
     }
-  }, [sendMessage, input, selectedParameters]);
+  }, [sendMessage, input]);
 
   /**
-   * Maneja la selección de una acción rápida
+   * Maneja la selección de una acción rápida desde un mensaje
    * Si es "Generar mapa mental", ejecuta la función correspondiente
-   * Si no, establece el texto en el input
+   * Si no, establece el texto en el input incluyendo el contexto del mensaje
    */
   const handleQuickActionSelect = useCallback(
-    (actionText) => {
-      if (actionText === "Generar mapa mental" && messages.length > 1) {
+    (action, message) => {
+      if (action.id === "mapa-mental") {
+        // Generar mapa mental directamente, sin modificar el input
         const convId = conversationIdRef.current || currentChat.conversacionId;
         generarMapaMental(messages, convId);
       } else {
-        setInput(actionText);
-        handleQuickAction(actionText);
+        // Establecer el mensaje citado y el texto en el input
+        setQuotedMessage(message);
+        setInput(action.text);
       }
     },
-    [handleQuickAction, generarMapaMental, messages, setInput, currentChat]
+    [generarMapaMental, messages, setInput, currentChat, setQuotedMessage]
   );
 
   // --------------------------------------------------------------------------
@@ -579,7 +570,7 @@ const ChatInterface = () => {
             {isTyping && (
               <div className="mb-4">
                 <LoadingIndicator
-                  message="El asistente está pensando..."
+                  message=""
                   type="processing"
                   isDarkMode={isDarkMode}
                 />
@@ -588,14 +579,17 @@ const ChatInterface = () => {
             <ChatMessages
               messages={messages}
               isTyping={isTyping}
+              isLoadingMessages={isLoadingMessages}
               onFeedback={handleFeedback}
               isDarkMode={isDarkMode}
               onViewMindMap={handleViewMindMap}
+              onQuickAction={handleQuickActionSelect}
+              onQuoteMessage={setQuotedMessage}
             />
           </div>
         </div>
 
-        {/* Área de input - Parámetros de contexto y campo de texto */}
+        {/* Área de input - Campo de texto */}
         <div
           className={`border-t ${
             isDarkMode
@@ -603,33 +597,15 @@ const ChatInterface = () => {
               : "border-gray-200 bg-white"
           }`}
         >
-          <ContextParameters
-            onParameterChange={handleParameterChange}
-            isDarkMode={isDarkMode}
-            selectedParameters={selectedParameters}
-            generarMapaMental={
-              messages.length > 1
-                ? () => {
-                    const convId =
-                      conversationIdRef.current || currentChat.conversacionId;
-                    generarMapaMental(messages, convId);
-                  }
-                : null
-            }
-            isTyping={isTyping}
-            shouldShow={messages.some((msg) => msg.sender === "user")}
-          />
           <div className="w-full">
             <ChatInput
               input={input}
               onInputChange={handleInputChange}
               onSendMessage={handleSendMessage}
               isTyping={isTyping}
-              quickActions={messages.length > 1 ? [] : quickActions}
-              onQuickAction={handleQuickActionSelect}
               isDarkMode={isDarkMode}
-              selectedParameters={selectedParameters}
-              onParameterChange={handleParameterChange}
+              quotedMessage={quotedMessage} // Pasar el mensaje citado
+              setQuotedMessage={setQuotedMessage} // Pasar la función para limpiar el mensaje citado
             />
           </div>
         </div>

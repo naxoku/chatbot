@@ -3,17 +3,20 @@ const { nanoid } = require("nanoid");
 /**
  * Normaliza mensajes de diferentes formatos a un formato estándar
  * Soporta tanto el formato con 'role' (n8n) como 'sender' (frontend)
- * 
+ *
  * @param {Array} messages - Array de mensajes en cualquier formato
  * @returns {Array} - Array de mensajes normalizados con estructura estándar
  */
 function normalizeMessages(messages) {
   if (!Array.isArray(messages)) {
-    console.error("❌ normalizeMessages recibió datos inválidos:", typeof messages);
+    console.error(
+      "❌ normalizeMessages recibió datos inválidos:",
+      typeof messages
+    );
     return [];
   }
 
-  return messages.map(msg => {
+  return messages.map((msg) => {
     // Si ya tiene el formato correcto, retornarlo tal cual
     if (msg.sender && msg.id) {
       return msg;
@@ -41,6 +44,12 @@ function normalizeMessages(messages) {
       if (msg.artifactData) {
         normalizedMsg.artifactData = msg.artifactData;
       }
+      if (msg.quotedMessageId) {
+        normalizedMsg.quotedMessageId = msg.quotedMessageId;
+      }
+      if (msg.quotedMessageContent) {
+        normalizedMsg.quotedMessageContent = msg.quotedMessageContent;
+      }
 
       return normalizedMsg;
     }
@@ -58,7 +67,7 @@ function normalizeMessages(messages) {
 
 /**
  * Valida que un chat_history tenga la estructura correcta
- * 
+ *
  * @param {Array} chatHistory - Array de mensajes a validar
  * @returns {boolean} - true si es válido, false si no
  */
@@ -67,11 +76,8 @@ function validateChatHistory(chatHistory) {
     return false;
   }
 
-  return chatHistory.every(msg => 
-    msg.id && 
-    msg.sender && 
-    msg.content !== undefined && 
-    msg.timestamp
+  return chatHistory.every(
+    (msg) => msg.id && msg.sender && msg.content !== undefined && msg.timestamp
   );
 }
 

@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { nanoid } from "nanoid";
@@ -11,7 +9,9 @@ export const useChatLogic = (
   addArtifact,
   setMessages,
   setInput,
-  chatState
+  chatState,
+  quotedMessage, // Añadir quotedMessage
+  setQuotedMessage // Añadir setQuotedMessage
 ) => {
   const { currentChat, setCurrentChat, setChats } = chatState;
   const [isTyping, setIsTyping] = useState(false);
@@ -48,9 +48,12 @@ Si el problema persiste, puedes contactar directamente a: **ddper@uct.cl**`;
     isSendingRef.current = true;
     setIsTyping(true);
 
-    const userMsg = createMessage("user", trimmed);
+    const userMsg = createMessage("user", trimmed, {
+      quotedMessage: quotedMessage,
+    });
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
+    setQuotedMessage(null); // Limpiar el mensaje citado después de enviarlo
 
     try {
       const conversacionActualId = conversacionIdRef.current;
@@ -63,6 +66,9 @@ Si el problema persiste, puedes contactar directamente a: **ddper@uct.cl**`;
         documentos: documents,
         parametros: selectedParameters,
         conversacionId: conversacionActualId,
+        quotedMessageId: quotedMessage ? quotedMessage.id : undefined, // Enviar ID del mensaje citado
+        quotedMessageContent: quotedMessage ? quotedMessage.content : undefined, // Enviar contenido del mensaje citado
+        quotedMessageSender: quotedMessage ? quotedMessage.sender : undefined, // Enviar remitente del mensaje citado
       });
 
       const {
@@ -242,13 +248,10 @@ Si el problema persiste, puedes contactar directamente a: **ddper@uct.cl**`;
     );
   };
 
-  const handleQuickAction = (text) => setInput(text);
-
   return {
     isTyping,
     sendMessage,
     handleFeedback,
     generarMapaMental,
-    handleQuickAction,
   };
 };
