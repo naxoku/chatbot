@@ -19,24 +19,32 @@ export const useChatState = () => {
   const [chats, setChats] = useState([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [isDocumentsModalOpen, setIsDocumentsModalOpen] = useState(false);
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [editingTitle, setEditingTitle] = useState("");
   const [selectedParameters, setSelectedParameters] = useState([]);
   const [selectedArtifact, setSelectedArtifact] = useState(null);
   const [isMindMapModalOpen, setIsMindMapModalOpen] = useState(false);
 
-  const handleNewChat = useCallback(() => {
-    setCurrentChat({
-      id: "current", // O un ID temporal que indique que es un nuevo chat
-      name: "Nueva conversación",
-      timestamp: new Date(),
-      mapasAsociados: [],
-      conversacionId: null, // Es crucial que sea null para indicar que no se ha guardado
-    });
-    setInput("");
-    // No añadir a `chats` aquí, se añadirá cuando se guarde en el backend
-    if (isMobile) setIsSidebarOpen(false);
-  }, [isMobile]); // `chats` ya no es una dependencia aquí
+  const handleNewChat = useCallback(
+    (setMessages) => {
+      const newChat = {
+        id: "current",
+        name: "Nueva conversación",
+        timestamp: new Date(),
+        mapasAsociados: [],
+        conversacionId: null,
+      };
+
+      setCurrentChat(newChat);
+      setInput("");
+
+      // Limpiar mensajes si se proporciona la función
+      if (setMessages && typeof setMessages === "function") {
+        setMessages([]);
+      }
+
+      if (isMobile) setIsSidebarOpen(false);
+    },
+    [isMobile]
+  );
 
   const handleSelectChat = useCallback(
     (chat) => {
@@ -63,29 +71,6 @@ export const useChatState = () => {
     },
     [isMobile]
   );
-
-  const handleTitleEdit = () => {
-    setIsEditingTitle(true);
-    setEditingTitle(currentChat?.name || "Nueva Conversación");
-  };
-
-  const handleTitleSave = () => {
-    if (editingTitle.trim()) {
-      const newName = editingTitle.trim();
-      setCurrentChat((prev) => ({ ...prev, name: newName }));
-      setChats((prev) =>
-        prev.map((chat) =>
-          chat.id === currentChat.id ? { ...chat, name: newName } : chat
-        )
-      );
-    }
-    setIsEditingTitle(false);
-  };
-
-  const handleTitleCancel = () => {
-    setIsEditingTitle(false);
-    setEditingTitle("");
-  };
 
   const handleParameterChange = useCallback((newParameters) => {
     setSelectedParameters(newParameters);
@@ -115,8 +100,6 @@ export const useChatState = () => {
     chats,
     isMobile,
     isDocumentsModalOpen,
-    isEditingTitle,
-    editingTitle,
     selectedParameters,
     selectedArtifact,
     isMindMapModalOpen,
@@ -132,7 +115,6 @@ export const useChatState = () => {
     setChats,
     setIsMobile,
     setIsDocumentsModalOpen,
-    setEditingTitle,
     setSelectedParameters,
 
     // Handlers
@@ -141,9 +123,6 @@ export const useChatState = () => {
     closeAll,
     handleInputChange,
     handleDocumentSelect,
-    handleTitleEdit,
-    handleTitleSave,
-    handleTitleCancel,
     handleParameterChange,
     handleOpenArtifact,
     handleCloseMindMapModal,

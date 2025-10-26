@@ -1,4 +1,5 @@
 import VibrantButton from "./VibrantButton";
+import ChatActions from "./ChatActions";
 
 const Sidebar = ({
   chats = [],
@@ -13,6 +14,8 @@ const Sidebar = ({
   LogoUCT,
   toggleDarkMode,
   onViewMapas,
+  onDeleteChat,
+  onRenameChat,
 }) => {
   const getBotStatusConfig = (status) => {
     switch (status) {
@@ -115,33 +118,48 @@ const Sidebar = ({
             </div>
           ) : (
             chats.map((chat) => (
-              <div key={chat.id} className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
-                <button
-                  onClick={() => onSelectChat(chat)}
-                  className="w-full text-left p-3 transition-all duration-200 flex items-center group hover:bg-gray-50 dark:hover:bg-gray-700/50 focus:outline-none focus:ring-2 focus:ring-purple-500/20 hover:shadow-sm"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 flex items-center justify-center mr-3 flex-shrink-0">
-                    <i className="fas fa-comment text-xs text-purple-600 dark:text-purple-400"></i>
+              <div
+                key={chat.id}
+                className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden hover:border-gray-300 dark:hover:border-gray-600 transition-colors group"
+              >
+                <div className="flex items-center justify-between p-3">
+                  <button
+                    onClick={() => onSelectChat(chat)}
+                    className="flex-1 text-left transition-all duration-200 flex items-center hover:bg-gray-50 dark:hover:bg-gray-700/50 focus:outline-none focus:ring-2 focus:ring-purple-500/20 min-w-0"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 flex items-center justify-center mr-3 flex-shrink-0">
+                      <i className="fas fa-comment text-xs text-purple-600 dark:text-purple-400"></i>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="truncate font-medium text-gray-800 dark:text-gray-200 text-sm">
+                        {chat.name}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        {chat.lastMessage || "Sin mensajes"}
+                        {chat.timestamp && (
+                          <span className="ml-2">
+                            •{" "}
+                            {new Date(chat.timestamp).toLocaleDateString(
+                              "es-CL"
+                            )}
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </button>
+
+                  <div className="flex-shrink-0">
+                    <ChatActions
+                      chat={chat}
+                      onDelete={onDeleteChat}
+                      onRename={onRenameChat}
+                    />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="truncate font-medium text-gray-800 dark:text-gray-200 text-sm">
-                      {chat.name}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                      {chat.lastMessage || "Sin mensajes"}
-                      {chat.timestamp && (
-                        <span className="ml-2">
-                          • {new Date(chat.timestamp).toLocaleDateString("es-CL")}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                  <i className="fas fa-chevron-right text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-all duration-200 group-hover:translate-x-1"></i>
-                </button>
-                
+                </div>
+
                 {/* Mostrar mapas mentales asociados */}
                 {chat.mapasAsociados && chat.mapasAsociados.length > 0 && (
-                  <div className="px-3 pb-2">
+                  <div className="px-3 pb-2 border-t border-gray-100 dark:border-gray-700/50 pt-2">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
                         Mapas mentales ({chat.mapasAsociados.length})
@@ -156,10 +174,14 @@ const Sidebar = ({
                             onViewMapas(mapa);
                           }}
                           className="text-xs px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-md hover:bg-purple-200 dark:hover:bg-purple-800/50 transition-colors"
-                          title={`${mapa.titulo} - ${new Date(mapa.fecha_creacion).toLocaleDateString()}`}
+                          title={`${mapa.titulo} - ${new Date(
+                            mapa.fecha_creacion
+                          ).toLocaleDateString()}`}
                         >
                           <i className="fas fa-project-diagram mr-1"></i>
-                          {mapa.titulo.length > 12 ? mapa.titulo.substring(0, 12) + '...' : mapa.titulo}
+                          {mapa.titulo.length > 12
+                            ? mapa.titulo.substring(0, 12) + "..."
+                            : mapa.titulo}
                         </button>
                       ))}
                     </div>

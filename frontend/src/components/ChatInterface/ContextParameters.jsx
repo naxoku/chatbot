@@ -1,3 +1,5 @@
+import Tooltip from "../Tooltip";
+
 const ContextParameters = ({
   onParameterChange,
   isDarkMode,
@@ -13,6 +15,18 @@ const ContextParameters = ({
       icon: "fas fa-compress-alt",
       color: "emerald",
       description: "Proporciona respuestas concisas y resumidas",
+      detailedDescription: (
+        <div>
+          <p className="font-semibold mb-1">Resumir</p>
+          <p className="text-xs mb-2">
+            Obtén respuestas breves y al punto, perfectas cuando necesitas
+            información rápida.
+          </p>
+          <p className="text-xs italic">
+            Ejemplo: "Resume los puntos clave del documento"
+          </p>
+        </div>
+      ),
     },
     {
       id: "detallado",
@@ -20,6 +34,18 @@ const ContextParameters = ({
       icon: "fas fa-expand-alt",
       color: "orange",
       description: "Respuestas detalladas y explicaciones completas",
+      detailedDescription: (
+        <div>
+          <p className="font-semibold mb-1">Explicar mejor</p>
+          <p className="text-xs mb-2">
+            Recibe explicaciones profundas con todos los detalles y contexto
+            necesario.
+          </p>
+          <p className="text-xs italic">
+            Ejemplo: "Explica en detalle cómo funciona este proceso"
+          </p>
+        </div>
+      ),
     },
     {
       id: "ejemplo",
@@ -27,6 +53,17 @@ const ContextParameters = ({
       icon: "fas fa-lightbulb",
       color: "blue",
       description: "Incluye ejemplos prácticos en las respuestas",
+      detailedDescription: (
+        <div>
+          <p className="font-semibold mb-1">Dar ejemplo</p>
+          <p className="text-xs mb-2">
+            Las respuestas incluirán ejemplos prácticos y casos de uso reales.
+          </p>
+          <p className="text-xs italic">
+            Ejemplo: "Dame ejemplos de cómo aplicar esto"
+          </p>
+        </div>
+      ),
     },
   ];
 
@@ -77,35 +114,59 @@ const ContextParameters = ({
           {parameters.map((param) => {
             const isSelected = selectedParameters.includes(param.id);
             return (
-              <button
+              <Tooltip
                 key={param.id}
-                onClick={() => handleParameterToggle(param.id)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-full border text-sm font-medium ${getColorClasses(
-                  param.color,
-                  isSelected
-                )}`}
-                title={param.description}
+                content={param.detailedDescription}
+                position="top"
+                isDarkMode={isDarkMode}
               >
-                <i className={param.icon}></i>
-                <span>{param.label}</span>
-              </button>
+                <button
+                  onClick={() => handleParameterToggle(param.id)}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-full border text-sm font-medium ${getColorClasses(
+                    param.color,
+                    isSelected
+                  )}`}
+                  aria-label={param.description}
+                >
+                  <i className={param.icon}></i>
+                  <span>{param.label}</span>
+                  {isSelected && <i className="fas fa-check text-xs"></i>}
+                </button>
+              </Tooltip>
             );
           })}
 
           {generarMapaMental && (
-            <button
-              type="button"
-              onClick={() => generarMapaMental()}
-              disabled={isTyping}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-full border text-sm font-medium ${getColorClasses(
-                "teal",
-                false
-              )} ${isTyping ? "opacity-50 cursor-not-allowed" : ""}`}
-              title="Generar mapa mental del contenido"
+            <Tooltip
+              content={
+                <div>
+                  <p className="font-semibold mb-1">Generar Mapa Mental</p>
+                  <p className="text-xs mb-2">
+                    Crea una visualización interactiva del contenido de la
+                    conversación.
+                  </p>
+                  <p className="text-xs italic">
+                    Útil para organizar ideas y conceptos complejos
+                  </p>
+                </div>
+              }
+              position="top"
+              isDarkMode={isDarkMode}
             >
-              <i className="fas fa-project-diagram"></i>
-              <span>Mapa Mental</span>
-            </button>
+              <button
+                type="button"
+                onClick={() => generarMapaMental()}
+                disabled={isTyping}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-full border text-sm font-medium ${getColorClasses(
+                  "teal",
+                  false
+                )} ${isTyping ? "opacity-50 cursor-not-allowed" : ""}`}
+                aria-label="Generar mapa mental del contenido"
+              >
+                <i className="fas fa-project-diagram"></i>
+                <span>Mapa Mental</span>
+              </button>
+            </Tooltip>
           )}
         </div>
       </div>

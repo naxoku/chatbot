@@ -23,6 +23,8 @@ import DocumentsModal from "../DocumentsModal";
 import MindMapModal from "../MindMapModal";
 import ArtifactsModal from "../ArtifactsModal";
 import ContextParameters from "./ContextParameters";
+import HelpPanel from "../HelpPanel";
+import LoadingIndicator from "../LoadingIndicator";
 import LogoUCT from "../../assets/logouct.png";
 
 // ============================================================================
@@ -77,6 +79,7 @@ const ChatInterface = () => {
   // --------------------------------------------------------------------------
   const [messages, setMessages] = useState([]);
   const [documentsList, setDocumentsList] = useState([]);
+  const [isHelpPanelOpen, setIsHelpPanelOpen] = useState(false);
 
   // --------------------------------------------------------------------------
   // HOOKS PERSONALIZADOS - GESTIÓN DE ESTADO
@@ -91,8 +94,6 @@ const ChatInterface = () => {
     chats,
     isMobile,
     isDocumentsModalOpen,
-    isEditingTitle,
-    editingTitle,
     selectedParameters,
     selectedArtifact,
     isMindMapModalOpen,
@@ -102,15 +103,11 @@ const ChatInterface = () => {
     setChats,
     setIsSidebarOpen,
     setIsArtifactsOpen,
-    setEditingTitle,
     setIsDocumentsModalOpen,
     closeAll,
     handleNewChat,
     handleInputChange,
     handleDocumentSelect,
-    handleTitleEdit,
-    handleTitleSave,
-    handleTitleCancel,
     handleParameterChange,
     handleOpenArtifact,
     handleCloseMindMapModal,
@@ -160,6 +157,25 @@ const ChatInterface = () => {
   // --------------------------------------------------------------------------
 
   /**
+   * Maneja la creación de una nueva conversación
+   * Limpia los mensajes y resetea el estado
+   */
+  const handleNewChatClick = useCallback(() => {
+    handleNewChat(setMessages);
+    if (user) {
+      setMessages([
+        {
+          id: "welcome",
+          sender: "bot",
+          content: `¡Hola **${user.name}**! Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?`,
+          timestamp: new Date(),
+          feedbackRequested: false,
+        },
+      ]);
+    }
+  }, [handleNewChat, setMessages, user]);
+
+  /**
    * Maneja la selección de una conversación desde el sidebar
    * Carga los mensajes de la conversación seleccionada o limpia el chat para uno nuevo
    */
@@ -185,6 +201,40 @@ const ChatInterface = () => {
       }
     },
     [chatState, loadConversacionMessages, setMessages, user?.name]
+  );
+
+  /**
+   * Maneja la eliminación de una conversación
+   * Elimina del backend y actualiza el estado local
+   */
+  const handleDeleteChat = useCallback(
+    async (chat) => {
+      try {
+        const response = await axios.delete(
+          `${API_BASE}/api/conversaciones/${chat.conversacionId}`
+        );
+
+        if (response.data.success) {
+          // Actualizar lista de conversaciones
+          setChats((prev) =>
+            prev.filter((c) => c.conversacionId !== chat.conversacionId)
+          );
+
+          // Si la conversación eliminada es la actual, crear una nueva
+          if (currentChat.conversacionId === chat.conversacionId) {
+            handleNewChatClick();
+          }
+
+          console.log("✅ Conversación eliminada correctamente");
+        }
+      } catch (error) {
+        console.error("❌ Error al eliminar conversación:", error);
+        alert(
+          "No se pudo eliminar la conversación. Por favor, inténtalo de nuevo."
+        );
+      }
+    },
+    [setChats, currentChat, handleNewChatClick]
   );
 
   /**
@@ -220,6 +270,39 @@ const ChatInterface = () => {
       }
     },
     [setSelectedArtifact, chatState]
+  );
+
+  const handleRenameChat = useCallback(
+    async (chat, newName) => {
+      try {
+        const response = await axios.put(
+          `${API_BASE}/api/conversaciones/${chat.conversacionId}`,
+          {
+            nombre: newName,
+          }
+        );
+
+        if (response.data.success) {
+          setChats((prev) =>
+            prev.map((c) =>
+              c.conversacionId === chat.conversacionId
+                ? { ...c, name: newName }
+                : c
+            )
+          );
+          if (currentChat.conversacionId === chat.conversacionId) {
+            chatState.setCurrentChat((prev) => ({ ...prev, name: newName }));
+          }
+          console.log("✅ Conversación renombrada correctamente");
+        }
+      } catch (error) {
+        console.error("❌ Error al renombrar conversación:", error);
+        alert(
+          "No se pudo renombrar la conversación. Por favor, inténtalo de nuevo."
+        );
+      }
+    },
+    [setChats, currentChat, chatState]
   );
 
   // --------------------------------------------------------------------------
@@ -323,23 +406,49 @@ const ChatInterface = () => {
 
   /**
    * Efecto para manejar el cierre de modales con la tecla Escape
+   * Añadido soporte para Ctrl+K para abrir panel de ayuda
    */
   useEffect(() => {
-    const handleEsc = (e) => e.key === "Escape" && closeAll();
-    document.addEventListener("keydown", handleEsc);
-    return () => document.removeEventListener("keydown", handleEsc);
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        closeAll();
+        setIsHelpPanelOpen(false);
+      }
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        e.key === "k" &&
+        !e.target.matches("textarea, input")
+      ) {
+        e.preventDefault();
+        setIsHelpPanelOpen((prev) => !prev);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [closeAll]);
 
   /**
    * Efecto para prevenir el scroll del body cuando hay modales abiertos en móvil
    */
   useEffect(() => {
-    if ((isSidebarOpen || isArtifactsOpen || isMindMapModalOpen) && isMobile) {
+    if (
+      (isSidebarOpen ||
+        isArtifactsOpen ||
+        isMindMapModalOpen ||
+        isHelpPanelOpen) &&
+      isMobile
+    ) {
       document.body.classList.add("overflow-hidden");
     } else {
       document.body.classList.remove("overflow-hidden");
     }
-  }, [isSidebarOpen, isArtifactsOpen, isMindMapModalOpen, isMobile]);
+  }, [
+    isSidebarOpen,
+    isArtifactsOpen,
+    isMindMapModalOpen,
+    isHelpPanelOpen,
+    isMobile,
+  ]);
 
   // --------------------------------------------------------------------------
   // RENDERIZADO CONDICIONAL - LOADING
@@ -375,7 +484,8 @@ const ChatInterface = () => {
       {(isSidebarOpen ||
         isArtifactsOpen ||
         isDocumentsModalOpen ||
-        isMindMapModalOpen) &&
+        isMindMapModalOpen ||
+        isHelpPanelOpen) &&
         isMobile && (
           <div
             className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -392,9 +502,11 @@ const ChatInterface = () => {
         <Sidebar
           documents={documentsList}
           chats={chats}
-          onNewChat={handleNewChat}
+          onNewChat={handleNewChatClick}
           onDocumentSelect={handleDocumentSelect}
           onSelectChat={handleSelectChat}
+          onDeleteChat={handleDeleteChat}
+          onRenameChat={handleRenameChat}
           onLogout={handleLogout}
           botStatus={botStatus}
           isDarkMode={isDarkMode}
@@ -420,13 +532,7 @@ const ChatInterface = () => {
           isSidebarOpen={isSidebarOpen}
           setIsSidebarOpen={setIsSidebarOpen}
           botStatus={botStatus}
-          isEditingTitle={isEditingTitle}
-          editingTitle={editingTitle}
-          setEditingTitle={setEditingTitle}
-          handleTitleSave={handleTitleSave}
-          handleTitleCancel={handleTitleCancel}
           currentChat={currentChat}
-          handleTitleEdit={handleTitleEdit}
           isDarkMode={isDarkMode}
           artifacts={artifacts}
           isArtifactsOpen={isArtifactsOpen}
@@ -434,11 +540,21 @@ const ChatInterface = () => {
           messages={messages}
           generarMapaMental={generarMapaMental}
           isTyping={isTyping}
+          onOpenHelp={() => setIsHelpPanelOpen(true)}
         />
 
         {/* Área de mensajes - Scrollable */}
         <div className="flex-1 overflow-y-auto">
           <div className="w-full p-4">
+            {isTyping && (
+              <div className="mb-4">
+                <LoadingIndicator
+                  message="El asistente está pensando..."
+                  type="processing"
+                  isDarkMode={isDarkMode}
+                />
+              </div>
+            )}
             <ChatMessages
               messages={messages}
               isTyping={isTyping}
@@ -511,6 +627,13 @@ const ChatInterface = () => {
         artifact={selectedArtifact}
         isDarkMode={isDarkMode}
       />
+
+      {isHelpPanelOpen && (
+        <HelpPanel
+          isDarkMode={isDarkMode}
+          onClose={() => setIsHelpPanelOpen(false)}
+        />
+      )}
     </div>
   );
 };

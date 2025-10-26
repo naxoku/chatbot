@@ -1,19 +1,14 @@
-import React from "react";
+import Tooltip from "../Tooltip";
 
 const ChatHeader = ({
   isSidebarOpen,
   setIsSidebarOpen,
-  isEditingTitle,
-  editingTitle,
-  setEditingTitle,
-  handleTitleSave,
-  handleTitleCancel,
   currentChat,
-  handleTitleEdit,
   isDarkMode,
   artifacts,
   isArtifactsOpen,
   setIsArtifactsOpen,
+  onOpenHelp,
 }) => {
   return (
     <header
@@ -28,72 +23,94 @@ const ChatHeader = ({
     >
       <div className="flex items-center space-x-3">
         {/* Botón para abrir/cerrar sidebar */}
-        <button
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className={`p-2 rounded-lg transition-colors ${
-            isDarkMode
-              ? "text-gray-300 hover:bg-gray-700"
-              : "text-gray-600 hover:bg-gray-100"
-          }`}
-          aria-label="Toggle sidebar"
+        <Tooltip
+          content="Abrir/cerrar menú lateral"
+          position="bottom"
+          isDarkMode={isDarkMode}
         >
-          <i className="fas fa-bars text-lg" />
-        </button>
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className={`p-2 rounded-lg transition-colors ${
+              isDarkMode
+                ? "text-gray-300 hover:bg-gray-700"
+                : "text-gray-600 hover:bg-gray-100"
+            }`}
+            aria-label="Toggle sidebar"
+          >
+            <i className="fas fa-bars text-lg" />
+          </button>
+        </Tooltip>
 
         {/* Título de la conversación */}
         <div>
-          {isEditingTitle ? (
-            <input
-              type="text"
-              value={editingTitle}
-              onChange={(e) => setEditingTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleTitleSave();
-                if (e.key === "Escape") handleTitleCancel();
-              }}
-              onBlur={handleTitleSave}
-              className={`px-2 py-1 rounded text-sm font-semibold bg-transparent border-b-2 focus:outline-none ${
-                isDarkMode
-                  ? "text-white border-gray-500"
-                  : "text-gray-900 border-gray-400"
-              }`}
-              autoFocus
-            />
-          ) : (
-            <h2
-              className={`font-semibold truncate cursor-pointer transition-colors ${
-                isDarkMode
-                  ? "text-white hover:text-gray-300"
-                  : "text-gray-900 hover:text-gray-600"
-              }`}
-              onClick={handleTitleEdit}
-              title="Click para editar título"
-            >
-              {currentChat?.name || "Nueva Conversación"}
-            </h2>
-          )}
+          <h2
+            className={`font-semibold truncate ${
+              isDarkMode ? "text-white" : "text-gray-900"
+            }`}
+          >
+            {currentChat?.name || "Nueva Conversación"}
+          </h2>
         </div>
       </div>
 
       {/* Botones de la derecha */}
       <div className="flex items-center space-x-2">
-        {artifacts && (
-          <button
-            onClick={() => setIsArtifactsOpen(!isArtifactsOpen)}
-            className={`p-2 rounded-lg transition-colors relative ${
-              isDarkMode
-                ? "text-gray-300 hover:bg-gray-700"
-                : "text-gray-600 hover:bg-gray-100"
-            }`}
-            title="Artefactos"
+        {onOpenHelp && (
+          <Tooltip
+            content={
+              <div>
+                <p className="font-semibold mb-1">Centro de Ayuda</p>
+                <p className="text-xs">Presiona Ctrl+K para abrir</p>
+              </div>
+            }
+            position="bottom"
+            isDarkMode={isDarkMode}
           >
-            <i className="fas fa-layer-group" />
-            {artifacts.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                {artifacts.length}
-              </span>
-            )}
-          </button>
+            <button
+              onClick={onOpenHelp}
+              className={`p-2 rounded-lg transition-colors ${
+                isDarkMode
+                  ? "text-gray-300 hover:bg-gray-700"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+              aria-label="Abrir centro de ayuda"
+            >
+              <i className="fas fa-question-circle text-lg" />
+            </button>
+          </Tooltip>
+        )}
+
+        {/* Botón de artefactos */}
+        {artifacts && (
+          <Tooltip
+            content={
+              <div>
+                <p className="font-semibold mb-1">Artefactos</p>
+                <p className="text-xs">
+                  Mapas mentales y otros contenidos generados
+                </p>
+              </div>
+            }
+            position="bottom"
+            isDarkMode={isDarkMode}
+          >
+            <button
+              onClick={() => setIsArtifactsOpen(!isArtifactsOpen)}
+              className={`p-2 rounded-lg transition-colors relative ${
+                isDarkMode
+                  ? "text-gray-300 hover:bg-gray-700"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+              aria-label="Ver artefactos"
+            >
+              <i className="fas fa-layer-group text-lg" />
+              {artifacts.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {artifacts.length}
+                </span>
+              )}
+            </button>
+          </Tooltip>
         )}
       </div>
     </header>
