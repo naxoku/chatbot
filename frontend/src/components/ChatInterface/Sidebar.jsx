@@ -16,6 +16,7 @@ const Sidebar = ({
   onViewMapas,
   onDeleteChat,
   onRenameChat,
+  currentChatId, // Agregar prop para el chat actual
 }) => {
   const getBotStatusConfig = (status) => {
     switch (status) {
@@ -44,6 +45,7 @@ const Sidebar = ({
 
   return (
     <div className="relative flex flex-col h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-xl">
+      {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/10 dark:to-blue-900/10">
         <div className="flex items-center space-x-3">
           {LogoUCT && (
@@ -72,6 +74,7 @@ const Sidebar = ({
         </button>
       </div>
 
+      {/* Action Buttons */}
       <div className="p-4 space-y-3">
         <VibrantButton
           color="purple"
@@ -93,6 +96,7 @@ const Sidebar = ({
         <div className="h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-600 to-transparent"></div>
       </div>
 
+      {/* Chat List */}
       <div className="flex-1 p-4 overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
@@ -104,92 +108,170 @@ const Sidebar = ({
         </div>
 
         <div className="space-y-2">
-          {chats.length === 0 ? (
-            <div className="text-center py-8">
-              <div className="w-12 h-12 mx-auto mb-3 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center">
-                <i className="fas fa-comments text-xl text-gray-400 dark:text-gray-500"></i>
-              </div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
-                No hay conversaciones
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-500">
-                Crea una nueva para empezar
-              </p>
-            </div>
-          ) : (
-            chats.map((chat) => (
-              <div
-                key={chat.id}
-                className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden hover:border-gray-300 dark:hover:border-gray-600 transition-colors group"
-              >
-                <div className="flex items-center justify-between p-3">
-                  <button
-                    onClick={() => onSelectChat(chat)}
-                    className="flex-1 text-left transition-all duration-200 flex items-center hover:bg-gray-50 dark:hover:bg-gray-700/50 focus:outline-none focus:ring-2 focus:ring-purple-500/20 min-w-0"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 flex items-center justify-center mr-3 flex-shrink-0">
-                      <i className="fas fa-comment text-xs text-purple-600 dark:text-purple-400"></i>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="truncate font-medium text-gray-800 dark:text-gray-200 text-sm">
-                        {chat.name}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                        {chat.lastMessage || "Sin mensajes"}
-                        {chat.timestamp && (
-                          <span className="ml-2">
-                            •{" "}
-                            {new Date(chat.timestamp).toLocaleDateString(
-                              "es-CL"
-                            )}
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                  </button>
-
-                  <div className="flex-shrink-0">
-                    <ChatActions
-                      chat={chat}
-                      onDelete={onDeleteChat}
-                      onRename={onRenameChat}
-                    />
-                  </div>
+          {
+            chats.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="w-12 h-12 mx-auto mb-3 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center">
+                  <i className="fas fa-comments text-xl text-gray-400 dark:text-gray-500"></i>
                 </div>
-
-                {/* Mostrar mapas mentales asociados */}
-                {chat.mapasAsociados && chat.mapasAsociados.length > 0 && (
-                  <div className="px-3 pb-2 border-t border-gray-100 dark:border-gray-700/50 pt-2">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                        Mapas mentales ({chat.mapasAsociados.length})
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {chat.mapasAsociados.map((mapa) => (
-                        <button
-                          key={mapa.id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onViewMapas(mapa);
-                          }}
-                          className="text-xs px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-md hover:bg-purple-200 dark:hover:bg-purple-800/50 transition-colors"
-                          title={`${mapa.titulo} - ${new Date(
-                            mapa.fecha_creacion
-                          ).toLocaleDateString()}`}
-                        >
-                          <i className="fas fa-project-diagram mr-1"></i>
-                          {mapa.titulo.length > 12
-                            ? mapa.titulo.substring(0, 12) + "..."
-                            : mapa.titulo}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+                  No hay conversaciones
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-500">
+                  Crea una nueva para empezar
+                </p>
               </div>
-            ))
-          )}
+            ) : (
+              chats.map((chat) => {
+                const isActive =
+                  currentChatId === chat.conversacionId ||
+                  currentChatId === chat.id;
+
+                return (
+                  <div
+                    key={chat.id}
+                    className={`
+                    border rounded-xl
+                    hover:shadow-md
+                    transition-all duration-200 
+                    group
+                    ${
+                      isActive
+                        ? isDarkMode
+                          ? "bg-gradient-to-r from-purple-900/30 to-blue-900/30 border-purple-700"
+                          : "bg-gradient-to-r from-purple-50 to-blue-50 border-purple-300"
+                        : isDarkMode
+                        ? "bg-gray-800/50 border-gray-700 hover:border-gray-600"
+                        : "bg-white border-gray-200 hover:border-gray-300"
+                    }
+                  `}
+                  >
+                    {/* Chat Main Content */}
+                    <div className="flex items-start gap-3 p-3">
+                      {/* Avatar/Icon */}
+                      <button
+                        onClick={() => onSelectChat(chat)}
+                        className="
+                        w-10 h-10 rounded-lg 
+                        bg-gradient-to-br from-purple-100 to-blue-100 
+                        dark:from-purple-900/30 dark:to-blue-900/30 
+                        flex items-center justify-center 
+                        flex-shrink-0
+                        group-hover:scale-105
+                        transition-transform duration-200
+                      "
+                      >
+                        <i
+                          className={`fas fa-comment text-sm ${
+                            isActive
+                              ? "text-white"
+                              : "text-purple-600 dark:text-purple-400"
+                          }`}
+                        ></i>
+                      </button>
+
+                      {/* Text Content */}
+                      <button
+                        onClick={() => onSelectChat(chat)}
+                        className={`
+                        flex-1 text-left min-w-0
+                        focus:outline-none focus:ring-2 focus:ring-purple-500/20 rounded-lg
+                        -ml-1 -my-1 p-1
+                      `}
+                      >
+                        <p
+                          className={`
+                          truncate font-medium 
+                          text-sm
+                          transition-colors duration-200
+                          ${
+                            isActive
+                              ? "text-purple-700 dark:text-purple-300 font-semibold"
+                              : "text-gray-800 dark:text-gray-200 group-hover:text-purple-600 dark:group-hover:text-purple-400"
+                          }
+                        `}
+                        >
+                          {chat.name}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                          {chat.lastMessage || "Sin mensajes"}
+                          {chat.timestamp && (
+                            <span className="ml-2">
+                              •{" "}
+                              {new Date(chat.timestamp).toLocaleDateString(
+                                "es-CL"
+                              )}
+                            </span>
+                          )}
+                        </p>
+                      </button>
+
+                      {/* Actions Menu */}
+                      <div className="flex-shrink-0 -mr-1">
+                        <ChatActions
+                          chat={chat}
+                          onDelete={onDeleteChat}
+                          onRename={onRenameChat}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Mind Maps Section */}
+                    {chat.mapasAsociados && chat.mapasAsociados.length > 0 && (
+                      <div
+                        className="
+                        px-3 pb-3 pt-2
+                        border-t border-gray-100 dark:border-gray-700/50
+                        bg-gradient-to-r from-purple-50/30 to-blue-50/30
+                        dark:from-purple-900/10 dark:to-blue-900/10
+                      "
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-medium text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                            <i className="fas fa-project-diagram text-purple-600 dark:text-purple-400"></i>
+                            Mapas mentales ({chat.mapasAsociados.length})
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {chat.mapasAsociados.map((mapa) => (
+                            <button
+                              key={mapa.id}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onViewMapas(mapa);
+                              }}
+                              className="
+                              text-xs px-3 py-1.5
+                              bg-white dark:bg-gray-800
+                              border border-purple-200 dark:border-purple-800
+                              text-purple-700 dark:text-purple-300
+                              rounded-lg
+                              hover:bg-purple-50 dark:hover:bg-purple-900/30
+                              hover:border-purple-300 dark:hover:border-purple-700
+                              hover:shadow-sm
+                              transition-all duration-200
+                              font-medium
+                              flex items-center gap-1.5
+                            "
+                              title={`${mapa.titulo} - ${new Date(
+                                mapa.fecha_creacion
+                              ).toLocaleDateString()}`}
+                            >
+                              <i className="fas fa-project-diagram"></i>
+                              <span className="max-w-[120px] truncate">
+                                {mapa.titulo}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ); // Cierra el return() de la línea 164
+              }) // Cierra el callback .map() de la línea 126
+            ) // Cierra el paréntesis del "else" del ternario de la línea 125
+          }{" "}
+          {/* Cierra la expresión JSX del ternario de la línea 112 */}
         </div>
       </div>
 
@@ -197,8 +279,9 @@ const Sidebar = ({
         <div className="h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-600 to-transparent"></div>
       </div>
 
+      {/* Footer Controls */}
       <div className="p-4 space-y-3">
-        {/* Enhanced bot status */}
+        {/* Bot Status */}
         <div className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
@@ -223,16 +306,36 @@ const Sidebar = ({
         {/* Dark Mode Toggle */}
         <button
           onClick={toggleDarkMode}
-          className="w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-xl font-medium text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500/20 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+          className="
+            w-full flex items-center justify-center space-x-2 
+            py-3 px-4 rounded-xl 
+            font-medium text-gray-600 dark:text-gray-300 
+            hover:text-gray-800 dark:hover:text-white 
+            hover:bg-gray-100 dark:hover:bg-gray-700/50 
+            transition-all duration-200 
+            focus:outline-none focus:ring-2 focus:ring-gray-500/20 
+            border border-gray-200 dark:border-gray-700 
+            hover:border-gray-300 dark:hover:border-gray-600
+          "
         >
           <i className={`fas ${isDarkMode ? "fa-sun" : "fa-moon"}`}></i>
           <span>{isDarkMode ? "Modo Claro" : "Modo Oscuro"}</span>
         </button>
 
-        {/* Enhanced logout button */}
+        {/* Logout Button */}
         <button
           onClick={onLogout}
-          className="w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-xl font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500/20 border border-red-200 dark:border-red-800 hover:border-red-300 dark:hover:border-red-700"
+          className="
+            w-full flex items-center justify-center space-x-2 
+            py-3 px-4 rounded-xl 
+            font-medium text-red-600 dark:text-red-400 
+            hover:text-red-700 dark:hover:text-red-300 
+            hover:bg-red-50 dark:hover:bg-red-900/10 
+            transition-all duration-200 
+            focus:outline-none focus:ring-2 focus:ring-red-500/20 
+            border border-red-200 dark:border-red-800 
+            hover:border-red-300 dark:hover:border-red-700
+          "
         >
           <i className="fas fa-sign-out-alt"></i>
           <span>Cerrar Sesión</span>

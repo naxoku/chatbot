@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from "react";
-import Tooltip from "../Tooltip";
+import Tooltip from "../ToolTip";
 
 const ChatInput = ({
   input,

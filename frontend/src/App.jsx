@@ -47,7 +47,13 @@ const App = () => {
   };
 
   const addArtifact = (newArtifact) => {
-    setArtifacts((prev) => [...prev, newArtifact]);
+    setArtifacts((prev) => {
+      // Evitar duplicados: si ya existe un artefacto con el mismo ID, no lo añadimos
+      if (prev.some((art) => art.id === newArtifact.id)) {
+        return prev;
+      }
+      return [...prev, newArtifact];
+    });
   };
 
   const removeArtifact = (id) => {
@@ -64,7 +70,7 @@ const App = () => {
       isAuthenticated,
       setIsAuthenticated,
     }),
-    [isDarkMode, artifacts, isAuthenticated]
+    [isDarkMode, artifacts, isAuthenticated, toggleDarkMode]
   );
 
   // Mostrar loader mientras verifica la sesión inicial

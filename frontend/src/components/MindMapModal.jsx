@@ -1,7 +1,10 @@
 import ReactFlowMindMap from "../utils/renderMindMap.jsx";
 
 const MindMapModal = ({ isOpen, onClose, artifact, isDarkMode }) => {
-  if (!isOpen || !artifact) return null;
+  if (!isOpen || !artifact || !artifact.name) {
+    console.warn("MindMapModal: Artifact is missing required properties.");
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -50,7 +53,7 @@ const MindMapModal = ({ isOpen, onClose, artifact, isDarkMode }) => {
                   isDarkMode ? "text-gray-400" : "text-gray-500"
                 }`}
               >
-                {artifact.description}
+                {artifact.description || "Sin descripción disponible"}
               </p>
             </div>
           </div>

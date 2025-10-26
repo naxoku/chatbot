@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect, useCallback } from "react";
+import { useState, useContext, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../App";
 import axios from "axios";
@@ -80,6 +80,7 @@ const ChatInterface = () => {
   const [messages, setMessages] = useState([]);
   const [documentsList, setDocumentsList] = useState([]);
   const [isHelpPanelOpen, setIsHelpPanelOpen] = useState(false);
+  const conversationIdRef = useRef(null);
 
   // --------------------------------------------------------------------------
   // HOOKS PERSONALIZADOS - GESTIÓN DE ESTADO
@@ -129,7 +130,8 @@ const ChatInterface = () => {
   const { loadConversacionMessages } = useConversationLoader(
     user,
     setChats,
-    setMessages
+    setMessages,
+    addArtifact // Pasar addArtifact
   );
 
   // Monitoreo del estado del backend
@@ -148,8 +150,7 @@ const ChatInterface = () => {
     addArtifact,
     setMessages,
     setInput,
-    chatState,
-    messages
+    chatState
   );
 
   // --------------------------------------------------------------------------
@@ -244,24 +245,45 @@ const ChatInterface = () => {
   const handleViewMindMap = useCallback(
     async (mapa) => {
       try {
+        // Si el objeto ya tiene los datos completos (desde el chat), usarlos directamente
+        if (mapa.data && mapa.name) {
+          setSelectedArtifact(mapa);
+          chatState.setIsMindMapModalOpen(true);
+          return;
+        }
+
+        // Si no, cargar los datos desde el backend (desde el sidebar)
+        const mapaId = mapa.id || mapa.conversacionId;
+        if (!mapaId) {
+          console.error("ID de mapa mental no válido:", mapa);
+          alert("No se pudo identificar el mapa mental.");
+          return;
+        }
+
         const response = await axios.get(
-          `${API_BASE}/api/mapas-mentales/${mapa.id}`
+          `${API_BASE}/api/mapas-mentales/${mapaId}`
         );
 
         if (response.data.success) {
           const fullMindMapData = response.data.mapa;
 
-          setSelectedArtifact({
+          const artifactData = {
             id: fullMindMapData.id,
-            name: fullMindMapData.titulo,
+            name: fullMindMapData.titulo || "Mapa Mental sin título",
             type: "mindmap",
             icon: "fas fa-project-diagram",
             color: "purple",
-            data: fullMindMapData.estructura_json.respuesta.datos,
+            data:
+              fullMindMapData.estructura_json?.respuesta?.datos ||
+              fullMindMapData.estructura_json ||
+              fullMindMapData.respuesta?.datos ||
+              {},
             createdAt: fullMindMapData.fecha_creacion,
-            description: fullMindMapData.contexto,
-          });
+            description:
+              fullMindMapData.contexto || "Sin descripción disponible",
+          };
 
+          setSelectedArtifact(artifactData);
           chatState.setIsMindMapModalOpen(true);
         }
       } catch (error) {
@@ -342,9 +364,12 @@ const ChatInterface = () => {
    * Maneja el envío de un mensaje desde el input
    * Valida que el mensaje no esté vacío antes de enviarlo
    */
-  const handleSendMessage = useCallback(() => {
+  const handleSendMessage = useCallback(async () => {
     if (input.trim()) {
-      sendMessage(input, selectedParameters);
+      const newConvId = await sendMessage(input, selectedParameters);
+      if (newConvId) {
+        conversationIdRef.current = newConvId;
+      }
     }
   }, [sendMessage, input, selectedParameters]);
 
@@ -356,13 +381,14 @@ const ChatInterface = () => {
   const handleQuickActionSelect = useCallback(
     (actionText) => {
       if (actionText === "Generar mapa mental" && messages.length > 1) {
-        generarMapaMental(messages);
+        const convId = conversationIdRef.current || currentChat.conversacionId;
+        generarMapaMental(messages, convId);
       } else {
         setInput(actionText);
         handleQuickAction(actionText);
       }
     },
-    [handleQuickAction, generarMapaMental, messages, setInput]
+    [handleQuickAction, generarMapaMental, messages, setInput, currentChat]
   );
 
   // --------------------------------------------------------------------------
@@ -538,7 +564,11 @@ const ChatInterface = () => {
           isArtifactsOpen={isArtifactsOpen}
           setIsArtifactsOpen={setIsArtifactsOpen}
           messages={messages}
-          generarMapaMental={generarMapaMental}
+          generarMapaMental={() => {
+            const convId =
+              conversationIdRef.current || currentChat.conversacionId;
+            generarMapaMental(messages, convId);
+          }}
           isTyping={isTyping}
           onOpenHelp={() => setIsHelpPanelOpen(true)}
         />
@@ -578,7 +608,13 @@ const ChatInterface = () => {
             isDarkMode={isDarkMode}
             selectedParameters={selectedParameters}
             generarMapaMental={
-              messages.length > 1 ? () => generarMapaMental(messages) : null
+              messages.length > 1
+                ? () => {
+                    const convId =
+                      conversationIdRef.current || currentChat.conversacionId;
+                    generarMapaMental(messages, convId);
+                  }
+                : null
             }
             isTyping={isTyping}
             shouldShow={messages.some((msg) => msg.sender === "user")}
@@ -621,12 +657,14 @@ const ChatInterface = () => {
         />
       )}
 
-      <MindMapModal
-        isOpen={isMindMapModalOpen}
-        onClose={handleCloseMindMapModal}
-        artifact={selectedArtifact}
-        isDarkMode={isDarkMode}
-      />
+      {isMindMapModalOpen && (
+        <MindMapModal
+          isOpen={isMindMapModalOpen}
+          onClose={handleCloseMindMapModal}
+          artifact={selectedArtifact}
+          isDarkMode={isDarkMode}
+        />
+      )}
 
       {isHelpPanelOpen && (
         <HelpPanel

@@ -15,7 +15,12 @@ import { API_BASE } from "../config.js";
  * @param {Function} setMessages - Función para actualizar los mensajes del chat
  * @returns {Object} Funciones para cargar conversaciones
  */
-export const useConversationLoader = (user, setChats, setMessages) => {
+export const useConversationLoader = (
+  user,
+  setChats,
+  setMessages,
+  addArtifact
+) => {
   /**
    * Carga los mensajes de una conversación específica desde el backend
    * @param {number} conversacionId - ID de la conversación a cargar
@@ -30,20 +35,10 @@ export const useConversationLoader = (user, setChats, setMessages) => {
         if (response.data.success) {
           const conversacion = response.data.conversacion;
 
-          // Mensaje de bienvenida siempre al inicio
-          const welcomeMessage = {
-            id: "welcome",
-            sender: "bot",
-            content: `¡Hola **${user.name}**! Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?`,
-            timestamp: new Date(),
-            feedbackRequested: false,
-          };
-
-          // Combinar mensaje de bienvenida con historial y ordenar por timestamp
-          const formattedMessages = [
-            welcomeMessage,
-            ...conversacion.chat_history,
-          ].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+          // No añadir mensaje de bienvenida aquí, se gestiona en ChatInterface
+          const formattedMessages = conversacion.chat_history.sort(
+            (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+          );
 
           setMessages(formattedMessages);
         }
@@ -51,7 +46,7 @@ export const useConversationLoader = (user, setChats, setMessages) => {
         console.error("Error al cargar mensajes de conversación:", error);
       }
     },
-    [user?.name, setMessages]
+    [setMessages]
   );
 
   /**
@@ -81,12 +76,61 @@ export const useConversationLoader = (user, setChats, setMessages) => {
                 lastMessage.substring(0, 50) +
                 (lastMessage.length > 50 ? "..." : ""),
               timestamp: conv.fecha_creacion,
-              mapasAsociados: conv.mapas_asociados || [],
+              mapasAsociados: [], // Inicializar vacío, se llenará después
               conversacionId: conv.id,
             };
           });
 
-          setChats(formattedChats);
+          // Cargar detalles de mapas mentales para cada conversación
+          const chatsWithMaps = await Promise.all(
+            formattedChats.map(async (chat) => {
+              const originalConv = conversaciones.find(
+                (c) => c.id === chat.conversacionId
+              );
+              if (
+                originalConv &&
+                originalConv.mapas_mentales_ids &&
+                originalConv.mapas_mentales_ids.length > 0
+              ) {
+                try {
+                  const mapsResponse = await axios.get(
+                    `${API_BASE}/api/mapas-mentales/conversacion/${chat.conversacionId}`
+                  );
+                  if (mapsResponse.data.success) {
+                    return { ...chat, mapasAsociados: mapsResponse.data.mapas };
+                  }
+                } catch (mapError) {
+                  console.error(
+                    `Error al cargar mapas mentales para conversación ${chat.conversacionId}:`,
+                    mapError
+                  );
+                }
+              }
+              return chat;
+            })
+          );
+
+          setChats(chatsWithMaps);
+
+          // Añadir todos los mapas mentales cargados al contexto global de artefactos
+          const allMaps = chatsWithMaps.flatMap((chat) =>
+            chat.mapasAsociados.map((mapa) => ({
+              id: mapa.id,
+              name: mapa.titulo || `Mapa Mental de ${chat.name}`,
+              type: "mindmap",
+              icon: "fas fa-project-diagram",
+              color: "purple",
+              data:
+                mapa.estructura_json?.respuesta?.datos ||
+                mapa.estructura_json ||
+                mapa.respuesta?.datos ||
+                {},
+              createdAt: mapa.fecha_creacion,
+              description:
+                mapa.contexto || "Mapa mental guardado en la base de datos",
+            }))
+          );
+          allMaps.forEach(addArtifact);
         }
       } catch (error) {
         console.error("Error al cargar conversaciones:", error);
@@ -94,7 +138,7 @@ export const useConversationLoader = (user, setChats, setMessages) => {
     };
 
     fetchConversaciones();
-  }, [user, setChats]);
+  }, [user, setChats, addArtifact]);
 
   return { loadConversacionMessages };
 };
