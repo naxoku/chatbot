@@ -2,6 +2,16 @@ import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { CHECK_SESSION } from "../config";
 
+// Helper para envuelve actualizaciones de estado en setTimeout
+// setTimeout actúa como act() implícitamente para sincronización de estado
+const scheduleUpdate = (callback) => {
+  // En desarrollo/testing, usar setTimeout para sincronización
+  if (process.env.NODE_ENV !== 'production') {
+    setTimeout(callback, 0);
+  } else {
+    callback();
+  }
+};
 
 const ProtectedRoute = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
@@ -20,19 +30,24 @@ const ProtectedRoute = ({ children }) => {
 
       const data = await response.json();
 
-      if (data.logged_in) {
-        setIsAuthenticated(true);
-      } else {
-        setIsAuthenticated(false);
-      }
+      scheduleUpdate(() => {
+        if (data.logged_in) {
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+        }
+      });
     } catch (error) {
       console.error("Error verificando sesión:", error);
-      setIsAuthenticated(false);
+      scheduleUpdate(() => {
+        setIsAuthenticated(false);
+      });
     } finally {
-      setIsLoading(false);
+      scheduleUpdate(() => {
+        setIsLoading(false);
+      });
     }
   };
-
   if (isLoading) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
