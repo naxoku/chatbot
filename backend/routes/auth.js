@@ -6,9 +6,13 @@ const router = express.Router();
 
 // Login
 router.post("/login", async (req, res) => {
+  console.log("🔍 Request body:", req.body);
+  console.log("🔍 Content-Type:", req.headers['content-type']);
+  
   const { email, password } = req.body;
 
   if (!email || !password) {
+    console.log("❌ Missing email or password");
     return res.json({
       success: false,
       message: "Email y contraseña son requeridos",
@@ -16,6 +20,8 @@ router.post("/login", async (req, res) => {
   }
 
   try {
+    console.log("🔄 Calling UCT API...");
+    
     // Llamada a la API de validación externa
     const response = await axios.post(
       "https://api-ldap.uct.cl/validacion",
@@ -28,9 +34,11 @@ router.post("/login", async (req, res) => {
       }
     );
 
+    console.log("✅ UCT API response:", response.data);
     const data = response.data;
 
     if (data && data.success && data.data?.authenticated) {
+      console.log("🔐 User authenticated, checking database...");
       const { Rut, cn, uid } = data.data;
 
       // Verificamos si el usuario ya existe
@@ -39,12 +47,15 @@ router.post("/login", async (req, res) => {
         [email]
       );
 
+      console.log("📊 Database query result:", existingUser.rows);
+
       let userId;
       if (existingUser.rows.length === 0) {
+        console.log("➕ Creating new user...");
         // Insertamos el usuario en la nueva tabla
         const result = await db.query(
-          `INSERT INTO usuarios (rut, nombre, correo_electronico, usuario) 
-           VALUES ($1, $2, $3, $4) 
+          `INSERT INTO usuarios (rut, nombre, correo_electronico, usuario)
+           VALUES ($1, $2, $3, $4)
            RETURNING id`,
           [Rut, cn, email, uid]
         );
@@ -52,6 +63,8 @@ router.post("/login", async (req, res) => {
       } else {
         userId = existingUser.rows[0].id;
       }
+
+      console.log("💾 User ID:", userId);
 
       // Guardamos en sesión
       req.session.user = {
@@ -62,19 +75,22 @@ router.post("/login", async (req, res) => {
         usuario: uid,
       };
 
+      console.log("🎉 Login successful!");
       return res.json({
         success: true,
         message: `Bienvenido ${cn}`,
         user: req.session.user,
       });
     } else {
+      console.log("❌ Authentication failed:", data?.message);
       return res.json({
         success: false,
         message: data?.message || "Credenciales inválidas",
       });
     }
   } catch (err) {
-    console.error("Error en login:", err.message);
+    console.error("❌ Error en login:", err.message);
+    console.error("❌ Stack trace:", err.stack);
     return res.json({
       success: false,
       message: "Error en el servicio de autenticación",

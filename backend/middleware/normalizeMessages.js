@@ -17,8 +17,16 @@ function normalizeMessages(messages) {
   }
 
   return messages.map((msg) => {
-    // Si ya tiene el formato correcto, retornarlo tal cual
-    if (msg.sender && msg.id) {
+    // Verificar si ya tiene el formato correcto básico
+    if (msg.sender && (msg.id || msg.id === null)) {
+      // Si id es null, asignar uno nuevo pero no mostrar warning
+      if (msg.id === null) {
+        return {
+          ...msg,
+          id: nanoid(),
+          content: msg.content || "",
+        };
+      }
       return msg;
     }
 
@@ -54,8 +62,11 @@ function normalizeMessages(messages) {
       return normalizedMsg;
     }
 
-    // Si no tiene ni 'role' ni 'sender', intentar construir un mensaje válido
-    console.warn("⚠️ Mensaje con formato desconocido:", msg);
+    // Solo mostrar warning para mensajes con formato realmente desconocido
+    if (!msg.sender && !msg.role) {
+      console.warn("⚠️ Mensaje con formato desconocido:", msg);
+    }
+    
     return {
       id: msg.id || nanoid(),
       sender: msg.sender || "user",

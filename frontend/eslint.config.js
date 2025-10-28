@@ -15,7 +15,30 @@ export default defineConfig([
     ],
     languageOptions: {
       ecmaVersion: 2020,
-      globals: globals.browser,
+      globals: {
+        ...globals.browser,
+        // Variables globales de Jest
+        describe: "readonly",
+        test: "readonly",
+        expect: "readonly",
+        it: "readonly",
+        beforeEach: "readonly",
+        afterEach: "readonly",
+        beforeAll: "readonly",
+        afterAll: "readonly",
+        jest: "readonly",
+        // Variables globales de Testing Library
+        screen: "readonly",
+        fireEvent: "readonly",
+        waitFor: "readonly",
+        userEvent: "readonly",
+        // Variables globales para archivos de mock y Node.js environment
+        global: "readonly",
+        require: "readonly",
+        module: "readonly",
+        process: "readonly",
+        exports: "readonly",
+      },
       parserOptions: {
         ecmaVersion: "latest",
         ecmaFeatures: { jsx: true },
