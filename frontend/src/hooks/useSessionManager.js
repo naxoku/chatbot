@@ -9,7 +9,6 @@ import { CHECK_SESSION } from "../config.js";
  * - Verificar si el usuario tiene una sesión activa
  * - Cargar los datos del usuario desde el backend
  * - Redirigir al login si no hay sesión
- * - Inicializar el mensaje de bienvenida
  *
  * @param {Function} setUser - Función para actualizar el estado del usuario
  * @param {Function} setMessages - Función para actualizar los mensajes del chat
@@ -31,23 +30,12 @@ export const useSessionManager = (setUser, setMessages) => {
         const data = await res.json();
 
         if (data.logged_in) {
-          // Usuario autenticado: cargar datos y mensaje de bienvenida
+          // Usuario autenticado: cargar datos
           setUser({
             name: data.user.nombre,
             email: data.user.email,
             role: data.user.rol,
           });
-
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: "welcome",
-              sender: "bot",
-              content: `¡Hola **${data.user.nombre}**! ¿En qué puedo ayudarte hoy?`,
-              timestamp: new Date(),
-              feedbackRequested: false,
-            },
-          ]);
         } else {
           // No hay sesión: redirigir al login
           navigate("/login");

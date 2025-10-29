@@ -1,24 +1,54 @@
 import { useState } from "react";
 import { useDocuments } from "./hooks/useDocuments";
+import useDebouncedSearch from "../../hooks/useDebouncedSearch";
 import { getDocumentIcon, getDocumentColor } from "../utils/documentUtils";
 
 const DocumentsModal = ({ isOpen, onClose, onDocumentSelect, isDarkMode }) => {
-  const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   
-  const { 
-    documents, 
-    loading, 
-    error, 
-    reloadDocuments, 
-    getCategories, 
-    filterDocuments 
+  const {
+    documents,
+    loading,
+    error,
+    reloadDocuments,
+    getCategories
   } = useDocuments();
   
+  // Usar debounced search para optimizar el filtrado (SIEMPRE llamado en el mismo orden)
+  const {
+    searchTerm,
+    setSearchTerm,
+    filteredItems: filteredDocuments
+  } = useDebouncedSearch(
+    documents,
+    // Función de filtro personalizada que incluye categoría
+    (doc, term) => {
+      // Si no hay término de búsqueda, solo filtrar por categoría
+      if (!term.trim()) {
+        return selectedCategory === "all" || doc.category === selectedCategory;
+      }
+      
+      // Buscar en título, descripción, y categoría
+      const searchLower = term.toLowerCase();
+      const titleMatch = doc.title?.toLowerCase().includes(searchLower);
+      const descMatch = doc.description?.toLowerCase().includes(searchLower);
+      const categoryMatch = doc.category?.toLowerCase().includes(searchLower);
+      
+      // Filtrar por categoría y término de búsqueda
+      const categoryFilter = selectedCategory === "all" || doc.category === selectedCategory;
+      
+      return categoryFilter && (titleMatch || descMatch || categoryMatch);
+    },
+    300 // 300ms de delay
+  );
+
   if (!isOpen) return null;
 
-  const categories = getCategories();
-  const filteredDocuments = filterDocuments(searchTerm, selectedCategory);
+  // Garantizar que categories siempre sea un array válido
+  const categories = getCategories() || ["all"];
+  
+  // Asegurar que categories sea un array antes de usar .map()
+  const safeCategories = Array.isArray(categories) ? categories : ["all"];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -103,7 +133,7 @@ const DocumentsModal = ({ isOpen, onClose, onDocumentSelect, isDarkMode }) => {
 
           {/* Categories */}
           <div className="flex flex-wrap gap-2">
-            {categories.map((category) => (
+            {safeCategories.map((category) => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}

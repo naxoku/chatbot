@@ -9,8 +9,8 @@ export const useChatLogic = (
   setMessages,
   setInput,
   chatState,
-  quotedMessage, // Añadir quotedMessage
-  setQuotedMessage // Añadir setQuotedMessage
+  quotedMessage,
+  setQuotedMessage
 ) => {
   const { currentChat, setCurrentChat, setChats } = chatState;
   const [isTyping, setIsTyping] = useState(false);

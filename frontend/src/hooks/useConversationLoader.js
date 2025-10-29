@@ -27,18 +27,22 @@ export const useConversationLoader = (
    */
   const loadConversacionMessages = useCallback(
     async (conversacionId) => {
+      console.log('🟣 useConversationLoader.loadConversacionMessages llamado con:', conversacionId);
       try {
         const response = await axios.get(
           `${API_BASE}/api/conversaciones/${conversacionId}`
         );
+        console.log('🟣 Respuesta del backend:', response.data);
 
         if (response.data.success) {
           const conversacion = response.data.conversacion;
+          console.log('🟣 Conversación cargada:', conversacion);
 
           // No añadir mensaje de bienvenida aquí, se gestiona en ChatInterface
           const formattedMessages = conversacion.chat_history.sort(
             (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
           );
+          console.log('🟣 Mensajes formateados:', formattedMessages);
 
           setMessages(formattedMessages);
         }

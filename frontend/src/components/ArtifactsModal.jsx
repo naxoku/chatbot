@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import useDebouncedSearch from "../hooks/useDebouncedSearch";
 
 const ArtifactsModal = ({
   isOpen,
@@ -9,7 +10,26 @@ const ArtifactsModal = ({
   onGenerateArtifact,
   isDarkMode,
 }) => {
-  const [searchTerm, setSearchTerm] = useState("");
+  // Usar debounced search para optimizar el filtrado (SIEMPRE llamado en el mismo orden)
+  const {
+    searchTerm,
+    setSearchTerm,
+    filteredItems: filteredArtifacts
+  } = useDebouncedSearch(
+    artifacts,
+    // Función de filtro personalizada para artefactos
+    (artifact, term) => {
+      if (!term.trim()) return true;
+      
+      const searchLower = term.toLowerCase();
+      const nameMatch = artifact.name?.toLowerCase().includes(searchLower);
+      const descriptionMatch = artifact.description?.toLowerCase().includes(searchLower);
+      const typeMatch = artifact.type?.toLowerCase().includes(searchLower);
+      
+      return nameMatch || descriptionMatch || typeMatch;
+    },
+    300 // 300ms de delay
+  );
 
   if (!isOpen) return null;
 
@@ -22,14 +42,6 @@ const ArtifactsModal = ({
         : "text-purple-600 bg-purple-50",
     },
   };
-
-  const filteredArtifacts = artifacts.filter((artifact) => {
-    const matchesSearch =
-      artifact.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (artifact.description &&
-        artifact.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    return matchesSearch;
-  });
 
   const handleGenerate = () => {
     if (onGenerateArtifact) {

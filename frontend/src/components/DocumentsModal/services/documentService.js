@@ -1,5 +1,5 @@
 import axios from "axios";
-import { API_BASE } from "../../config";
+import { API_BASE } from "../../../config";
 
 export const documentService = {
   async fetchDocuments() {

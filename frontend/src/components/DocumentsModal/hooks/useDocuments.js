@@ -24,7 +24,15 @@ export const useDocuments = () => {
   }, [loadDocuments]);
 
   const getCategories = useCallback(() => {
-    return documentService.getDocumentCategories(documents);
+    // Garantizar que getCategories siempre retorne un array válido
+    if (!documents || !Array.isArray(documents) || documents.length === 0) {
+      return ["all"];
+    }
+    
+    const result = documentService.getDocumentCategories(documents);
+    
+    // Asegurar que el resultado sea un array
+    return Array.isArray(result) ? result : ["all"];
   }, [documents]);
 
   const filterDocuments = useCallback((searchTerm, selectedCategory) => {

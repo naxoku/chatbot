@@ -3,9 +3,7 @@
  * Coordina todos los subcomponentes para una mejor mantenibilidad
  */
 
-import { MessageBubble, EmptyState } from "./ChatMessages/components";
-import { useMessageActions } from "./ChatMessages/hooks/useMessageActions";
-import useVirtualScroll from "../../hooks/useVirtualScroll";
+import { MessageBubble, EmptyState } from "./components";
 
 /**
  * Componente principal ChatMessages
@@ -29,20 +27,7 @@ const ChatMessages = ({
   onQuickAction,
   onQuoteMessage,
 }) => {
-  // Hook personalizado para manejar acciones de mensajes
-  useMessageActions(onFeedback);
-
-  // Solo activar virtual scroll para chats muy largos
-  const shouldUseVirtualScroll = messages.length > 50;
   
-  // Hook siempre llamado para cumplir reglas de React
-  const virtualScrollData = useVirtualScroll(
-    messages,
-    120, // Altura estimada por mensaje
-    500, // Altura del contenedor virtual
-    5   // Buffer size
-  );
-
   // Componente de Skeleton para mensajes cargando
   const SkeletonMessage = () => (
     <div className="flex justify-start mb-3">
@@ -82,65 +67,19 @@ const ChatMessages = ({
         <EmptyState isDarkMode={isDarkMode} />
       )}
 
-      {/* Renderizado inteligente: normal para chats cortos, virtual scroll para chats largos */}
-      {messages.length > 0 && (
-        <>
-          {shouldUseVirtualScroll ? (
-            // Virtual Scroll solo para chats muy largos (>50 mensajes)
-            <div className="relative">
-              <div 
-                ref={virtualScrollData.containerRef}
-                className="overflow-y-auto"
-                style={{ height: "500px" }}
-                onScroll={virtualScrollData.handleScroll}
-              >
-                {/* Spacer superior */}
-                <div style={{ height: `${virtualScrollData.stats.startIndex * 120}px` }} />
-                
-                {/* Mensajes visibles */}
-                {virtualScrollData.visibleItems.map(({ item, index }) => (
-                  <MessageBubble
-                    key={item.id || index}
-                    message={item}
-                    index={index}
-                    onFeedback={onFeedback}
-                    onQuickAction={onQuickAction}
-                    onQuoteMessage={onQuoteMessage}
-                    onViewMindMap={onViewMindMap}
-                    isDarkMode={isDarkMode}
-                  />
-                ))}
-                
-                {/* Spacer inferior */}
-                <div style={{ 
-                  height: `${Math.max(0, (messages.length - virtualScrollData.stats.endIndex) * 120)}px` 
-                }} />
-              </div>
-              
-              {/* Indicador de virtual scroll activo */}
-              <div className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 rounded text-xs opacity-75">
-                {virtualScrollData.stats.visibleItems}/{virtualScrollData.stats.totalItems}
-              </div>
-            </div>
-          ) : (
-            // Renderizado normal para chats cortos/medianos (≤50 mensajes)
-            <div className="space-y-4">
-              {messages.map((message, index) => (
-                <MessageBubble
-                  key={message.id || index}
-                  message={message}
-                  index={index}
-                  onFeedback={onFeedback}
-                  onQuickAction={onQuickAction}
-                  onQuoteMessage={onQuoteMessage}
-                  onViewMindMap={onViewMindMap}
-                  isDarkMode={isDarkMode}
-                />
-              ))}
-            </div>
-          )}
-        </>
-      )}
+      {/* Renderizado de mensajes */}
+      {messages.map((message, index) => (
+        <MessageBubble
+          key={message.id || index}
+          message={message}
+          index={index}
+          onFeedback={onFeedback}
+          onQuickAction={onQuickAction}
+          onQuoteMessage={onQuoteMessage}
+          onViewMindMap={onViewMindMap}
+          isDarkMode={isDarkMode}
+        />
+      ))}
 
       {/* Skeleton para carga de mensajes */}
       {isLoadingMessages && <SkeletonMessage />}

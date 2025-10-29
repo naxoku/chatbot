@@ -1,10 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import { useContext } from "react";
-import { AppContext } from "../App";
 
 const NotFound = () => {
   const navigate = useNavigate();
-  const { isDarkMode } = useContext(AppContext);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900 transition-colors duration-300">

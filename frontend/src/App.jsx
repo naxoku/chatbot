@@ -2,7 +2,7 @@ import React, { useState, createContext, useMemo, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
-import ChatInterface from "./components/ChatInterface/ChatInterface";
+import ChatInterface from "./components/ChatInterface.jsx";
 import NotFound from "./components/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import useTheme from "./hooks/useTheme";
