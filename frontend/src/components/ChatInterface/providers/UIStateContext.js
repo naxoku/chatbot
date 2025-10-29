@@ -1,0 +1,26 @@
+import { createContext } from "react";
+
+export const UIStateContext = createContext({
+  isSidebarOpen: true,
+  isArtifactsOpen: false,
+  isDocumentsModalOpen: false,
+  isMindMapModalOpen: false,
+  isHelpPanelOpen: false,
+  isDarkMode: false,
+  isMobile: false,
+  selectedArtifact: null,
+  isTyping: false,
+  input: "",
+  setIsSidebarOpen: () => {},
+  setIsArtifactsOpen: () => {},
+  setIsDocumentsModalOpen: () => {},
+  setIsMindMapModalOpen: () => {},
+  setIsHelpPanelOpen: () => {},
+  setIsDarkMode: () => {},
+  setIsMobile: () => {},
+  setSelectedArtifact: () => {},
+  setIsTyping: () => {},
+  setInput: () => {},
+  toggleDarkMode: () => {},
+  closeAll: () => {},
+});
