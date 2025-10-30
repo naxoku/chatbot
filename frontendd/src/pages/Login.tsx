@@ -1,7 +1,7 @@
 import React, { useContext, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AppContext } from "../App";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { LOGIN } from "../config";
 
 interface LoginData {
@@ -88,21 +88,22 @@ const Login: React.FC = () => {
           general: response.data.message || "Error al iniciar sesión",
         });
       }
-    } catch (error: any) {
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message?: string }>;
       console.error("Error en login:", error);
 
-      if (error.response?.status === 401 || error.response?.status === 400) {
+      if (axiosError.response?.status === 401 || axiosError.response?.status === 400) {
         setErrors({
-          general: error.response.data?.message || "Credenciales inválidas",
+          general: axiosError.response.data?.message || "Credenciales inválidas",
         });
-      } else if (error.code === "ERR_NETWORK") {
+      } else if (axiosError.code === "ERR_NETWORK") {
         setErrors({
           general: "Error de conexión. Verifica que el servidor esté activo.",
         });
       } else {
         setErrors({
           general:
-            error.response?.data?.message ||
+            axiosError.response?.data?.message ||
             "Error de conexión. Inténtalo de nuevo.",
         });
       }

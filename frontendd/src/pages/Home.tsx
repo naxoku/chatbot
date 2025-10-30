@@ -1,15 +1,19 @@
 import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { Brain } from "lucide-react";
 import { AppContext } from "../App";
+import { Button } from "../components/ui/button";
 
 const Home: React.FC = () => {
-  const { isDarkMode, toggleDarkMode } = useContext(AppContext);
+  const { isDarkMode } = useContext(AppContext);
   const navigate = useNavigate();
 
   return (
     <div
-      className={`min-h-screen flex flex-col ${
-        isDarkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-900"
+      className={`min-h-screen flex flex-col transition-colors duration-300 ${
+        isDarkMode
+          ? "bg-gray-900 text-white"
+          : "bg-gray-50 text-gray-900"
       }`}
     >
       <main className="flex-grow flex items-center justify-center text-center p-8 bg-gradient-to-br from-purple-600 to-blue-600 dark:from-purple-900 dark:to-blue-900">
@@ -25,12 +29,13 @@ const Home: React.FC = () => {
             rápida y precisa. Pregúntale al bot sobre reglamentos, formularios o
             cualquier otro documento oficial, y obtén respuestas al instante.
           </p>
-          <button
+          <Button
             onClick={() => navigate("/login")}
-            className="bg-white text-purple-600 px-8 py-4 rounded-xl text-lg font-semibold hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-lg"
+            size="lg"
+            className="bg-white text-purple-600 hover:bg-gray-100 hover:scale-105 transition-all duration-300 shadow-lg font-semibold"
           >
             Acceder al Sistema
-          </button>
+          </Button>
         </div>
       </main>
 
@@ -38,7 +43,7 @@ const Home: React.FC = () => {
         <div className="max-w-7xl mx-auto text-center">
           <div className="flex items-center justify-center space-x-3 mb-4">
             <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-              <i className="fas fa-brain text-white text-sm"></i>
+              <Brain className="text-white text-sm" />
             </div>
             <span className="text-lg font-bold">Asistente UCT</span>
           </div>
