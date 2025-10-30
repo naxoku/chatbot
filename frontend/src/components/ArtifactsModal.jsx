@@ -7,7 +7,6 @@ const ArtifactsModal = ({
   artifacts = [],
   onOpenArtifact,
   onDeleteArtifact,
-  onGenerateArtifact,
   isDarkMode,
 }) => {
   // Usar debounced search para optimizar el filtrado (SIEMPRE llamado en el mismo orden)
@@ -41,13 +40,6 @@ const ArtifactsModal = ({
         ? "text-purple-400 bg-purple-900/20"
         : "text-purple-600 bg-purple-50",
     },
-  };
-
-  const handleGenerate = () => {
-    if (onGenerateArtifact) {
-      onGenerateArtifact("Genera un mapa mental sobre los beneficios DDPER");
-    }
-    onClose?.();
   };
 
   return (
@@ -153,19 +145,6 @@ const ArtifactsModal = ({
                   ? "Intenta otro término"
                   : "Genera tu primer artefacto en el chat"}
               </p>
-              {!searchTerm && (
-                <button
-                  onClick={handleGenerate}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                    isDarkMode
-                      ? "bg-blue-600 hover:bg-blue-700 text-white"
-                      : "bg-blue-500 hover:bg-blue-600 text-white"
-                  }`}
-                >
-                  <i className="fas fa-plus mr-2 text-xs"></i>
-                  Crear Artefacto
-                </button>
-              )}
             </div>
           ) : (
             <div className="space-y-2">

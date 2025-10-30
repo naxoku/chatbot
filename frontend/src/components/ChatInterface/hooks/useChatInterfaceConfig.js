@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../../App.jsx";
 
@@ -46,6 +46,14 @@ export const useChatInterfaceConfig = () => {
   const { loadConversacionMessages } = useConversationLoader(user, setChats, setMessages, addArtifact);
   const backendStatus = useBackendStatus();
   
+  // REF PARA TRACKEAR CONVERSACIÓN ID
+  const conversationIdRef = useRef(currentChat.conversacionId);
+  
+  // SINCRONIZAR REF CON CURRENTCHAT
+  useEffect(() => {
+    conversationIdRef.current = currentChat.conversacionId;
+  }, [currentChat.conversacionId]);
+  
   const { isTyping, sendMessage, handleFeedback, generarMapaMental } = useChatLogic(
     documentsList, navigate, addArtifact, setMessages, setInput, chatState, quotedMessage, setQuotedMessage
   );
@@ -66,6 +74,7 @@ export const useChatInterfaceConfig = () => {
     handleNewChat,
     sendMessage,
     generarMapaMental,
+    conversationIdRef,
     LOGOUT,
   });
 

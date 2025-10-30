@@ -1,11 +1,10 @@
 /**
- * Componente principal ChatMessages completamente modularizado
- * Coordina todos los subcomponentes para una mejor mantenibilidad
+ * Componente principal ChatMessages - RENDERIZADO SIMPLE SIN VIRTUAL SCROLLING
+ * Renderiza todos los mensajes normalmente sin optimizaciones
  */
 
 import { MessageBubble, EmptyState } from "./ChatMessages/components";
 import { useMessageActions } from "./ChatMessages/hooks/useMessageActions";
-import useVirtualScroll from "../../hooks/useVirtualScroll";
 
 /**
  * Componente principal ChatMessages
@@ -31,17 +30,6 @@ const ChatMessages = ({
 }) => {
   // Hook personalizado para manejar acciones de mensajes
   useMessageActions(onFeedback);
-
-  // Solo activar virtual scroll para chats muy largos
-  const shouldUseVirtualScroll = messages.length > 50;
-  
-  // Hook siempre llamado para cumplir reglas de React
-  const virtualScrollData = useVirtualScroll(
-    messages,
-    120, // Altura estimada por mensaje
-    500, // Altura del contenedor virtual
-    5   // Buffer size
-  );
 
   // Componente de Skeleton para mensajes cargando
   const SkeletonMessage = () => (
@@ -82,64 +70,34 @@ const ChatMessages = ({
         <EmptyState isDarkMode={isDarkMode} />
       )}
 
-      {/* Renderizado inteligente: normal para chats cortos, virtual scroll para chats largos */}
+      {/* Renderizado simple de todos los mensajes - SIN VIRTUAL SCROLLING */}
       {messages.length > 0 && (
-        <>
-          {shouldUseVirtualScroll ? (
-            // Virtual Scroll solo para chats muy largos (>50 mensajes)
-            <div className="relative">
-              <div 
-                ref={virtualScrollData.containerRef}
-                className="overflow-y-auto"
-                style={{ height: "500px" }}
-                onScroll={virtualScrollData.handleScroll}
-              >
-                {/* Spacer superior */}
-                <div style={{ height: `${virtualScrollData.stats.startIndex * 120}px` }} />
-                
-                {/* Mensajes visibles */}
-                {virtualScrollData.visibleItems.map(({ item, index }) => (
-                  <MessageBubble
-                    key={item.id || index}
-                    message={item}
-                    index={index}
-                    onFeedback={onFeedback}
-                    onQuickAction={onQuickAction}
-                    onQuoteMessage={onQuoteMessage}
-                    onViewMindMap={onViewMindMap}
-                    isDarkMode={isDarkMode}
-                  />
-                ))}
-                
-                {/* Spacer inferior */}
-                <div style={{ 
-                  height: `${Math.max(0, (messages.length - virtualScrollData.stats.endIndex) * 120)}px` 
-                }} />
+        <div className="space-y-4">
+          {messages.map((message, index) => (
+            <MessageBubble
+              key={message.id || index}
+              message={message}
+              index={index}
+              onFeedback={onFeedback}
+              onQuickAction={onQuickAction}
+              onQuoteMessage={onQuoteMessage}
+              onViewMindMap={onViewMindMap}
+              isDarkMode={isDarkMode}
+            />
+          ))}
+          
+          {/* Indicador sutil cuando hay muchos mensajes */}
+          {messages.length > 20 && (
+            <div className="text-center py-2">
+              <div className="inline-flex items-center text-xs text-gray-500 dark:text-gray-400">
+                <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+                {messages.length} mensajes en esta conversación
               </div>
-              
-              {/* Indicador de virtual scroll activo */}
-              <div className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 rounded text-xs opacity-75">
-                {virtualScrollData.stats.visibleItems}/{virtualScrollData.stats.totalItems}
-              </div>
-            </div>
-          ) : (
-            // Renderizado normal para chats cortos/medianos (≤50 mensajes)
-            <div className="space-y-4">
-              {messages.map((message, index) => (
-                <MessageBubble
-                  key={message.id || index}
-                  message={message}
-                  index={index}
-                  onFeedback={onFeedback}
-                  onQuickAction={onQuickAction}
-                  onQuoteMessage={onQuoteMessage}
-                  onViewMindMap={onViewMindMap}
-                  isDarkMode={isDarkMode}
-                />
-              ))}
             </div>
           )}
-        </>
+        </div>
       )}
 
       {/* Skeleton para carga de mensajes */}

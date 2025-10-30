@@ -19,14 +19,14 @@ import MessageActions from "./MessageActions";
  * @param {Function} props.onViewMindMap - Handler para ver mapa mental
  * @param {boolean} props.isDarkMode - Modo oscuro activado
  */
-const MessageBubble = ({ 
-  message, 
-  index, 
-  onFeedback, 
-  onQuickAction, 
-  onQuoteMessage, 
-  onViewMindMap, 
-  isDarkMode 
+const MessageBubble = ({
+  message,
+  index,
+  onFeedback,
+  onQuickAction,
+  onQuoteMessage,
+  onViewMindMap,
+  isDarkMode
 }) => {
   const isUser = message.sender === "user";
   const isContext = message.isContext;

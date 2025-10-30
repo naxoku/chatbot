@@ -45,10 +45,9 @@ const ChatInterface = () => {
     // Estado del chat
     input, isSidebarOpen, isArtifactsOpen, currentChat, chats, isMobile,
     isDocumentsModalOpen, selectedArtifact, isMindMapModalOpen, isDarkMode,
-    setInput, setIsSidebarOpen, setIsArtifactsOpen,
-    setIsDocumentsModalOpen, closeAll, handleInputChange,
-    handleDocumentSelect, handleOpenArtifact, handleCloseMindMapModal,
-    toggleDarkMode,
+    setIsSidebarOpen, setIsArtifactsOpen, setIsDocumentsModalOpen, 
+    closeAll, handleInputChange, handleDocumentSelect, handleOpenArtifact,
+    handleCloseMindMapModal, toggleDarkMode,
     
     // Handlers extraídos
     handlers,
@@ -168,7 +167,6 @@ const ChatInterface = () => {
           onOpenArtifact={handleOpenArtifact}
           onDeleteArtifact={removeArtifact}
           isDarkMode={isDarkMode}
-          onGenerateArtifact={(prompt) => setInput(prompt)}
         />
       )}
 

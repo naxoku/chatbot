@@ -61,10 +61,17 @@ Si el problema persiste, puedes contactar directamente a: **ddper@uct.cl**`;
     try {
       const conversacionActualId = conversacionIdRef.current;
       console.log(
-        `📝 Enviando mensaje... conversacionId: ${conversacionActualId}`
+        `📝 Enviando mensaje en modo stream... conversacionId: ${conversacionActualId}`
       );
 
-      const chatResponse = await axios.post("/api/chat", {
+      // Crear mensaje del bot para actualización progresiva
+      const botMsg = createMessage("bot", "", {
+        feedbackRequested: true,
+      });
+      setMessages((prev) => [...prev, botMsg]);
+
+      // Preparar datos para el endpoint SSE
+      const requestData = {
         pregunta: trimmed,
         documentos: documents,
         parametros: selectedParameters,
@@ -74,68 +81,121 @@ Si el problema persiste, puedes contactar directamente a: **ddper@uct.cl**`;
           quotedMessageContent: quotedMessage.content,
           quotedMessageSender: quotedMessage.sender,
         }),
+      };
+
+      console.log("🔍 Probando endpoint SSE directamente...");
+      
+      // Hacer petición al endpoint SSE
+      const response = await fetch("/api/chat/stream", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestData),
       });
 
-      const {
-        respuesta,
-        documentosRecomendados = [],
-        conversacionId,
-      } = chatResponse.data;
-      console.log(`✅ Respuesta recibida. conversacionId: ${conversacionId}`);
-
-      const botMsg = createMessage("bot", respuesta || "No hay respuesta.", {
-        documentLinks:
-          documentosRecomendados.length > 0
-            ? documentosRecomendados
-            : undefined,
-        feedbackRequested: true,
-      });
-      setMessages((prev) => [...prev, botMsg]);
-
-      if (!conversacionActualId) {
-        const newChatEntry = {
-          id: `conv-${conversacionId}`,
-          name: trimmed.substring(0, 50) + (trimmed.length > 50 ? "..." : ""),
-          lastMessage:
-            trimmed.substring(0, 50) + (trimmed.length > 50 ? "..." : ""),
-          timestamp: new Date(),
-          mapasAsociados: [],
-          conversacionId: conversacionId,
-        };
-        conversacionIdRef.current = conversacionId;
-        setCurrentChat(newChatEntry);
-        setChats((prev) => [newChatEntry, ...prev]);
-        console.log(
-          "✅ Estado local actualizado - Nueva conversación:",
-          conversacionId
-        );
-      } else {
-        setChats((prev) =>
-          prev.map((chat) =>
-            chat.conversacionId === conversacionActualId
-              ? {
-                  ...chat,
-                  lastMessage:
-                    trimmed.substring(0, 50) +
-                    (trimmed.length > 50 ? "..." : ""),
-                  timestamp: new Date(),
-                }
-              : chat
-          )
-        );
-        console.log(
-          "✅ Estado local actualizado - Conversación existente:",
-          conversacionActualId
-        );
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-      return conversacionId; // Devolver el ID
+
+      // Configurar EventSource para recibir el stream
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedText = "";
+      let finalDocumentos = [];
+      let finalConversacionId = conversacionActualId;
+
+      try {
+        let lastEventType = null; // Variable para rastrear el tipo de evento actual
+        
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('event: ')) {
+              lastEventType = line.slice(7);
+            } else if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                
+                if (lastEventType === 'start') {
+                  // Stream iniciado
+                } else if (lastEventType === 'chunk') {
+                  // Actualizar mensaje con el chunk actual
+                  accumulatedText = data.fullText || accumulatedText + (data.text || '');
+                  setMessages(prev => prev.map(msg =>
+                    msg.id === botMsg.id
+                      ? { ...msg, content: accumulatedText }
+                      : msg
+                  ));
+                } else if (lastEventType === 'complete') {
+                  // Mensaje completo recibido
+                  accumulatedText = data.respuesta || accumulatedText;
+                  finalDocumentos = data.documentosRecomendados || [];
+                  finalConversacionId = data.conversacionId;
+                  
+                  // Actualizar mensaje final
+                  setMessages(prev => prev.map(msg =>
+                    msg.id === botMsg.id
+                      ? {
+                          ...msg,
+                          content: accumulatedText,
+                          documentLinks: finalDocumentos.length > 0 ? finalDocumentos : undefined,
+                        }
+                      : msg
+                  ));
+
+                  // Actualizar estado de conversación
+                  if (!conversacionActualId && finalConversacionId) {
+                    const newChatEntry = {
+                      id: `conv-${finalConversacionId}`,
+                      name: trimmed.substring(0, 50) + (trimmed.length > 50 ? "..." : ""),
+                      lastMessage: trimmed.substring(0, 50) + (trimmed.length > 50 ? "..." : ""),
+                      timestamp: new Date(),
+                      mapasMentales: [],
+                      conversacionId: finalConversacionId,
+                    };
+                    setCurrentChat(newChatEntry);
+                    setChats((prev) => [newChatEntry, ...prev]);
+                  } else if (conversacionActualId) {
+                    setChats((prev) =>
+                      prev.map((chat) =>
+                        chat.conversacionId === conversacionActualId
+                          ? {
+                              ...chat,
+                              lastMessage: trimmed.substring(0, 50) + (trimmed.length > 50 ? "..." : ""),
+                              timestamp: new Date(),
+                            }
+                          : chat
+                      )
+                    );
+                  }
+
+                } else if (lastEventType === 'error') {
+                  throw new Error(data.message || "Error en el streaming");
+                }
+              } catch (parseError) {
+                console.warn("Error parseando chunk SSE:", parseError);
+              }
+            }
+          }
+        }
+      } finally {
+        reader.releaseLock();
+      }
+
+      return finalConversacionId;
     } catch (err) {
       console.error("❌ Error en sendMessage:", err);
       const errorMsg = createMessage("bot", getErrorMessage(), {
         feedbackRequested: true,
       });
       setMessages((prev) => [...prev, errorMsg]);
-      return null; // Devolver null en caso de error
+      return null;
     } finally {
       setIsTyping(false);
       isSendingRef.current = false;
