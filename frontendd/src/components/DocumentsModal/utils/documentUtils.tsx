@@ -35,28 +35,21 @@ export const getDocumentIcon = (url: string) => {
 export const getDocumentColor = (type: string): string => {
   switch (type.toLowerCase()) {
     case "pdf":
-      return "bg-red-100 dark:bg-red-900/20";
     case "word":
     case "doc":
     case "docx":
-      return "bg-blue-100 dark:bg-blue-900/20";
     case "excel":
     case "xls":
     case "xlsx":
-      return "bg-green-100 dark:bg-green-900/20";
     case "powerpoint":
     case "ppt":
     case "pptx":
-      return "bg-orange-100 dark:bg-orange-900/20";
     case "image":
     case "jpg":
     case "png":
-      return "bg-purple-100 dark:bg-purple-900/20";
     case "video":
-      return "bg-pink-100 dark:bg-pink-900/20";
     case "audio":
-      return "bg-indigo-100 dark:bg-indigo-900/20";
     default:
-      return "bg-gray-100 dark:bg-gray-800";
+      return "bg-muted text-muted-foreground";
   }
 };

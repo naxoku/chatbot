@@ -110,10 +110,10 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
             className="flex-1 text-left py-2 pl-3 pr-1 min-w-0"
           >
             <div className="flex flex-col items-start gap-1 min-w-0">
-              <span className="text-sm font-medium truncate w-full text-sidebar-foreground">
+              <span className="text-sm font-medium truncate w-full text-foreground">
                 {conversation.title}
               </span>
-              <span className="text-xs text-sidebar-foreground/60 truncate w-full">
+              <span className="text-xs text-foreground/60 truncate w-full">
                 {conversation.lastMessage}
               </span>
             </div>

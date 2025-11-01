@@ -1,18 +1,26 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { ThemeProvider } from "@/components/theme-provider";
 import { BotMessage } from "@/components/messages/BotMessage";
 import { UserMessage } from "@/components/messages/UserMessage";
 import { Sidebar } from "@/components/sidebar";
 import { DocumentsModal } from "@/components/DocumentsModal";
-import { Bot, Send } from "lucide-react";
+import { ChatHeader } from "@/components/ChatHeader";
+import { ChatInput } from "@/components/ChatInput";
+import { EmptyChatState } from "@/components/EmptyChatState";
+import { type QuickAction } from "@/components/config/quickActions";
 
 interface Message {
   id: string;
   content: string;
   sender: "user" | "bot";
   timestamp: Date;
+  quotedMessageId?: string;
+  quotedMessageContent?: string;
+  quotedMessageSender?: "user" | "bot";
+  parameters?: string[];
+  isContext?: boolean;
+  feedbackRequested?: boolean;
 }
 
 interface Conversation {
@@ -34,19 +42,18 @@ interface Document {
 
 const ChatBot: React.FC = () => {
   const navigate = useNavigate();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isDocumentsModalOpen, setIsDocumentsModalOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      content: "¡Hola! Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?",
-      sender: "bot",
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isBotOnline] = useState(true); // Estado del bot (solo lectura)
   const [activeConversationId, setActiveConversationId] = useState<string>("1");
+  const [quotedMessage, setQuotedMessage] = useState<{
+    id: string;
+    content: string;
+    sender: "user" | "bot";
+  } | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([
     {
       id: "1",
@@ -68,6 +75,15 @@ const ChatBot: React.FC = () => {
     },
   ]);
 
+  // Auto-scroll to bottom when new messages are added
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
   // 1. Cerrar/Abrir Sidebar
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -79,20 +95,14 @@ const ChatBot: React.FC = () => {
     const newConversation: Conversation = {
       id: newConvId,
       title: "Nueva conversación",
-      lastMessage: "Conversación iniciada",
+      lastMessage: "",
       timestamp: new Date(),
     };
 
     setConversations((prev) => [newConversation, ...prev]);
     setActiveConversationId(newConvId);
-    setMessages([
-      {
-        id: "1",
-        content: "¡Nueva conversación iniciada! ¿En qué puedo ayudarte?",
-        sender: "bot",
-        timestamp: new Date(),
-      },
-    ]);
+    setMessages([]);
+    setQuotedMessage(null); // Limpiar cita al cambiar conversación
   };
 
   // 3. Abrir Modal de Documentos
@@ -129,14 +139,8 @@ const ChatBot: React.FC = () => {
   const handleSelectConversation = (id: string) => {
     setActiveConversationId(id);
     // Aquí cargarías los mensajes de la conversación seleccionada
-    setMessages([
-      {
-        id: "1",
-        content: `Has seleccionado la conversación ${id}. Aquí se cargarían los mensajes guardados.`,
-        sender: "bot",
-        timestamp: new Date(),
-      },
-    ]);
+    setMessages([]);
+    setQuotedMessage(null); // Limpiar cita al cambiar conversación
   };
 
   // 7. Renombrar Conversación (Menú de Acciones)
@@ -161,18 +165,107 @@ const ChatBot: React.FC = () => {
     }
   };
 
+  // 8. Manejar acciones rápidas del mensaje - Estilo WhatsApp
+  const handleQuickAction = (action: QuickAction, originalMessage: Message) => {
+    // Construir contenido con la cita del mensaje original
+    let responseContent = `> **${originalMessage.content}**\n\n`;
+
+    switch (action.id) {
+      case "resumen":
+        responseContent += `Aquí tienes un resumen del mensaje: ${originalMessage.content.substring(
+          0,
+          100
+        )}...`;
+        break;
+      case "explicar":
+        responseContent += `Explicación detallada: ${originalMessage.content}`;
+        break;
+      case "ejemplo":
+        responseContent += `Te doy un ejemplo basado en tu mensaje: ${originalMessage.content}`;
+        break;
+      case "mapa-mental":
+        responseContent += `Generando mapa mental para: "${originalMessage.content}"`;
+        break;
+      default:
+        responseContent += `Acción "${action.text}" realizada para el mensaje: ${originalMessage.content}`;
+    }
+
+    const responseMessage: Message = {
+      id: Date.now().toString(),
+      content: responseContent,
+      sender: "bot",
+      timestamp: new Date(),
+      parameters: [action.id],
+      quotedMessageId: originalMessage.id,
+      quotedMessageContent: originalMessage.content,
+      quotedMessageSender: originalMessage.sender,
+    };
+
+    setMessages((prev) => [...prev, responseMessage]);
+  };
+
+  // 9. Citar mensaje (responder) - Estilo WhatsApp
+  const handleQuoteMessage = (messageToQuote: Message) => {
+    setQuotedMessage({
+      id: messageToQuote.id,
+      content: messageToQuote.content,
+      sender: messageToQuote.sender,
+    });
+  };
+
+  // 10. Limpiar mensaje citado
+  const handleClearQuotedMessage = () => {
+    setQuotedMessage(null);
+  };
+
+  // 11. Manejar feedback de mensajes
+  const handleFeedback = (
+    messageId: string,
+    isHelpful: boolean,
+    comment?: string
+  ) => {
+    console.log("Feedback recibido:", { messageId, isHelpful, comment });
+    // Aquí puedes enviar el feedback al backend
+  };
+
+  // 12. Ver mapa mental (handler placeholder)
+  const handleViewMindMap = (mindMapData: any) => {
+    console.log("Mostrando mapa mental:", mindMapData);
+    // Implementar la lógica para mostrar el mapa mental
+  };
+
+  // 13. Enviar mensaje con cita incluida - Estilo WhatsApp
   const handleSendMessage = () => {
     if (!inputMessage.trim()) return;
 
+    // Construir el contenido con la cita si existe
+    let messageContent = inputMessage;
+    let quotedMessageId: string | undefined;
+    let quotedMessageContent: string | undefined;
+    let quotedMessageSender: "user" | "bot" | undefined;
+
+    if (quotedMessage) {
+      quotedMessageId = quotedMessage.id;
+      quotedMessageContent = quotedMessage.content;
+      quotedMessageSender = quotedMessage.sender;
+
+      // Agregar la cita al contenido
+      messageContent = `> **${quotedMessage.content}**\n\n${inputMessage}`;
+    }
+
     const newMessage: Message = {
       id: Date.now().toString(),
-      content: inputMessage,
+      content: messageContent,
       sender: "user",
       timestamp: new Date(),
+      quotedMessageId,
+      quotedMessageContent,
+      quotedMessageSender,
     };
 
     setMessages((prev) => [...prev, newMessage]);
     setInputMessage("");
+    setQuotedMessage(null); // Limpiar la cita después de enviar
 
     setTimeout(() => {
       const botResponse: Message = {
@@ -194,7 +287,7 @@ const ChatBot: React.FC = () => {
   };
 
   return (
-    <ThemeProvider defaultTheme="system" storageKey="chatbot-theme">
+    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
       <div className="min-h-screen bg-background flex">
         {/* Sidebar Component */}
         <Sidebar
@@ -218,71 +311,60 @@ const ChatBot: React.FC = () => {
           onDocumentSelect={handleDocumentSelect}
         />
 
-        {/* Main Content */}
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Header del chat */}
-          <div className="p-6 border-b border-border bg-card shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Bot className="h-6 w-6 text-primary" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <h2 className="text-xl font-semibold truncate">
-                  {conversations.find((c) => c.id === activeConversationId)
-                    ?.title || "Chat Asistente"}
-                </h2>
-                <p className="text-sm text-muted-foreground truncate">
-                  {isBotOnline
-                    ? "Conectado y listo para ayudar"
-                    : "Desconectado"}
-                </p>
-              </div>
-            </div>
-          </div>
+          <ChatHeader
+            conversationTitle={
+              conversations.find((c) => c.id === activeConversationId)?.title ||
+              "Chat Asistente"
+            }
+          />
 
-          {/* Mensajes */}
-          <div className="flex-1 overflow-auto p-6">
-            <div className="space-y-4 max-w-4xl mx-auto">
-              {messages.map((message) =>
-                message.sender === "bot" ? (
-                  <BotMessage key={message.id} message={message} />
-                ) : (
-                  <UserMessage key={message.id} message={message} />
-                )
-              )}
-            </div>
-          </div>
-
-          {/* Input */}
-          <div className="p-6 border-t border-border bg-card shrink-0">
-            <div className="max-w-4xl mx-auto">
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  <textarea
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    onKeyUp={handleKeyPress}
-                    placeholder="Escribe tu mensaje aquí..."
-                    className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none"
-                    disabled={!isBotOnline}
-                  />
+          <div className="flex-1 min-h-0">
+            <div className="h-[calc(100vh-12rem)] overflow-y-auto p-6">
+              {messages.length === 0 ? (
+                <EmptyChatState
+                  conversationTitle={
+                    conversations.find((c) => c.id === activeConversationId)
+                      ?.title || "..."
+                  }
+                />
+              ) : (
+                <div className="space-y-4 max-w-4xl mx-auto">
+                  {messages.map((message) =>
+                    message.sender === "bot" ? (
+                      <BotMessage
+                        key={message.id}
+                        message={message}
+                        onQuickAction={handleQuickAction}
+                        onQuoteMessage={handleQuoteMessage}
+                        onFeedback={handleFeedback}
+                        onViewMindMap={handleViewMindMap}
+                      />
+                    ) : (
+                      <UserMessage
+                        key={message.id}
+                        message={message}
+                        onQuickAction={handleQuickAction}
+                        onQuoteMessage={handleQuoteMessage}
+                        onViewMindMap={handleViewMindMap}
+                      />
+                    )
+                  )}
+                  <div ref={messagesEndRef} />
                 </div>
-                <Button
-                  onClick={handleSendMessage}
-                  disabled={!inputMessage.trim() || !isBotOnline}
-                  className="px-6 shrink-0"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
-
-              {!isBotOnline && (
-                <p className="text-sm text-muted-foreground mt-2 text-center">
-                  El bot está desconectado. No se pueden enviar mensajes.
-                </p>
               )}
             </div>
           </div>
+
+          <ChatInput
+            inputMessage={inputMessage}
+            onInputChange={setInputMessage}
+            onSendMessage={handleSendMessage}
+            onKeyPress={handleKeyPress}
+            isBotOnline={isBotOnline}
+            quotedMessage={quotedMessage}
+            onClearQuotedMessage={handleClearQuotedMessage}
+          />
         </div>
       </div>
     </ThemeProvider>

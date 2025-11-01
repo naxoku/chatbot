@@ -86,8 +86,8 @@ export const DocumentsModal: React.FC<DocumentsModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-linear-to-br from-purple-600 to-blue-600 rounded-xl flex items-center justify-center">
-              <FolderOpen className="text-white h-5 w-5" />
+            <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center">
+              <FolderOpen className="text-accent-foreground h-5 w-5" />
             </div>
             <div>
               <h2 className="text-xl font-semibold text-card-foreground">

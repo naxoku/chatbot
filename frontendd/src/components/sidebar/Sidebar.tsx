@@ -53,8 +53,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             isOpen ? "opacity-100 flex-1" : "opacity-0 w-0"
           }`}
         >
-          <div className="p-1.5 bg-sidebar-primary/10 rounded-lg shrink-0">
-            <Bot className="h-4 w-4 text-sidebar-primary" />
+          <div className="p-1.5 bg-primary/10 rounded-lg shrink-0">
+            <Bot className="h-4 w-4 text-primary" />
           </div>
           <div className="min-w-0 flex-1">
             <h2 className="font-semibold text-sm text-sidebar-foreground truncate">
@@ -79,14 +79,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </Button>
       </div>
 
-      {/* Botones Principales */}
-      <div className="p-2 border-b border-sidebar-border space-y-1 shrink-0">
-        {/* 2. Nueva Conversación */}
+      <div className="p-2 border-b border-border space-y-1 shrink-0">
         <Button
           variant="default"
           className={`w-full ${
             isOpen ? "justify-start" : "justify-center px-2"
-          } bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90`}
+          } bg-primary text-primary-foreground hover:bg-primary/90`}
           onClick={onNewConversation}
           title={!isOpen ? "Nueva conversación" : undefined}
         >
@@ -100,12 +98,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </span>
         </Button>
 
-        {/* 3. Documentos */}
         <Button
           variant="ghost"
           className={`w-full ${
             isOpen ? "justify-start" : "justify-center px-2"
-          } text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground`}
+          } text-foreground hover:bg-muted hover:text-foreground`}
           onClick={onOpenDocuments}
           title={!isOpen ? "Documentos" : undefined}
         >
@@ -129,7 +126,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {isOpen && (
           <div className="space-y-1">
             <div className="px-2 py-1.5">
-              <h3 className="text-xs font-medium text-sidebar-foreground/70 uppercase tracking-wider">
+              <h3 className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wider">
                 Conversaciones
               </h3>
             </div>
@@ -146,7 +143,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               ))
             ) : (
               <div className="px-2 py-4 text-center">
-                <p className="text-xs text-sidebar-foreground/50">
+                <p className="text-xs text-muted-foreground/50">
                   No hay conversaciones
                 </p>
               </div>
@@ -155,10 +152,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      {/* Footer: Estado del Bot, Toggle Tema y Cerrar Sesión */}
-      <div className="border-t border-sidebar-border shrink-0">
-        {/* Indicador Visual: Estado del Bot (clickeable si onToggleBotStatus existe) */}
-        <div className="px-3 py-2 border-b border-sidebar-border">
+      <div className="border-t border-border shrink-0">
+        <div className="px-3 py-2 border-b border-border">
           <button
             onClick={onToggleBotStatus}
             disabled={!onToggleBotStatus}
@@ -166,8 +161,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               isOpen ? "gap-2" : "justify-center"
             } px-2 py-1.5 rounded-md transition-colors ${
               onToggleBotStatus
-                ? "bg-sidebar-accent/50 hover:bg-sidebar-accent cursor-pointer"
-                : "bg-sidebar-accent/50"
+                ? "bg-muted/50 hover:bg-muted cursor-pointer"
+                : "bg-muted/50"
             }`}
             title={
               onToggleBotStatus
@@ -181,7 +176,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               }`}
             />
             <span
-              className={`text-xs font-medium text-sidebar-foreground truncate transition-all duration-200 ${
+              className={`text-xs font-medium text-foreground truncate transition-all duration-200 ${
                 isOpen ? "opacity-100 w-auto" : "opacity-0 w-0 overflow-hidden"
               }`}
             >
@@ -191,16 +186,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         </div>
 
-        {/* Controles del Footer */}
         <div className="p-2 space-y-1">
           {!isOpen ? (
             <>
-              {/* 4. Toggle Modo Oscuro/Claro (colapsado) */}
               <div className="flex justify-center">
                 <ModeToggle />
               </div>
 
-              {/* 5. Cerrar Sesión (colapsado) */}
               <Button
                 variant="ghost"
                 size="icon"
@@ -213,13 +205,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </>
           ) : (
             <>
-              {/* 4. Toggle Modo Oscuro/Claro (expandido) */}
               <div className="flex items-center justify-between px-2 py-1">
-                <span className="text-sm text-sidebar-foreground">Tema</span>
+                <span className="text-sm text-foreground">Tema</span>
                 <ModeToggle />
               </div>
 
-              {/* 5. Cerrar Sesión (expandido) */}
               <Button
                 variant="ghost"
                 className="w-full justify-start text-destructive hover:bg-destructive/10"
