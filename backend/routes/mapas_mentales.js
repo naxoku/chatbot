@@ -1,5 +1,5 @@
 const express = require("express");
-const db = require("../db");
+const { db, queryWithRetry } = require("../db");
 const requireLogin = require("../middleware/auth");
 
 const router = express.Router();
@@ -25,11 +25,13 @@ router.get("/:id", requireLogin, async (req, res) => {
       "SELECT id, titulo, contexto, estructura_json, fecha_creacion FROM mapas_mentales WHERE id = $1 AND usuario_id = $2",
       [req.params.id, req.session.user.id]
     );
-    
+
     if (result.rows.length === 0) {
-      return res.status(404).json({ success: false, error: "Mapa mental no encontrado" });
+      return res
+        .status(404)
+        .json({ success: false, error: "Mapa mental no encontrado" });
     }
-    
+
     res.json({ success: true, mapa: result.rows[0] });
   } catch (err) {
     console.error("Error al obtener mapa mental:", err);
@@ -64,11 +66,23 @@ router.put("/:id", requireLogin, async (req, res) => {
            conversacion_id = $4
        WHERE id = $5 AND usuario_id = $6
        RETURNING *`,
-      [titulo, contexto, estructura_json, conversacion_id, req.params.id, req.session.user.id]
+      [
+        titulo,
+        contexto,
+        estructura_json,
+        conversacion_id,
+        req.params.id,
+        req.session.user.id,
+      ]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ success: false, error: "Mapa mental no encontrado o no autorizado" });
+      return res
+        .status(404)
+        .json({
+          success: false,
+          error: "Mapa mental no encontrado o no autorizado",
+        });
     }
 
     res.json({ success: true, mapa: result.rows[0] });
@@ -88,7 +102,7 @@ router.get("/conversacion/:conversacionId", requireLogin, async (req, res) => {
        ORDER BY m.fecha_creacion DESC`,
       [req.params.conversacionId, req.session.user.id]
     );
-    
+
     res.json({ success: true, mapas: result.rows });
   } catch (err) {
     console.error("Error al obtener mapas mentales de conversación:", err);

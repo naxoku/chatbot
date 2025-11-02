@@ -4,33 +4,13 @@ import MessageParameters from "./MessageParameters";
 import MessageArtifacts from "./MessageArtifacts";
 import MessageQuickActions from "./MessageQuickActions";
 import { type QuickAction } from "../config/quickActions";
-
-interface Message {
-  id: string;
-  content: string;
-  sender: "user" | "bot";
-  timestamp: Date;
-  parameters?: string[];
-  responseParameters?: string[];
-  documentLinks?: Array<{
-    url: string;
-    title: string;
-    description?: string;
-    type?: string;
-  }>;
-  artifact?: any;
-  artifactData?: any;
-  quotedMessageId?: string;
-  quotedMessageSender?: string;
-  quotedMessageContent?: string;
-}
+import type { Message } from "../../services/backendService";
 
 interface UserMessageProps {
   message: Message;
   onQuoteMessage?: (message: Message) => void;
   onQuickAction?: (action: QuickAction, message: Message) => void;
-  onViewMindMap?: (artifactData: any) => void;
-  isDarkMode?: boolean;
+  onViewMindMap?: (artifactData: unknown) => void;
 }
 
 export const UserMessage: React.FC<UserMessageProps> = ({
@@ -38,7 +18,6 @@ export const UserMessage: React.FC<UserMessageProps> = ({
   onQuoteMessage,
   onQuickAction,
   onViewMindMap,
-  isDarkMode = false,
 }) => {
   const getMessageType = (content: string): "text" | "command" | "question" => {
     if (content.startsWith("/")) return "command";
@@ -61,13 +40,7 @@ export const UserMessage: React.FC<UserMessageProps> = ({
       <div className="max-w-[70%]">
         {/* Mensaje citado */}
         {message.quotedMessageId && (
-          <div
-            className={`mb-2 px-3 py-2 rounded-lg border-l-2 text-xs ${
-              isDarkMode
-                ? "bg-blue-900/20 border-blue-500 text-blue-300"
-                : "bg-blue-50 border-blue-400 text-blue-700"
-            }`}
-          >
+          <div className="mb-2 px-3 py-2 rounded-lg border-l-2 text-xs bg-blue-50 border-blue-400 text-blue-700 dark:bg-blue-900/20 dark:border-blue-500 dark:text-blue-300">
             <div className="flex items-center gap-1.5 mb-1 font-medium">
               <i className="fas fa-reply text-xs"></i>
               <span>
@@ -82,11 +55,7 @@ export const UserMessage: React.FC<UserMessageProps> = ({
 
         <div className="p-3 rounded-tl-lg rounded-tr-lg rounded-bl-md bg-primary text-primary-foreground">
           {/* Parámetros del mensaje */}
-          <MessageParameters
-            parameters={parameters}
-            isUser={true}
-            isDarkMode={isDarkMode}
-          />
+          <MessageParameters parameters={parameters} isUser={true} />
 
           {/* Contenido del mensaje */}
           <MarkdownRenderer content={message.content} />
@@ -98,7 +67,6 @@ export const UserMessage: React.FC<UserMessageProps> = ({
             artifactData={message.artifactData}
             onViewMindMap={onViewMindMap}
             isUser={true}
-            isDarkMode={isDarkMode}
           />
 
           <div className="flex items-center justify-between gap-2 mt-2">

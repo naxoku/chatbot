@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const db = require("../db");
+const { db, queryWithRetry } = require("../db");
 const si = require("systeminformation");
 const axios = require("axios");
 

@@ -1,14 +1,14 @@
 const express = require("express");
 const axios = require("axios");
-const db = require("../db");
+const { db, queryWithRetry } = require("../db");
 
 const router = express.Router();
 
 // Login
 router.post("/login", async (req, res) => {
   console.log("🔍 Request body:", req.body);
-  console.log("🔍 Content-Type:", req.headers['content-type']);
-  
+  console.log("🔍 Content-Type:", req.headers["content-type"]);
+
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -21,7 +21,7 @@ router.post("/login", async (req, res) => {
 
   try {
     console.log("🔄 Calling UCT API...");
-    
+
     // Llamada a la API de validación externa
     const response = await axios.post(
       "https://api-ldap.uct.cl/validacion",
@@ -42,7 +42,7 @@ router.post("/login", async (req, res) => {
       const { Rut, cn, uid } = data.data;
 
       // Verificamos si el usuario ya existe
-      const existingUser = await db.query(
+      const existingUser = await queryWithRetry(
         "SELECT id FROM usuarios WHERE correo_electronico = $1",
         [email]
       );
@@ -53,7 +53,7 @@ router.post("/login", async (req, res) => {
       if (existingUser.rows.length === 0) {
         console.log("➕ Creating new user...");
         // Insertamos el usuario en la nueva tabla
-        const result = await db.query(
+        const result = await queryWithRetry(
           `INSERT INTO usuarios (rut, nombre, correo_electronico, usuario)
            VALUES ($1, $2, $3, $4)
            RETURNING id`,
@@ -110,9 +110,9 @@ router.post("/conversacion", async (req, res) => {
   }
 
   try {
-    const result = await db.query(
-      `INSERT INTO conversaciones (usuario_id, pregunta, respuesta) 
-       VALUES ($1, $2, $3) 
+    const result = await queryWithRetry(
+      `INSERT INTO conversaciones (usuario_id, pregunta, respuesta)
+       VALUES ($1, $2, $3)
        RETURNING id, fecha_creacion`,
       [req.session.user.id, pregunta, respuesta]
     );

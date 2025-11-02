@@ -8,28 +8,18 @@ import { parameterLabels } from "../config/quickActions";
 interface MessageParametersProps {
   parameters?: string[];
   isUser: boolean;
-  isDarkMode?: boolean;
 }
 
 export const MessageParameters: React.FC<MessageParametersProps> = ({
   parameters = [],
   isUser,
-  isDarkMode = false,
 }) => {
   if (!parameters || parameters.length === 0) {
     return null;
   }
 
   return (
-    <div
-      className={`mb-2 pb-2 border-b ${
-        isUser
-          ? "border-white/10"
-          : isDarkMode
-          ? "border-gray-700"
-          : "border-gray-200"
-      }`}
-    >
+    <div className="mb-2 pb-2 border-b border-gray-200 dark:border-gray-700">
       <div className="flex flex-wrap gap-1.5">
         {parameters.map((param) => {
           const paramInfo = parameterLabels[param] || {
@@ -43,9 +33,7 @@ export const MessageParameters: React.FC<MessageParametersProps> = ({
               className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs ${
                 isUser
                   ? "bg-white/20 text-white"
-                  : isDarkMode
-                  ? "bg-gray-700 text-gray-300"
-                  : "bg-gray-200 text-gray-700"
+                  : "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
               }`}
             >
               <i className={`${paramInfo.icon} text-xs`}></i>

@@ -5,27 +5,13 @@ import MessageArtifacts from "./MessageArtifacts";
 import MessageParameters from "./MessageParameters";
 import MessageQuickActions from "./MessageQuickActions";
 import { quickActions } from "../config/quickActions";
-
-interface Message {
-  id: string;
-  content: string;
-  sender: "user" | "bot";
-  timestamp: Date;
-  parameters?: string[];
-  responseParameters?: string[];
-  documentLinks?: Array<{
-    url: string;
-    title: string;
-    description?: string;
-    type?: string;
-  }>;
-  artifact?: any;
-  artifactData?: any;
-  quotedMessageId?: string;
-  quotedMessageSender?: string;
-  quotedMessageContent?: string;
-  feedbackRequested?: boolean;
-}
+import { type QuickAction } from "../config/quickActions";
+import type { Message } from "../../services/backendService";
+import {
+  isSystemMessage,
+  formatMessageTimestamp,
+  getQuotedSenderText,
+} from "./utils/messageUtils";
 
 interface BotMessageProps {
   message: Message;
@@ -34,11 +20,81 @@ interface BotMessageProps {
     isHelpful: boolean,
     comment?: string
   ) => void;
-  onQuickAction?: (action: any, message: Message) => void;
+  onQuickAction?: (action: QuickAction, message: Message) => void;
   onQuoteMessage?: (message: Message) => void;
-  onViewMindMap?: (artifactData: any) => void;
-  isDarkMode?: boolean;
+  onViewMindMap?: (artifactData: unknown) => void;
 }
+
+/**
+ * Componente para el mensaje citado
+ */
+interface QuotedMessageProps {
+  message: Message;
+}
+
+const QuotedMessage: React.FC<QuotedMessageProps> = ({ message }) => {
+  if (!message.quotedMessageId) return null;
+
+  return (
+    <div className="mb-2 px-3 py-2 rounded-lg border-l-2 text-xs bg-gray-100 border-gray-400 text-gray-600 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400">
+      <div className="flex items-center gap-1.5 mb-1 font-medium">
+        <i className="fas fa-reply text-xs"></i>
+        <span>{getQuotedSenderText(message.quotedMessageSender)}</span>
+      </div>
+      <p className="line-clamp-2 opacity-80">
+        {message.quotedMessageContent || "Contenido no disponible"}
+      </p>
+    </div>
+  );
+};
+
+/**
+ * Componente para el header del mensaje con timestamp y badges
+ */
+interface MessageHeaderProps {
+  message: Message;
+  isSystem: boolean;
+}
+
+const MessageHeader: React.FC<MessageHeaderProps> = ({ message, isSystem }) => (
+  <div className="flex items-center justify-between gap-2 mt-2">
+    <p className="text-xs text-muted-foreground">
+      {formatMessageTimestamp(message.timestamp)}
+    </p>
+    {isSystem && (
+      <span className="text-xs text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-0.5 rounded-full">
+        Sistema
+      </span>
+    )}
+  </div>
+);
+
+/**
+ * Componente para las acciones del mensaje (solo para mensajes del bot)
+ */
+interface MessageActionsContainerProps {
+  message: Message;
+  onFeedback?: BotMessageProps["onFeedback"];
+  onQuickAction?: BotMessageProps["onQuickAction"];
+  onQuoteMessage?: BotMessageProps["onQuoteMessage"];
+}
+
+const MessageActionsContainer: React.FC<MessageActionsContainerProps> = ({
+  message,
+  onFeedback,
+  onQuickAction,
+  onQuoteMessage,
+}) => (
+  <div className="flex items-center gap-2">
+    <MessageQuickActions
+      message={message}
+      onQuickAction={onQuickAction}
+      onQuoteMessage={onQuoteMessage}
+      quickActions={quickActions}
+    />
+    <MessageActions message={message} onFeedback={onFeedback} isUser={false} />
+  </div>
+);
 
 export const BotMessage: React.FC<BotMessageProps> = ({
   message,
@@ -46,41 +102,20 @@ export const BotMessage: React.FC<BotMessageProps> = ({
   onQuickAction,
   onQuoteMessage,
   onViewMindMap,
-  isDarkMode = false,
 }) => {
-  const isSystemMessage =
-    message.content.includes("¡") || message.content.includes("Hola");
+  const systemMessage = isSystemMessage(message.content);
 
   return (
     <div className="flex gap-3 justify-start">
       <div className="max-w-[70%]">
         {/* Mensaje citado */}
-        {message.quotedMessageId && (
-          <div
-            className={`mb-2 px-3 py-2 rounded-lg border-l-2 text-xs ${
-              isDarkMode
-                ? "bg-gray-800 border-gray-600 text-gray-400"
-                : "bg-gray-100 border-gray-400 text-gray-600"
-            }`}
-          >
-            <div className="flex items-center gap-1.5 mb-1 font-medium">
-              <i className="fas fa-reply text-xs"></i>
-              <span>
-                {message.quotedMessageSender === "user" ? "Tú" : "Asistente"}
-              </span>
-            </div>
-            <p className="line-clamp-2 opacity-80">
-              {message.quotedMessageContent || "Contenido no disponible"}
-            </p>
-          </div>
-        )}
+        <QuotedMessage message={message} />
 
         <div className="p-3 rounded-tl-lg rounded-tr-lg rounded-br-md bg-muted">
           {/* Parámetros del mensaje */}
           <MessageParameters
             parameters={message.parameters || message.responseParameters}
             isUser={false}
-            isDarkMode={isDarkMode}
           />
 
           {/* Contenido del mensaje */}
@@ -93,36 +128,20 @@ export const BotMessage: React.FC<BotMessageProps> = ({
             artifactData={message.artifactData}
             onViewMindMap={onViewMindMap}
             isUser={false}
-            isDarkMode={isDarkMode}
           />
 
-          <div className="flex items-center justify-between gap-2 mt-2">
-            <p className="text-xs text-muted-foreground">
-              {message.timestamp.toLocaleTimeString()}
-            </p>
-            {isSystemMessage && (
-              <span className="text-xs text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-0.5 rounded-full">
-                Sistema
-              </span>
-            )}
+          {/* Header del mensaje */}
+          <MessageHeader message={message} isSystem={systemMessage} />
 
-            {/* Acciones del mensaje */}
-            {!isSystemMessage && (
-              <div className="flex items-center gap-2">
-                <MessageQuickActions
-                  message={message}
-                  onQuickAction={onQuickAction}
-                  onQuoteMessage={onQuoteMessage}
-                  quickActions={quickActions}
-                />
-                <MessageActions
-                  message={message}
-                  onFeedback={onFeedback}
-                  isUser={false}
-                />
-              </div>
-            )}
-          </div>
+          {/* Acciones del mensaje - solo para mensajes que no son del sistema */}
+          {!systemMessage && (
+            <MessageActionsContainer
+              message={message}
+              onFeedback={onFeedback}
+              onQuickAction={onQuickAction}
+              onQuoteMessage={onQuoteMessage}
+            />
+          )}
         </div>
       </div>
     </div>

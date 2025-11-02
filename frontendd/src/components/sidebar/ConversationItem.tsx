@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -34,6 +34,8 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(conversation.title);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showMenuAbove, setShowMenuAbove] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const handleStartEdit = () => {
     setEditTitle(conversation.title);
@@ -65,6 +67,18 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
       handleCancelEdit();
     }
   };
+
+  // Detectar posición y ajustar menú
+  useEffect(() => {
+    if (isMenuOpen && buttonRef.current) {
+      const buttonRect = buttonRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const spaceBelow = viewportHeight - buttonRect.bottom;
+
+      // Si hay menos de 120px hacia abajo, mostrar arriba
+      setShowMenuAbove(spaceBelow < 120);
+    }
+  }, [isMenuOpen]);
 
   return (
     <div
@@ -123,6 +137,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
           <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
             <DropdownMenuTrigger asChild>
               <Button
+                ref={buttonRef}
                 variant="ghost"
                 size="icon-sm"
                 className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -131,7 +146,12 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuContent
+              align="end"
+              className="w-48"
+              side={showMenuAbove ? "top" : "bottom"}
+              sideOffset={8}
+            >
               <DropdownMenuItem onClick={handleStartEdit}>
                 <Pencil className="mr-2 h-4 w-4" />
                 Renombrar

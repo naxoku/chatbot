@@ -1,15 +1,16 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Reply, Sparkles } from "lucide-react";
 import { type QuickAction } from "../config/quickActions";
+import type { Message } from "../../services/backendService";
 
 /**
  * Componente para acciones rápidas del mensaje
- * Usa colores neutros de shadcn/ui
+ * Posiciona el menú dinámicamente arriba o abajo según el espacio disponible
  */
 interface MessageQuickActionsProps {
-  message: any;
-  onQuickAction?: (action: QuickAction, message: any) => void;
-  onQuoteMessage?: (message: any) => void;
+  message: Message;
+  onQuickAction?: (action: QuickAction, message: Message) => void;
+  onQuoteMessage?: (message: Message) => void;
   quickActions?: QuickAction[];
 }
 
@@ -20,7 +21,9 @@ export const MessageQuickActions: React.FC<MessageQuickActionsProps> = ({
   quickActions = [],
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [showMenuAbove, setShowMenuAbove] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -36,6 +39,18 @@ export const MessageQuickActions: React.FC<MessageQuickActionsProps> = ({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
+  }, [isOpen]);
+
+  // Detectar posición y ajustar menú
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const buttonRect = buttonRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const spaceBelow = viewportHeight - buttonRect.bottom;
+
+      // Si hay menos de 200px hacia abajo, mostrar arriba
+      setShowMenuAbove(spaceBelow < 200);
+    }
   }, [isOpen]);
 
   const handleActionClick = (action: QuickAction) => {
@@ -59,6 +74,7 @@ export const MessageQuickActions: React.FC<MessageQuickActionsProps> = ({
   return (
     <div className="relative" ref={menuRef}>
       <button
+        ref={buttonRef}
         onClick={(e) => {
           e.stopPropagation();
           setIsOpen(!isOpen);
@@ -75,13 +91,15 @@ export const MessageQuickActions: React.FC<MessageQuickActionsProps> = ({
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 z-9998"
+            className="fixed inset-0 z-40"
             onClick={() => setIsOpen(false)}
           />
 
           {/* Menu */}
           <div
-            className="absolute left-0 top-full mt-2 z-9999 w-48 rounded-lg shadow-lg border border-border bg-popover text-popover-foreground animate-in fade-in zoom-in-95 duration-200"
+            className={`absolute ${
+              showMenuAbove ? "bottom-full mb-2" : "top-full mt-2"
+            } left-1/2 transform -translate-x-1/2 z-50 w-48 rounded-lg shadow-lg border border-border bg-popover text-popover-foreground animate-in fade-in zoom-in-95 duration-200`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="py-1">

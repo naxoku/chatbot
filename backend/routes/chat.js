@@ -1,6 +1,6 @@
 const express = require("express");
 const { nanoid } = require("nanoid");
-const db = require("../db");
+const { db, queryWithRetry } = require("../db");
 const requireLogin = require("../middleware/auth");
 const { normalizeMessages } = require("../middleware/normalizeMessages");
 
@@ -17,7 +17,8 @@ function normalizeChatbotResponse(data) {
     data?.output?.respuesta ||
     "No hay respuesta disponible.";
 
-  let documentos = data?.documentosRecomendados || data?.output?.documentosRecomendados || [];
+  let documentos =
+    data?.documentosRecomendados || data?.output?.documentosRecomendados || [];
 
   // 🔹 Filtrar solo documentos válidos
   documentos = documentos.filter(
@@ -53,7 +54,7 @@ router.post("/stream", requireLogin, async (req, res) => {
   res.writeHead(200, {
     "Content-Type": "text/event-stream",
     "Cache-Control": "no-cache",
-    "Connection": "keep-alive",
+    Connection: "keep-alive",
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Cache-Control",
   });
@@ -74,14 +75,17 @@ router.post("/stream", requireLogin, async (req, res) => {
     sendEvent("start", { status: "iniciando respuesta" });
 
     // Hacer fetch al webhook de n8n en streaming mode
-    const n8nResponse = await fetch("https://skynet.uct.cl/webhook/chat-streaming", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        user_id: req.session.user.usuario,
-        pregunta,
-      }),
-    });
+    const n8nResponse = await fetch(
+      "https://skynet.uct.cl/webhook/chat-streaming",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: req.session.user.usuario,
+          pregunta,
+        }),
+      }
+    );
 
     console.log("👉 Stream - Status Skynet:", n8nResponse.status);
 
@@ -108,8 +112,8 @@ router.post("/stream", requireLogin, async (req, res) => {
           if (done) break;
 
           buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          
+          const lines = buffer.split("\n");
+
           // Mantener la última línea parcial en el buffer
           buffer = lines.pop() || "";
 
@@ -119,18 +123,18 @@ router.post("/stream", requireLogin, async (req, res) => {
 
             try {
               const data = JSON.parse(trimmedLine);
-              
+
               // Procesar según el tipo
-              if (data.type === 'item' && data.content) {
+              if (data.type === "item" && data.content) {
                 const textChunk = data.content;
                 accumulatedText += textChunk;
-                
+
                 // Enviar chunk inmediatamente al frontend
                 sendEvent("chunk", {
                   text: textChunk,
-                  fullText: accumulatedText
+                  fullText: accumulatedText,
                 });
-              } else if (data.type === 'end') {
+              } else if (data.type === "end") {
                 // Fin del streaming
                 finalResponse = accumulatedText || "Respuesta completada";
                 break;
@@ -140,7 +144,7 @@ router.post("/stream", requireLogin, async (req, res) => {
               continue;
             }
           }
-          
+
           // Si encontramos el final, salir del loop
           if (finalResponse) break;
         }
@@ -156,7 +160,7 @@ router.post("/stream", requireLogin, async (req, res) => {
       // Normalizar documentos recomendados
       const normalizedDocs = normalizeChatbotResponse({
         respuesta: finalResponse,
-        documentosRecomendados
+        documentosRecomendados,
       }).documentosRecomendados;
 
       // Crear mensajes para la base de datos
@@ -196,10 +200,10 @@ router.post("/stream", requireLogin, async (req, res) => {
           chatHistory = normalizeMessages(chatHistory);
           chatHistory.push(nuevoMensaje, nuevaRespuesta);
 
-          await db.query("UPDATE conversaciones SET chat_history = $1 WHERE id = $2", [
-            JSON.stringify(chatHistory),
-            conversacionId,
-          ]);
+          await db.query(
+            "UPDATE conversaciones SET chat_history = $1 WHERE id = $2",
+            [JSON.stringify(chatHistory), conversacionId]
+          );
 
           console.log("✅ Stream - Conversación actualizada:", conversacionId);
         } else {
@@ -209,7 +213,8 @@ router.post("/stream", requireLogin, async (req, res) => {
 
       if (!conversacionId || !finalConversacionId) {
         // Crear nueva conversación
-        const titulo = pregunta.substring(0, 50) + (pregunta.length > 50 ? "..." : "");
+        const titulo =
+          pregunta.substring(0, 50) + (pregunta.length > 50 ? "..." : "");
         const nuevoChatHistory = [nuevoMensaje, nuevaRespuesta];
 
         const newResult = await db.query(
@@ -223,7 +228,10 @@ router.post("/stream", requireLogin, async (req, res) => {
         );
 
         finalConversacionId = newResult.rows[0].id;
-        console.log("✅ Stream - Nueva conversación creada:", finalConversacionId);
+        console.log(
+          "✅ Stream - Nueva conversación creada:",
+          finalConversacionId
+        );
       }
 
       // Enviar evento final con todos los datos
@@ -236,15 +244,14 @@ router.post("/stream", requireLogin, async (req, res) => {
       console.error("❌ Error en stream:", streamError);
       sendEvent("error", {
         message: "Error al procesar la respuesta del asistente",
-        details: streamError.message
+        details: streamError.message,
       });
     }
-
   } catch (err) {
     console.error("❌ Error en stream:", err);
     sendEvent("error", {
       message: "Error al procesar la respuesta del asistente",
-      details: err.message
+      details: err.message,
     });
   } finally {
     closeConnection();
@@ -257,12 +264,12 @@ router.post("/debug", (req, res) => {
   console.log("🔍 Session user:", req.session?.user);
   console.log("🔍 Request body:", req.body);
   console.log("🔍 Headers:", req.headers);
-  
+
   res.json({
     message: "Debug successful",
     sessionUser: req.session?.user,
     requestBody: req.body,
-    headers: req.headers
+    headers: req.headers,
   });
 });
 
@@ -274,14 +281,17 @@ router.post("/", requireLogin, async (req, res) => {
 
   try {
     // const response = await fetch("https://skynet.uct.cl/webhook/chat-semantic-search", {
-    const response = await fetch("https://skynet.uct.cl/webhook/chat-streaming", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        user_id: req.session.user.usuario,
-        pregunta,
-      }),
-    });
+    const response = await fetch(
+      "https://skynet.uct.cl/webhook/chat-streaming",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: req.session.user.usuario,
+          pregunta,
+        }),
+      }
+    );
 
     console.log("👉 Status Skynet (Semantic Search):", response.status);
 
@@ -289,7 +299,8 @@ router.post("/", requireLogin, async (req, res) => {
     console.log("👉 Data recibida (Semantic Search):", data);
 
     // ✅ Normalizar respuesta del chatbot
-    const { respuesta, documentosRecomendados } = normalizeChatbotResponse(data);
+    const { respuesta, documentosRecomendados } =
+      normalizeChatbotResponse(data);
 
     // ✅ Crear mensajes normalizados
     const nuevoMensaje = {
@@ -326,10 +337,10 @@ router.post("/", requireLogin, async (req, res) => {
         chatHistory = normalizeMessages(chatHistory);
         chatHistory.push(nuevoMensaje, nuevaRespuesta);
 
-        await db.query("UPDATE conversaciones SET chat_history = $1 WHERE id = $2", [
-          JSON.stringify(chatHistory),
-          conversacionId,
-        ]);
+        await db.query(
+          "UPDATE conversaciones SET chat_history = $1 WHERE id = $2",
+          [JSON.stringify(chatHistory), conversacionId]
+        );
 
         console.log("✅ Conversación actualizada:", conversacionId);
         return res.json({ respuesta, documentosRecomendados, conversacionId });
@@ -339,7 +350,8 @@ router.post("/", requireLogin, async (req, res) => {
     }
 
     // 🆕 Crear nueva conversación
-    const titulo = pregunta.substring(0, 50) + (pregunta.length > 50 ? "..." : "");
+    const titulo =
+      pregunta.substring(0, 50) + (pregunta.length > 50 ? "..." : "");
     const nuevoChatHistory = [nuevoMensaje, nuevaRespuesta];
 
     const newResult = await db.query(
@@ -369,12 +381,16 @@ router.post("/", requireLogin, async (req, res) => {
 // 🧭 Generar mapa mental
 router.post("/mapa-mental", requireLogin, async (req, res) => {
   const { contexto, titulo, conversacionId } = req.body;
-  console.log("📝 Contexto recibido para mapa mental:", contexto?.substring(0, 100));
+  console.log(
+    "📝 Contexto recibido para mapa mental:",
+    contexto?.substring(0, 100)
+  );
   console.log("📝 ID de conversación para asociar mapa:", conversacionId);
 
   if (!conversacionId) {
     return res.status(400).json({
-      error: "El ID de la conversación es obligatorio para crear un mapa mental.",
+      error:
+        "El ID de la conversación es obligatorio para crear un mapa mental.",
     });
   }
 
@@ -388,7 +404,10 @@ router.post("/mapa-mental", requireLogin, async (req, res) => {
     console.log("👉 Status Skynet (Mapa Mental):", response.status);
 
     const data = await response.json();
-    console.log("👉 Data recibida (mapa mental):", JSON.stringify(data).substring(0, 200));
+    console.log(
+      "👉 Data recibida (mapa mental):",
+      JSON.stringify(data).substring(0, 200)
+    );
 
     const mapaMental = data.respuesta || {};
 
@@ -424,7 +443,8 @@ router.post("/mapa-mental", requireLogin, async (req, res) => {
 
     res.json({
       mapaMental,
-      mensaje: "Mapa mental guardado y asociado a la conversación correctamente",
+      mensaje:
+        "Mapa mental guardado y asociado a la conversación correctamente",
     });
   } catch (err) {
     console.error("❌ Error en mapa mental:", err);
