@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import { BotMessage } from "@/components/messages/BotMessage";
@@ -14,8 +14,11 @@ import { type QuickAction } from "@/components/config/quickActions";
 import { useChatLogic, useConversations } from "@/hooks/useChatLogic";
 import type { Message, Conversation } from "@/services/backendService";
 import { backendService } from "@/services/backendService";
+import { AppContext } from "@/App";
+import { LOGOUT } from "@/config";
 
-interface Document {
+// Tipo simple para documentos
+interface DocumentData {
   id: string;
   title: string;
   description: string;
@@ -28,13 +31,34 @@ interface Document {
 const ChatBot: React.FC = () => {
   const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { setIsAuthenticated } = useContext(AppContext);
 
   // ===== ESTADO LOCAL =====
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isDocumentsModalOpen, setIsDocumentsModalOpen] = useState(false);
   const [isArtifactsModalOpen, setIsArtifactsModalOpen] = useState(false);
   const [isMindMapModalOpen, setIsMindMapModalOpen] = useState(false);
-  const [selectedMindMapData, setSelectedMindMapData] = useState<unknown>(null);
+  const [selectedMindMapData, setSelectedMindMapData] = useState<{
+    name: string;
+    subtitle?: string;
+    icon?: string;
+    children?: Array<{
+      name: string;
+      subtitle?: string;
+      icon?: string;
+      children?: Array<{
+        name: string;
+        subtitle?: string;
+        icon?: string;
+        children?: Array<{
+          name: string;
+          subtitle?: string;
+          icon?: string;
+          children?: unknown[];
+        }>;
+      }>;
+    }>;
+  } | null>(null);
   const [selectedMindMapTitle, setSelectedMindMapTitle] =
     useState<string>("Mapa Mental");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -45,6 +69,7 @@ const ChatBot: React.FC = () => {
   const [currentChat, setCurrentChat] = useState<Conversation | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedParameters, setSelectedParameters] = useState<string[]>([]);
+  const [selectedDocuments, setSelectedDocuments] = useState<DocumentData[]>([]); // Estado para documentos seleccionados
 
   // ===== HOOK PARA CONVERSACIONES =====
   const {
@@ -129,6 +154,7 @@ const ChatBot: React.FC = () => {
     console.log("📤 ===== HANDLER SEND MESSAGE =====");
     console.log("   Input:", inputMessage.substring(0, 50));
     console.log("   Parámetros:", selectedParameters);
+    console.log("   Documentos seleccionados:", selectedDocuments.length);
     console.log("   ConversacionId:", conversacionIdRef.current);
 
     if (!inputMessage.trim()) {
@@ -136,7 +162,7 @@ const ChatBot: React.FC = () => {
       return;
     }
 
-    const newConvId = await sendMessage(inputMessage, selectedParameters);
+    const newConvId = await sendMessage(inputMessage, selectedParameters, selectedDocuments);
 
     if (newConvId) {
       console.log("✅ Mensaje enviado, nuevo conversacionId:", newConvId);
@@ -165,9 +191,32 @@ const ChatBot: React.FC = () => {
   };
 
   const handleOpenMindMap = (artifactData: unknown, title?: string) => {
-    setSelectedMindMapData(artifactData);
-    setSelectedMindMapTitle(title || "Mapa Mental");
-    setIsMindMapModalOpen(true);
+    // Validar y cast el tipo de datos
+    if (artifactData && typeof artifactData === 'object' && 'name' in artifactData) {
+      setSelectedMindMapData(artifactData as {
+        name: string;
+        subtitle?: string;
+        icon?: string;
+        children?: Array<{
+          name: string;
+          subtitle?: string;
+          icon?: string;
+          children?: Array<{
+            name: string;
+            subtitle?: string;
+            icon?: string;
+            children?: Array<{
+              name: string;
+              subtitle?: string;
+              icon?: string;
+              children?: unknown[];
+            }>;
+          }>;
+        }>;
+      });
+      setSelectedMindMapTitle(title || "Mapa Mental");
+      setIsMindMapModalOpen(true);
+    }
   };
 
   const handleCloseMindMap = () => {
@@ -176,21 +225,57 @@ const ChatBot: React.FC = () => {
     setSelectedMindMapTitle("Mapa Mental");
   };
 
-  const handleDocumentSelect = (document: Document) => {
-    console.log("📄 Documento seleccionado:", document);
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        content: `Has seleccionado el documento: ${document.title}`,
-        sender: "bot",
-        timestamp: new Date(),
-      },
-    ]);
+  const handleDocumentsSelect = (documents: DocumentData[]) => {
+    console.log("📄 Documentos seleccionados:", documents);
+    setSelectedDocuments(documents);
   };
 
-  const handleLogout = () => {
-    navigate("/login");
+  // Función para eliminar un documento individualmente
+  const handleRemoveDocument = (documentId: string) => {
+    console.log("🗑️ Eliminando documento:", documentId);
+    setSelectedDocuments(prev => prev.filter(doc => doc.id !== documentId));
+  };
+
+  // Función para añadir nuevos documentos (abre el modal)
+  const handleAddDocuments = () => {
+    console.log("➕ Añadiendo nuevos documentos");
+    setIsDocumentsModalOpen(true);
+  };
+
+  const handleLogout = async () => {
+    try {
+      console.log("🚪 Cerrando sesión...");
+      
+      // Llamar al endpoint de logout
+      const response = await fetch(LOGOUT, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        console.error("❌ Error al cerrar sesión en el backend:", response.status);
+        // Continuar con el logout local incluso si falla el backend
+      } else {
+        console.log("✅ Logout exitoso en el backend");
+      }
+
+      // Actualizar el estado de autenticación en el contexto
+      setIsAuthenticated(false);
+      
+      // Limpiar el localStorage si se usa
+      localStorage.removeItem("sessionToken");
+      
+      // Redirigir al login
+      navigate("/login");
+      
+    } catch (error) {
+      console.error("❌ Error durante el logout:", error);
+      
+      // En caso de error, aún intentar limpiar el estado local
+      setIsAuthenticated(false);
+      localStorage.removeItem("sessionToken");
+      navigate("/login");
+    }
   };
 
   const handleSelectConversation = async (id: string) => {
@@ -407,7 +492,8 @@ const ChatBot: React.FC = () => {
         <DocumentsModal
           isOpen={isDocumentsModalOpen}
           onClose={handleCloseDocuments}
-          onDocumentSelect={handleDocumentSelect}
+          onDocumentsSelect={handleDocumentsSelect}
+          preselectedDocuments={selectedDocuments}
         />
 
         {/* Artifacts Modal */}
@@ -425,27 +511,8 @@ const ChatBot: React.FC = () => {
             onClose={handleCloseMindMap}
             artifact={{
               name: selectedMindMapTitle,
-              data: selectedMindMapData as {
-                name: string;
-                subtitle?: string;
-                icon?: string;
-                children?: Array<{
-                  name: string;
-                  subtitle?: string;
-                  icon?: string;
-                  children?: Array<{
-                    name: string;
-                    subtitle?: string;
-                    icon?: string;
-                    children?: Array<{
-                      name: string;
-                      subtitle?: string;
-                      icon?: string;
-                      children?: unknown[];
-                    }>;
-                  }>;
-                }>;
-              },
+              data: selectedMindMapData,
+              description: "Mapa mental de la conversación",
             }}
           />
         )}
@@ -503,6 +570,9 @@ const ChatBot: React.FC = () => {
             quotedMessage={quotedMessage}
             onClearQuotedMessage={handleClearQuotedMessage}
             isTyping={isTyping}
+            selectedDocuments={selectedDocuments}
+            onRemoveDocument={handleRemoveDocument}
+            onAddDocuments={handleAddDocuments}
           />
         </div>
       </div>

@@ -1,6 +1,5 @@
-// frontendd/src/hooks/useChatLogic.ts
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { backendService, type Message, type Conversation } from '@/services/backendService';
+import { backendService, type Message, type Conversation, type StreamResponse } from '@/services/backendService';
 
 interface UseChatLogicProps {
   currentChat: Conversation | null;
@@ -42,7 +41,8 @@ export const useChatLogic = ({
    */
   const sendMessage = useCallback(async (
     input: string,
-    selectedParameters?: string[]
+    selectedParameters?: string[],
+    selectedDocuments?: unknown[]
   ): Promise<string | null> => {
     const trimmed = input.trim();
     
@@ -66,6 +66,7 @@ export const useChatLogic = ({
     console.log('   Input:', trimmed.substring(0, 50) + '...');
     console.log('   ConversacionId actual:', conversacionIdRef.current);
     console.log('   Parámetros:', selectedParameters);
+    console.log('   Documentos seleccionados:', selectedDocuments?.length || 0);
     console.log('   Mensaje citado:', quotedMessage?.id || 'ninguno');
 
     // Bloquear envíos duplicados
@@ -122,7 +123,6 @@ export const useChatLogic = ({
         trimmed,
         conversacionActualId,
         quotedMessage,
-        selectedParameters,
         
         // ===== onChunk: Actualización progresiva =====
         (chunk: string) => {
@@ -141,7 +141,7 @@ export const useChatLogic = ({
         },
         
         // ===== onComplete: Respuesta final =====
-        (response) => {
+        (response: StreamResponse) => {
           console.log('✅ ===== STREAMING COMPLETADO =====');
           console.log('   Total chunks recibidos:', chunkCount);
           console.log('   Respuesta final length:', response.respuesta.length);
@@ -222,7 +222,7 @@ export const useChatLogic = ({
         },
         
         // ===== onError: Manejo de errores =====
-        (errorMessage) => {
+        (errorMessage: string) => {
           console.error('❌ Error en el streaming:', errorMessage);
           
           setMessages((prev) =>
@@ -232,7 +232,9 @@ export const useChatLogic = ({
                 : msg
             )
           );
-        }
+        },
+        selectedParameters,
+        selectedDocuments
       );
 
       console.log('✅ ===== MENSAJE ENVIADO EXITOSAMENTE =====');

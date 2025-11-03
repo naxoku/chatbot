@@ -21,27 +21,11 @@ export const UserMessage: React.FC<UserMessageProps> = ({
   onQuickAction,
   onViewMindMap,
 }) => {
-  const getMessageType = (content: string): "text" | "command" | "question" => {
-    if (content.startsWith("/")) return "command";
-    if (content.includes("?")) return "question";
-    return "text";
-  };
-
-  const messageType = getMessageType(message.content);
-
-  // Parámetros basados en el tipo de mensaje
-  const parameters =
-    messageType === "command"
-      ? ["comando"]
-      : messageType === "question"
-      ? ["pregunta"]
-      : undefined;
-
   return (
-    <div className="flex justify-center px-4">
+    <div className="flex justify-center">
       <div className="w-full max-w-4xl">
         <div className="flex gap-3 justify-end">
-          <div className="w-full max-w-[70%]">
+          <div className="w-full md:max-w-[70%]">
             {/* Mensaje citado */}
             {message.quotedMessageId && (
               <div className="mb-2 px-3 py-2 rounded-lg border-l-2 text-xs bg-blue-50 border-blue-400 text-blue-700 dark:bg-blue-900/20 dark:border-blue-500 dark:text-blue-300">
@@ -61,7 +45,7 @@ export const UserMessage: React.FC<UserMessageProps> = ({
 
             <div className="p-3 rounded-tl-lg rounded-tr-lg rounded-bl-md bg-primary text-primary-foreground">
               {/* Parámetros del mensaje */}
-              <MessageParameters parameters={parameters} isUser={true} />
+              <MessageParameters parameters={undefined} isUser={true} />
 
               {/* Contenido del mensaje */}
               <MarkdownRenderer content={message.content} />
@@ -82,11 +66,6 @@ export const UserMessage: React.FC<UserMessageProps> = ({
 
                 {/* Acciones en el centro-derecha */}
                 <div className="flex items-center gap-2">
-                  {messageType !== "text" && (
-                    <span className="text-xs bg-muted px-2 py-0.5 rounded-full">
-                      {messageType === "command" ? "Comando" : "Pregunta"}
-                    </span>
-                  )}
                   <MessageQuickActions
                     message={message}
                     onQuickAction={onQuickAction}

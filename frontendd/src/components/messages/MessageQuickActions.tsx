@@ -47,9 +47,11 @@ export const MessageQuickActions: React.FC<MessageQuickActionsProps> = ({
       const buttonRect = buttonRef.current.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
       const spaceBelow = viewportHeight - buttonRect.bottom;
+      const viewportWidth = window.innerWidth;
 
-      // Si hay menos de 200px hacia abajo, mostrar arriba
-      setShowMenuAbove(spaceBelow < 200);
+      // Si hay poco espacio o pantalla muy pequeña, mostrar arriba
+      // También mostrar arriba en pantallas muy estrechas
+      setShowMenuAbove(spaceBelow < 200 || viewportWidth < 640);
     }
   }, [isOpen]);
 
@@ -99,7 +101,7 @@ export const MessageQuickActions: React.FC<MessageQuickActionsProps> = ({
           <div
             className={`absolute ${
               showMenuAbove ? "bottom-full mb-2" : "top-full mt-2"
-            } left-1/2 transform -translate-x-1/2 z-50 w-48 rounded-lg shadow-lg border border-border bg-popover text-popover-foreground animate-in fade-in zoom-in-95 duration-200`}
+            } left-1/2 transform -translate-x-1/2 z-50 w-48 sm:w-56 md:w-64 rounded-lg shadow-lg border border-border bg-popover text-popover-foreground animate-in fade-in zoom-in-95 duration-200`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="py-1">
@@ -112,7 +114,7 @@ export const MessageQuickActions: React.FC<MessageQuickActionsProps> = ({
                     icon: "fas fa-reply",
                   })
                 }
-                className="w-full text-left px-3 py-2 text-sm font-normal transition-colors flex items-center gap-2 text-popover-foreground hover:bg-accent hover:text-accent-foreground"
+                className="w-full text-left px-3 py-2 text-xs sm:text-sm font-normal transition-colors flex items-center gap-2 text-popover-foreground hover:bg-accent hover:text-accent-foreground min-h-[2.25rem]"
               >
                 <Reply className="w-3.5 h-3.5 text-muted-foreground" />
                 <span className="flex-1">Responder</span>
@@ -122,7 +124,7 @@ export const MessageQuickActions: React.FC<MessageQuickActionsProps> = ({
                 <button
                   key={action.id}
                   onClick={() => handleActionClick(action)}
-                  className="w-full text-left px-3 py-2 text-sm font-normal transition-colors flex items-center gap-2 text-popover-foreground hover:bg-accent hover:text-accent-foreground"
+                  className="w-full text-left px-3 py-2 text-xs sm:text-sm font-normal transition-colors flex items-center gap-2 text-popover-foreground hover:bg-accent hover:text-accent-foreground min-h-[2.25rem]"
                 >
                   <i
                     className={`${action.icon} text-sm text-muted-foreground`}

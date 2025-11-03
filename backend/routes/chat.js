@@ -46,9 +46,10 @@ function normalizeChatbotResponse(data) {
 
 // 📡 Endpoint de chat con streaming SSE
 router.post("/stream", requireLogin, async (req, res) => {
-  const { pregunta, conversacionId } = req.body;
+  const { pregunta, conversacionId, documentosSeleccionados } = req.body;
   console.log("👉 Stream - Pregunta recibida:", pregunta);
   console.log("👉 Stream - ID de conversación:", conversacionId);
+  console.log("👉 Stream - Documentos seleccionados:", documentosSeleccionados?.length || 0);
 
   // Configurar headers para SSE
   res.writeHead(200, {
@@ -74,16 +75,22 @@ router.post("/stream", requireLogin, async (req, res) => {
     // Enviar evento de inicio
     sendEvent("start", { status: "iniciando respuesta" });
 
+    // Preparar request body para n8n
+    const n8nRequestBody = {
+      user_id: req.session.user.usuario,
+      pregunta,
+      documentosSeleccionados: documentosSeleccionados || [],
+    };
+
+    console.log("📤 Enviando a n8n:", JSON.stringify(n8nRequestBody, null, 2));
+
     // Hacer fetch al webhook de n8n en streaming mode
     const n8nResponse = await fetch(
       "https://skynet.uct.cl/webhook/chat-streaming",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: req.session.user.usuario,
-          pregunta,
-        }),
+        body: JSON.stringify(n8nRequestBody),
       }
     );
 
@@ -275,25 +282,32 @@ router.post("/debug", (req, res) => {
 
 // 📩 Ruta de chat normal
 router.post("/", requireLogin, async (req, res) => {
-  const { pregunta, conversacionId } = req.body;
+  const { pregunta, conversacionId, documentosSeleccionados } = req.body;
   console.log("👉 Pregunta recibida:", pregunta);
   console.log("👉 ID de conversación:", conversacionId);
+  console.log("👉 Documentos seleccionados:", documentosSeleccionados?.length || 0);
 
   try {
+    // Preparar request body para n8n
+    const n8nRequestBody = {
+      user_id: req.session.user.usuario,
+      pregunta,
+      documentosSeleccionados: documentosSeleccionados || [],
+    };
+
+    console.log("📤 Enviando a n8n (chat normal):", JSON.stringify(n8nRequestBody, null, 2));
+
     // const response = await fetch("https://skynet.uct.cl/webhook/chat-semantic-search", {
     const response = await fetch(
       "https://skynet.uct.cl/webhook/chat-streaming",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: req.session.user.usuario,
-          pregunta,
-        }),
+        body: JSON.stringify(n8nRequestBody),
       }
     );
 
-    console.log("👉 Status Skynet (Semantic Search):", response.status);
+    console.log("👉 Status Skynet (Chat normal):", response.status);
 
     const data = await response.json();
     console.log("👉 Data recibida (Semantic Search):", data);

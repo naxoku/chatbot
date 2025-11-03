@@ -1,15 +1,11 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { MessageCircle, Users, Zap } from "lucide-react";
-import { ModeToggle } from "../components/mode-toggle";
+
+import logoVrae from "../assets/logo_vrae.png";
+import fondoVrae from "../assets/fondo_vrae.jpg";
+import clickIcon from "../assets/click.png";
+import infotin from "../assets/infotin.png"; // Asegúrate de que infotin.png también se importe si se usa
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -18,122 +14,167 @@ const Home: React.FC = () => {
     navigate("/login");
   };
 
-  const features = [
-    {
-      icon: <MessageCircle className="h-8 w-8" />,
-      title: "Biblioteca de Documentos Institucionales",
-      description:
-        "Accede a documentos académicos y formularios ya disponibles en la base de datos universitaria",
-    },
-    {
-      icon: <Users className="h-8 w-8" />,
-      title: "Selección de Contexto",
-      description:
-        "Elige documentos relevantes para enriquecer las respuestas del asistente con información específica",
-    },
-    {
-      icon: <Zap className="h-8 w-8" />,
-      title: "Respuestas Contextualizadas",
-      description:
-        "Obtén información precisa basada en la documentación oficial de la institución",
-    },
-  ];
-
   const currentYear = new Date().getFullYear();
 
+  // Departamentos/Direcciones
+  const departments = [
+    "DIRINF",
+    "DDPER",
+    "DFIN",
+    "DGDC",
+    "DCR"
+  ];
+
+  const departmentsFull = [
+    "Dirección de Informática",
+    "Dirección de Desarrollo de Personas",
+    "Dirección de Finanzas",
+    "Dirección de Gestión y Desarrollo de Campus",
+    "Dirección de Crédito y Recaudación"
+  ];
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen bg-[#3E8BD6] relative overflow-hidden flex flex-col">
+      {/* Patrón de fondo con imagen */}
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url('${fondoVrae}')` }}
+      />
+
       {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="w-auto h-12 rounded-lg overflow-hidden">
-                <img
-                  src="/logo_ddper.png"
-                  alt="Asistente UCT"
-                  className="w-full h-full object-contain"
-                />
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <ModeToggle />
-              <Button
-                onClick={handleLoginClick}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-colors duration-200"
-              >
-                Iniciar Sesión
-              </Button>
+      <header className="relative z-10 flex-shrink-0">
+        <div className="container mx-auto px-3 py-2 md:px-4 md:py-4">
+          <div className="flex items justify-start">
+            {/* Logo UCT */}
+            <div className="bg-transparent flex items-center p-0">
+              <img
+                src={logoVrae}
+                alt="Logo UCT"
+                className="w-full h-12 md:h-16 lg:h-20 object-contain"
+              />
             </div>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <main className="container mx-auto px-4 py-12">
-        <div className="grid md:grid-cols-2 gap-12 mb-16">
-          <div className="flex flex-col justify-center">
-            <div className="flex items-center mb-6">
-              <h1 className="text-5xl md:text-6xl font-bold text-foreground leading-tight">
-                <span className="text-primary block">Asistente UCT</span>
-              </h1>
-            </div>
-            <p className="text-xl text-muted-foreground leading-relaxed">
-              Asistente de inteligencia artificial especializado para académicos
-              y personal administrativo. Selecciona documentos de la biblioteca
-              institucional, formula preguntas y recibe respuestas precisas
-              contextualizadas con la documentación oficial de la universidad.
-            </p>
-          </div>
-          <div className="flex items-center justify-center">
-            <img
-              src="/infotin.png"
-              alt="Información del asistente"
-              className="w-100 h-auto rounded-lg"
-            />
-          </div>
-        </div>
-
-        {/* Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-          {features.map((feature, index) => (
-            <Card
-              key={index}
-              className="bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200"
-            >
-              <CardHeader>
-                <div className="flex flex-col items-center gap-4">
-                  <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center">
-                    <div className="text-primary flex items-center justify-center">
-                      {feature.icon}
-                    </div>
-                  </div>
-                  <CardTitle className="text-xl font-semibold text-card-foreground text-center">
-                    {feature.title}
-                  </CardTitle>
+      {/* Main Content - Flex grow para ocupar espacio disponible */}
+      <main className="relative z-10 flex-grow flex items-center justify-center">
+        <div className="container mx-auto px-3 md:px-4">
+          <div className="max-w-6xl mx-auto">
+            {/* Layout híbrido: texto centrado + imagen a la derecha */}
+            <div className="flex flex-col lg:flex-row items-center justify-center gap-4 md:gap-6 lg:gap-8">
+              {/* Contenedor de texto centrado (como 1 columna) */}
+              <div className="flex-1 max-w-3xl">
+                <div className="text-center space-y-3 md:space-y-4 lg:space-y-6">
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white leading-tight">
+                    Asistente virtual VRAE
+                  </h1>
+                  
+                  <p className="text-sm sm:text-base md:text-lg text-white leading-relaxed px-2 md:px-0">
+                    Accede a la información de documentos institucionales de forma rápida y precisa.
+                    Pregúntale al bot sobre reglamentos, formularios o cualquier otro documento
+                    oficial, y obtén respuestas al instante.
+                  </p>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-muted-foreground text-center leading-relaxed">
-                  {feature.description}
-                </CardDescription>
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+
+              {/* Imagen posicionada a la derecha */}
+              <div className="flex-shrink-0 lg:ml-4 xl:ml-8 order-first lg:order-last">
+                <div className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-56 lg:h-56">
+                  <img
+                    src={infotin}
+                    alt="Asistente Virtual"
+                    className="w-full h-full object-contain drop-shadow-2xl animate-float"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Botón centrado debajo */}
+            <div className="flex justify-center pt-6 md:pt-8 mt-4">
+              <Button
+                    onClick={handleLoginClick}
+                    className="bg-white text-[#3E8BD6] hover:bg-white/90 transition-all duration-200 rounded-xl font-bold group relative overflow-hidden h-auto p-0 w-full max-w-sm sm:max-w-md lg:max-w-lg"
+                  >
+                    <span className="flex items-center w-full">
+                      <span className="flex-1 text-center text-sm sm:text-base md:text-lg lg:text-xl px-3 sm:px-4 md:px-6 py-3 sm:py-4">
+                        Acceder al sistema
+                      </span>
+                      {/* Cursor icon en cuadro amarillo */}
+                      <div className="bg-[#FCC200] py-3 px-3 sm:py-4 sm:px-4 md:py-5 md:px-5 rounded-r-xl flex items-center justify-center h-full">
+                        <img
+                          src={clickIcon}
+                          alt="Click"
+                          className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 lg:w-10 lg:h-10 object-contain"
+                        />
+                      </div>
+                    </span>
+                  </Button>
+            </div>
+          </div>
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-muted text-muted-foreground py-6 mt-16 border-t border-border">
-        <div className="container mx-auto px-4">
+      {/* Departments Section - Pegado al footer */}
+      <div className="relative z-10">
+        <div className="p-2 sm:p-3 md:p-4 lg:p-6">
+          {/* Siglas */}
+          <div className="text-center mb-1 md:mb-2">
+            <h2 className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold text-white tracking-wider leading-tight">
+              <span className="block sm:inline">
+                {departments.slice(0, 2).join(" - ")}
+              </span>
+              {departments.length > 2 && (
+                <span className="block sm:inline sm:ml-2">
+                  {departments.slice(2).join(" - ")}
+                </span>
+              )}
+            </h2>
+          </div>
+          {/* Nombres completos */}
           <div className="text-center">
-            <p className="text-sm text-muted-foreground/80">
-              © {currentYear} Universidad Católica de Temuco. Todos los derechos
-              reservados.
+            <h4 className="text-xs sm:text-sm md:text-base text-white/95 leading-relaxed px-2">
+              <span className="block lg:inline">
+                {departmentsFull.slice(0, 2).join(" - ")}
+              </span>
+              {departmentsFull.length > 2 && (
+                <span className="block lg:inline lg:ml-2 mt-1 lg:mt-0">
+                  {departmentsFull.slice(2).join(" - ")}
+                </span>
+              )}
+            </h4>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <footer className="relative z-10 bg-[#FCC200] py-3 sm:py-4 md:py-6 lg:py-8 flex-shrink-0 flex items-center justify-center">
+        <div className="container mx-auto px-3 md:px-4">
+          <div className="text-center space-y-1 md:space-y-2">
+            <p className="text-sm sm:text-base md:text-lg font-bold text-[#3E8BD6]">
+              Asistente virtual VRAE
+            </p>
+            <p className="text-xs sm:text-sm md:text-base text-[#3E8BD6]/80">
+              {currentYear} Asistente virtual UCT. Todos los derechos reservados.
             </p>
           </div>
         </div>
       </footer>
+
+      {/* CSS para animación float */}
+      <style>{`
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-10px);
+          }
+        }
+        .animate-float {
+          animation: float 3s ease-in-out infinite;
+        }
+      `}</style>
     </div>
   );
 };

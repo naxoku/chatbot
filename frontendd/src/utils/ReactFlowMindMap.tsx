@@ -74,7 +74,7 @@ interface NodeColors {
   shadow: string;
 }
 
-// 📏 calcular ancho de texto
+// Calcular ancho de texto
 const measureTextWidth = (text: string, font = "14px Arial"): number => {
   if (!text) return 0;
   const canvas = document.createElement("canvas");
@@ -84,7 +84,7 @@ const measureTextWidth = (text: string, font = "14px Arial"): number => {
   return ctx.measureText(text).width;
 };
 
-// 📏 calcular altura según cantidad de líneas necesarias
+// Calcular altura según cantidad de líneas necesarias
 const measureNodeHeight = (title: string, subtitle = ""): number => {
   const titleWidth = measureTextWidth(title, "16px Arial");
   const subtitleWidth = measureTextWidth(subtitle, "13px Arial");
@@ -106,7 +106,7 @@ const getLayoutedElements = (
   dagreGraph.setDefaultEdgeLabel(() => ({}));
 
   const isHorizontal = direction === "LR";
-  dagreGraph.setGraph({ rankdir: direction, nodesep: 80, ranksep: 150 });
+  dagreGraph.setGraph({ rankdir: direction, nodesep: 40, ranksep: 80 });
 
   nodes.forEach((node) => {
     const height = node.style?.height || BASE_HEIGHT;
@@ -143,7 +143,7 @@ const getLayoutedElements = (
   return { nodes, edges };
 };
 
-// 🎨 Colores simplificados usando variables CSS
+// Colores según profundidad
 const getNodeColors = (depth: number): NodeColors => {
   const colorSchemes: NodeColors[] = [
     {
@@ -298,15 +298,18 @@ const convertToFlowElements = (data: NestedMindMapData) => {
         id: `edge-${parentId}-${id}`,
         source: parentId,
         target: id,
-        type: "smoothstep",
+        type: "bezier",
         style: {
-          stroke: "hsl(var(--primary))",
-          strokeWidth: 2,
+          stroke: "#3b82f6",
+          strokeWidth: 3,
+          opacity: 0.8,
         },
         animated: true,
         markerEnd: {
           type: MarkerType.ArrowClosed,
-          color: "hsl(var(--primary))",
+          color: "#3b82f6",
+          width: 20,
+          height: 20,
         },
       };
       console.log("📋 [MindMap] Edge creado:", JSON.stringify(edge, null, 2));
@@ -382,12 +385,13 @@ const convertToFlowElements = (data: NestedMindMapData) => {
   }
 };
 
-// ✅ COMPONENTE CUSTOM COMPLETAMENTE OPTIMIZADO FUERA DEL PRINCIPAL
 const CustomNode = React.memo<{ data: FlowNodeData; selected?: boolean }>(
   ({ data, selected }) => {
     const [isExpanded, setIsExpanded] = useState(data.expanded || false);
-    const [isHovered, setIsHovered] = useState(false);
     const { colors } = data;
+    
+    // Detectar si es móvil
+    const isMobile = typeof window !== "undefined" ? window.innerWidth < 768 : false;
 
     const handleToggle = useCallback(() => {
       const newExpanded = !isExpanded;
@@ -400,35 +404,35 @@ const CustomNode = React.memo<{ data: FlowNodeData; selected?: boolean }>(
     return (
       <div
         className={`
-        relative rounded-lg shadow-md border-2 p-4 cursor-pointer
+        relative rounded-lg shadow-md border-2 p-3 sm:p-4
+        cursor-pointer select-none
         transition-all duration-200 ease-out
         ${colors.bg} ${colors.border} ${colors.shadow}
-        ${selected ? "scale-105 ring-2 ring-primary/50" : ""}
-        ${isHovered ? "scale-102 shadow-lg" : ""}
+        ${selected ? "ring-2 ring-primary/50" : ""}
+        ${!isMobile ? "hover:scale-105 hover:shadow-lg" : "active:scale-95"}
         max-w-[${MAX_NODE_WIDTH}px] whitespace-normal wrap-break-word
         backdrop-blur-sm
+        ${isMobile ? "touch-manipulation" : ""}
       `}
         onClick={handleToggle}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
       >
         <Handle
           type="target"
           position={Position.Left}
-          className="w-3 h-3 bg-background border-2 border-primary shadow-sm"
+          className="w-2 h-2 sm:w-3 sm:h-3 bg-background border-2 border-primary shadow-sm"
         />
 
-        <div className="flex items-start gap-3 relative z-10">
+        <div className="flex items-start gap-2 sm:gap-3 relative z-10">
           {/* Icono con fondo */}
           {data.icon && (
-            <div className="shrink-0 w-10 h-10 rounded-lg bg-background/20 flex items-center justify-center">
-              <span className="text-xl">{data.icon}</span>
+            <div className="shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-background/20 flex items-center justify-center">
+              <span className="text-lg sm:text-xl">{data.icon}</span>
             </div>
           )}
 
           <div className="flex-1 min-w-0">
             <h3
-              className={`font-semibold text-sm leading-tight mb-1 ${colors.text}`}
+              className={`font-semibold text-xs sm:text-sm leading-tight mb-1 ${colors.text}`}
             >
               {data.title}
             </h3>
@@ -443,9 +447,9 @@ const CustomNode = React.memo<{ data: FlowNodeData; selected?: boolean }>(
 
           {/* Indicador de expansión */}
           {data.hasChildren && (
-            <div className="shrink-0 w-6 h-6 rounded-md bg-background/20 flex items-center justify-center">
+            <div className="shrink-0 w-5 h-5 sm:w-6 sm:h-6 rounded-md bg-background/20 flex items-center justify-center">
               <svg
-                className={`w-3 h-3 text-current transition-transform ${
+                className={`w-2.5 h-2.5 sm:w-3 sm:h-3 text-current transition-transform ${
                   isExpanded ? "rotate-90" : ""
                 }`}
                 fill="none"
@@ -466,14 +470,13 @@ const CustomNode = React.memo<{ data: FlowNodeData; selected?: boolean }>(
         <Handle
           type="source"
           position={Position.Right}
-          className="w-3 h-3 bg-background border-2 border-primary shadow-sm"
+          className="w-2 h-2 sm:w-3 sm:h-3 bg-background border-2 border-primary shadow-sm"
         />
       </div>
     );
   }
 );
 
-// ✅ nodeTypes DEFINIDO FUERA DEL COMPONENTE PRINCIPAL
 const nodeTypes = {
   custom: CustomNode,
 };
@@ -485,6 +488,9 @@ interface ReactFlowMindMapProps {
 
 const ReactFlowMindMap: React.FC<ReactFlowMindMapProps> = ({ data }) => {
   console.log("🎯 [MindMap] ReactFlowMindMap renderizado con datos:", data);
+
+  // Detectar si es dispositivo móvil
+  const isMobile = window.innerWidth < 768;
 
   const { nodes: initialNodes, edges: initialEdges } =
     convertToFlowElements(data);
@@ -499,7 +505,6 @@ const ReactFlowMindMap: React.FC<ReactFlowMindMapProps> = ({ data }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-  // ✅ HANDLER OPTIMIZADO CON useCallback
   const handleToggle = useCallback(
     (nodeId: string, expanded: boolean) => {
       console.log("🔄 [MindMap] handleToggle llamado:", { nodeId, expanded });
@@ -552,7 +557,6 @@ const ReactFlowMindMap: React.FC<ReactFlowMindMapProps> = ({ data }) => {
     [setNodes, setEdges, edges]
   );
 
-  // ✅ SOLUCIÓN CRÍTICA: useEffect que solo se ejecuta una vez al montar
   useEffect(() => {
     console.log("🔧 [MindMap] Inicializando handlers una sola vez");
     setNodes((nds) =>
@@ -561,40 +565,63 @@ const ReactFlowMindMap: React.FC<ReactFlowMindMapProps> = ({ data }) => {
         data: { ...node.data, onToggle: handleToggle },
       }))
     );
-  }, []); // ✅ ARRAY VACÍO - solo se ejecuta una vez al montar
+  }, [handleToggle, setNodes]);
 
   return (
-    <div className="w-full h-full min-h-[400px] bg-background rounded-lg relative overflow-hidden">
+    <div className="w-full h-full min-h-[700px] bg-background rounded-lg relative overflow-hidden">
       <ReactFlow
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={(params) => setEdges((eds) => addEdge(params, eds))}
-        nodeTypes={nodeTypes} // ✅ nodeTypes completamente memoizado fuera del componente
+        nodeTypes={nodeTypes}
         fitView
-        attributionPosition="bottom-left"
+        attributionPosition={isMobile ? "top-right" : "bottom-left"}
         className="bg-background"
         defaultEdgeOptions={{
-          animated: true,
+          type: "bezier",
+          animated: !isMobile, // Sin animaciones en móvil para mejor rendimiento
+          style: {
+            stroke: "#3b82f6",
+            strokeWidth: isMobile ? 2 : 3,
+            opacity: 0.8,
+          },
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            color: "#3b82f6",
+            width: isMobile ? 16 : 20,
+            height: isMobile ? 16 : 20,
+          },
         }}
-        minZoom={0.1}
-        maxZoom={2}
+        minZoom={isMobile ? 0.3 : 0.1}
+        maxZoom={isMobile ? 1.5 : 2}
+        panOnDrag={!isMobile ? true : true}
+        zoomOnScroll={!isMobile ? true : false}
+        zoomOnPinch={true}
       >
-        <Controls className="bg-background/90 backdrop-blur-sm border rounded-lg shadow-md" />
-        <MiniMap
-          className="bg-background/90 border rounded-lg shadow-md"
-          nodeColor={(_node) => {
-            return _node.data?.depth === 0
-              ? "hsl(var(--primary))"
-              : "hsl(var(--primary))";
-          }}
-          maskColor="transparent"
-        />
+        {/* Solo mostrar controles en desktop */}
+        {!isMobile && (
+          <Controls className="bg-background/90 backdrop-blur-sm border rounded-lg shadow-md" />
+        )}
+        
+        {/* Solo mostrar minimapa en desktop */}
+        {!isMobile && (
+          <MiniMap
+            className="bg-background/90 border rounded-lg shadow-md"
+            nodeColor={(_node) => {
+              return _node.data?.depth === 0
+                ? "hsl(var(--primary))"
+                : "hsl(var(--primary))";
+            }}
+            maskColor="transparent"
+          />
+        )}
+        
         <Background
           color="hsl(var(--muted-foreground))"
-          gap={20}
-          size={1}
+          gap={isMobile ? 16 : 20}
+          size={isMobile ? 0.5 : 1}
           variant={BackgroundVariant.Dots}
         />
       </ReactFlow>

@@ -1,5 +1,4 @@
 import React from "react";
-import { Download } from "lucide-react";
 import ReactFlowMindMap from "../../utils/ReactFlowMindMap";
 import {
   Dialog,
@@ -8,7 +7,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 
 interface MindMapModalProps {
   isOpen: boolean;
@@ -69,34 +67,6 @@ export const MindMapModal: React.FC<MindMapModalProps> = ({
     );
   }
 
-  const handleExport = () => {
-    // Función de exportación para react-flow
-    const element = document.querySelector(".react-flow");
-    if (!element) return;
-
-    const svg = element.querySelector("svg");
-    if (!svg) return;
-
-    const svgData = new XMLSerializer().serializeToString(svg);
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    const img = new Image();
-
-    canvas.width = element.clientWidth;
-    canvas.height = element.clientHeight;
-
-    img.onload = () => {
-      ctx?.drawImage(img, 0, 0);
-
-      const link = document.createElement("a");
-      link.download = `${artifact.name.replace(/\s+/g, "_")}.png`;
-      link.href = canvas.toDataURL();
-      link.click();
-    };
-
-    img.src = "data:image/svg+xml;base64," + btoa(svgData);
-  };
-
   // Validación más robusta con logs detallados
   if (!isOpen) {
     console.log("🚪 [MindMapModal] Modal no está abierto");
@@ -117,14 +87,14 @@ export const MindMapModal: React.FC<MindMapModalProps> = ({
     console.error("❌ [MindMapModal] Error: artifact.data está faltando");
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-[96vw] max-h-[92vh] p-0">
-          <DialogHeader className="p-6 pb-4 border-b">
-            <DialogTitle>Error: Datos de mapa mental faltantes</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="w-[98vw] h-[95vh] max-w-none max-h-none p-0 max-w-sm sm:max-w-4xl">
+          <DialogHeader className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-border">
+            <DialogTitle className="text-lg sm:text-xl">Error: Datos de mapa mental faltantes</DialogTitle>
+            <DialogDescription className="text-sm">
               No se pudieron cargar los datos del mapa mental.
             </DialogDescription>
           </DialogHeader>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <p className="text-sm text-muted-foreground">
               Los datos del mapa mental no están disponibles. Por favor, intenta
               generar un nuevo mapa mental.
@@ -140,15 +110,15 @@ export const MindMapModal: React.FC<MindMapModalProps> = ({
     console.error("❌ [MindMapModal] Error: artifact.data.name está faltando");
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-[96vw] max-h-[92vh] p-0">
-          <DialogHeader className="p-6 pb-4 border-b">
-            <DialogTitle>Error: Estructura de datos inválida</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="max-w-[96vw] max-h-[92vh] p-0 max-w-sm sm:max-w-4xl">
+          <DialogHeader className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-border">
+            <DialogTitle className="text-lg sm:text-xl">Error: Estructura de datos inválida</DialogTitle>
+            <DialogDescription className="text-sm">
               La estructura del mapa mental no es válida.
             </DialogDescription>
           </DialogHeader>
-          <div className="p-6">
-            <p className="text-sm text-muted-foreground">
+          <div className="p-4 sm:p-6">
+            <p className="text-xs sm:text-sm text-muted-foreground font-mono break-all">
               El mapa mental no tiene un nodo raíz válido. Estructura recibida:{" "}
               {JSON.stringify(artifact.data, null, 2)}
             </p>
@@ -162,54 +132,47 @@ export const MindMapModal: React.FC<MindMapModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[96vw] max-h-[92vh] p-0">
-        <DialogHeader className="p-6 pb-4 border-b">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                <i className="fas fa-project-diagram text-sm text-primary"></i>
-              </div>
-              <div>
-                <DialogTitle>{artifact.name}</DialogTitle>
-                {artifact.description && (
-                  <DialogDescription>{artifact.description}</DialogDescription>
-                )}
-              </div>
+      <DialogContent className="max-w-[96vw] max-h-[92vh] p-0 max-w-sm sm:max-w-4xl">
+        <DialogHeader className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-border">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <i className="fas fa-project-diagram text-sm text-primary"></i>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleExport}>
-              <Download className="w-4 h-4 mr-2" />
-              Exportar
-            </Button>
+            <div className="min-w-0 flex-1">
+              <DialogTitle className="text-lg sm:text-xl truncate">{artifact.name}</DialogTitle>
+              {artifact.description && (
+                <DialogDescription className="text-xs sm:text-sm line-clamp-2">
+                  {artifact.description}
+                </DialogDescription>
+              )}
+            </div>
           </div>
         </DialogHeader>
 
-        <div className="px-6 py-3 border-b bg-muted/50">
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1.5">
-                <i className="fas fa-mouse text-xs"></i>
-                Clic para expandir/colapsar
-              </span>
-              <span className="flex items-center gap-1.5">
-                <i className="fas fa-hand-pointer text-xs"></i>
-                Arrastra para mover
+        {artifact.createdAt && (
+          <div className="px-4 sm:px-6 py-2.5 sm:py-3 border-b border-border bg-muted/50">
+            <div className="flex items-center justify-end text-xs sm:text-sm text-muted-foreground">
+              <span className="flex items-center gap-1 shrink-0">
+                <i className="fas fa-clock text-xs"></i>
+                <span className="hidden sm:inline">
+                  {new Date(artifact.createdAt).toLocaleDateString("es-ES", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </span>
+                <span className="sm:hidden">
+                  {new Date(artifact.createdAt).toLocaleDateString("es-ES", {
+                    day: "numeric",
+                    month: "short",
+                  })}
+                </span>
               </span>
             </div>
-
-            {artifact.createdAt && (
-              <span className="flex items-center gap-1.5">
-                <i className="fas fa-clock text-xs"></i>
-                {new Date(artifact.createdAt).toLocaleDateString("es-ES", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })}
-              </span>
-            )}
           </div>
-        </div>
+        )}
 
-        <div className="flex-1 min-h-0 w-full h-[calc(100%-120px)]">
+        <div className="flex-1 min-h-0 w-full h-[calc(100%-100px)] sm:h-[calc(100%-120px)]">
           <ReactFlowMindMap data={artifact.data} />
         </div>
       </DialogContent>

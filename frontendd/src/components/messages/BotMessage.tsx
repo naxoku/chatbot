@@ -83,67 +83,78 @@ export const BotMessage: React.FC<BotMessageProps> = ({
   // Si es un mensaje de generación de mapa mental, mostrar diseño especial
   if (isGeneratingMindMap) {
     return (
-      <div className="flex justify-center px-4">
+      <div className="flex justify-center px-2">
         <div className="w-full max-w-4xl">
           <div className="flex gap-3 justify-start">
-            <div className="w-full max-w-[70%]">
+            <div className="w-full md:max-w-[70%]">
               {/* Mensaje citado */}
               <QuotedMessage message={message} />
 
               <style>{`
-                @keyframes pulse-opacity {
+                @keyframes sky-pulse {
                   0%, 100% {
-                    opacity: 0.4;
+                    background-color: rgb(224 242 254);
+                    box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.4);
                   }
                   50% {
-                    opacity: 0.8;
+                    background-color: rgb(186 230 253);
+                    box-shadow: 0 0 0 8px rgba(14, 165, 233, 0.1);
+                  }
+                }
+                @keyframes mindmap-enter {
+                  0% {
+                    opacity: 0;
+                    transform: scale(0.8) translateY(10px);
+                  }
+                  100% {
+                    opacity: 1;
+                    transform: scale(1) translateY(0);
+                  }
+                }
+                @keyframes content-fade {
+                  0% {
+                    opacity: 0.3;
+                    transform: translateX(-10px);
+                  }
+                  100% {
+                    opacity: 1;
+                    transform: translateX(0);
+                  }
+                }
+                @media (prefers-color-scheme: dark) {
+                  @keyframes sky-pulse-dark {
+                    0%, 100% {
+                      background-color: rgb(7 89 133 / 0.3);
+                      box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.2);
+                    }
+                    50% {
+                      background-color: rgb(12 74 110 / 0.5);
+                      box-shadow: 0 0 0 8px rgba(14, 165, 233, 0.05);
+                    }
+                  }
+                  .dark .mindmap-generating {
+                    animation: sky-pulse-dark 2.5s ease-in-out infinite;
                   }
                 }
                 .mindmap-generating {
-                  position: relative;
-                  overflow: hidden;
+                  animation: sky-pulse 2.5s ease-in-out infinite;
                 }
-                .mindmap-generating::before {
-                  content: '';
-                  position: absolute;
-                  top: 0;
-                  left: 0;
-                  right: 0;
-                  bottom: 0;
-                  background: linear-gradient(45deg, rgb(219 234 254), rgb(245 243 255), rgb(219 234 254));
-                  background-size: 400% 400%;
-                  animation: gradient-shift 3s ease-in-out infinite, pulse-opacity 2s ease-in-out infinite;
-                  z-index: 0;
-                  border-radius: inherit;
+                .mindmap-complete {
+                  animation: mindmap-enter 0.8s cubic-bezier(0.16, 1, 0.3, 1);
                 }
-                @media (prefers-color-scheme: dark) {
-                  .mindmap-generating::before {
-                    background: linear-gradient(45deg, rgb(37 99 235 / 0.3), rgb(147 51 234 / 0.3), rgb(37 99 235 / 0.3));
-                  }
-                }
-                @keyframes gradient-shift {
-                  0%, 100% {
-                    background-position: 0% 50%;
-                  }
-                  50% {
-                    background-position: 100% 50%;
-                  }
+                .mindmap-content-fade {
+                  animation: content-fade 0.6s ease-out;
                 }
               `}</style>
 
-              <div className="p-4 rounded-tl-lg rounded-tr-lg rounded-br-md bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 dark:from-blue-950/30 dark:to-purple-950/30 dark:border-blue-800 mindmap-generating">
-                <div className="relative z-10">
-                  <div className="flex items-center justify-center space-x-3">
-                    <div className="flex items-center space-x-3">
-                      <Brain className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                      <span className="text-lg font-medium text-gray-800 dark:text-gray-200">
-                        Generando mapa mental...
-                      </span>
-                    </div>
+              <div className="p-3 rounded-full bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800 mindmap-generating">
+                <div className="flex items-center justify-center space-x-3">
+                  <div className="p-2 bg-sky-100 dark:bg-sky-900/50 rounded-full animate-pulse">
+                    <Brain className="w-5 h-5 text-sky-600 dark:text-sky-400" />
                   </div>
-                  <div className="mt-2 text-sm text-center text-gray-600 dark:text-gray-400">
-                    Estamos creando un mapa mental basado en la conversación
-                  </div>
+                  <span className="font-medium text-sky-800 dark:text-sky-200 animate-pulse">
+                    Generando mapa mental...
+                  </span>
                 </div>
               </div>
             </div>
@@ -163,46 +174,42 @@ export const BotMessage: React.FC<BotMessageProps> = ({
       onViewMindMap?.(artifactData);
     };
 
+    // Extraer contexto del mensaje (primeros 50 caracteres del contenido)
+    const contextText = message.content.substring(0, 50) + (message.content.length > 50 ? "..." : "");
+
     return (
-      <div className="flex justify-center px-4">
+      <div className="flex justify-center px-2">
         <div className="w-full max-w-4xl">
           <div className="flex gap-3 justify-start">
-            <div className="w-full max-w-[70%]">
+            <div className="w-full md:max-w-[70%]">
               {/* Mensaje citado */}
               <QuotedMessage message={message} />
 
               <div
                 onClick={handleViewMindMap}
-                className="p-4 rounded-tl-lg rounded-tr-lg rounded-br-md bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 dark:from-green-950/30 dark:to-blue-950/30 dark:border-green-800 cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                className="p-3 rounded-full bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800 cursor-pointer hover:bg-sky-100 dark:hover:bg-sky-950/50 transition-all mindmap-complete"
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">
-                      <Brain className="w-5 h-5 text-green-600 dark:text-green-400" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
-                        Se ha generado un mapa mental
-                      </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {artifactData?.name || "Mapa Mental"}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                        Visualización generada
-                      </p>
-                    </div>
+                <div className="flex items-center space-x-3 mindmap-content-fade">
+                  <div className="p-2 bg-sky-100 dark:bg-sky-900/50 rounded-full shrink-0 transition-all duration-500 hover:rotate-12">
+                    <Brain className="w-5 h-5 text-sky-600 dark:text-sky-400 transition-colors duration-300" />
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleViewMindMap();
-                      }}
-                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2"
-                    >
-                      <span>Ver Mapa</span>
-                    </button>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-sky-800 dark:text-sky-200 truncate text-base transition-colors duration-300">
+                      Mapa mental
+                    </h3>
+                    <p className="text-sm text-sky-600 dark:text-sky-400 truncate transition-colors duration-300">
+                      {contextText}
+                    </p>
                   </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleViewMindMap();
+                    }}
+                    className="px-4 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium rounded-full shrink-0 transition-all duration-300 hover:scale-110 hover:shadow-md"
+                  >
+                    Ver
+                  </button>
                 </div>
               </div>
             </div>
@@ -214,10 +221,10 @@ export const BotMessage: React.FC<BotMessageProps> = ({
 
   // Diseño normal para otros mensajes
   return (
-    <div className="flex justify-center px-4">
+    <div className="flex justify-center px-2">
       <div className="w-full max-w-4xl">
         <div className="flex gap-3 justify-start">
-          <div className="w-full max-w-[70%]">
+          <div className="w-full md:max-w-[70%]">
             {/* Mensaje citado */}
             <QuotedMessage message={message} />
 

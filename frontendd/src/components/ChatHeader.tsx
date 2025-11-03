@@ -26,7 +26,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
 
         {/* Título centrado */}
         <div className="flex-1 flex justify-center items-center">
-          <h2 className="text-lg font-medium text-center truncate max-w-md">
+          <h2 className="text-lg font-medium text-center truncate max-w-55 md:max-w-md">
             {conversationTitle || "Chat Asistente"}
           </h2>
         </div>

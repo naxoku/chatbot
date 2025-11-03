@@ -1,4 +1,3 @@
-// frontendd/src/services/backendService.ts
 import axios from 'axios';
 import { nanoid } from 'nanoid';
 
@@ -15,6 +14,16 @@ if (isDev) {
 }
 
 // ==================== TYPES ====================
+export interface DocumentData {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  type: string;
+  url: string;
+  keywords?: string[];
+}
+
 export interface Message {
   id: string;
   content: string;
@@ -85,21 +94,24 @@ export class BackendService {
     input: string,
     conversacionId: string | null,
     quotedMessage: Message | null,
-    selectedParameters: string[] | undefined,
     onChunk: (chunk: string) => void,
     onComplete: (response: StreamResponse) => void,
-    onError: (error: string) => void
+    onError: (error: string) => void,
+    selectedParameters?: string[],
+    selectedDocuments?: unknown[]
   ): Promise<void> {
     try {
       console.log('📤 Enviando mensaje con streaming...');
       console.log('   ConversacionId:', conversacionId);
       console.log('   Parámetros:', selectedParameters);
+      console.log('   Documentos seleccionados:', selectedDocuments?.length || 0);
       console.log('   URL:', `${API_BASE}/api/chat/stream`);
       
       const requestData = {
         pregunta: input,
         conversacionId,
         parametros: selectedParameters,
+        documentosSeleccionados: selectedDocuments || [],
         ...(quotedMessage && {
           quotedMessageId: quotedMessage.id,
           quotedMessageContent: quotedMessage.content,
