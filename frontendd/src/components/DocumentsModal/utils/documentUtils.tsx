@@ -1,6 +1,7 @@
 import { FileText, File, Image, Video, Music } from "lucide-react";
+import React from "react";
 
-export const getDocumentIcon = (url: string) => {
+export const getDocumentIcon = (url: string): React.ReactNode => {
   const extension = url.split(".").pop()?.toLowerCase();
 
   switch (extension) {

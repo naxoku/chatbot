@@ -112,22 +112,20 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
 
   return (
     <div className="flex items-center gap-1">
-      {/* Botón de copiar (solo para mensajes del bot) */}
-      {!isUser && (
-        <CopyButton
-          content={message.content}
-          messageId={message.id}
-          isCopied={isCopied}
-          onCopy={copyToClipboard}
-        />
-      )}
+      {/* Botón de copiar (para todos los mensajes) */}
+      <CopyButton
+        content={message.content}
+        messageId={message.id}
+        isCopied={isCopied}
+        onCopy={copyToClipboard}
+      />
 
-      {/* Feedback para mensajes del bot */}
+      {/* Feedback solo para mensajes del bot */}
       {!isUser && message.feedbackRequested && !feedbackState?.submitted && (
         <FeedbackButtons messageId={message.id} onFeedback={handleFeedback} />
       )}
 
-      {/* Feedback enviado */}
+      {/* Feedback enviado solo para mensajes del bot */}
       {!isUser && feedbackState?.submitted && (
         <FeedbackSubmittedIndicator isHelpful={feedbackState.isHelpful} />
       )}

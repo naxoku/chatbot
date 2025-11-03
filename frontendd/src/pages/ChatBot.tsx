@@ -1,4 +1,3 @@
-// frontendd/src/pages/ChatBot.tsx
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -6,6 +5,8 @@ import { BotMessage } from "@/components/messages/BotMessage";
 import { UserMessage } from "@/components/messages/UserMessage";
 import { Sidebar } from "@/components/sidebar";
 import { DocumentsModal } from "@/components/DocumentsModal";
+import { ArtifactsModal } from "@/components/ArtifactsModal";
+import { MindMapModal } from "@/components/MindMapModal";
 import { ChatHeader } from "@/components/ChatHeader";
 import { ChatInput } from "@/components/ChatInput";
 import { EmptyChatState } from "@/components/EmptyChatState";
@@ -31,6 +32,11 @@ const ChatBot: React.FC = () => {
   // ===== ESTADO LOCAL =====
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isDocumentsModalOpen, setIsDocumentsModalOpen] = useState(false);
+  const [isArtifactsModalOpen, setIsArtifactsModalOpen] = useState(false);
+  const [isMindMapModalOpen, setIsMindMapModalOpen] = useState(false);
+  const [selectedMindMapData, setSelectedMindMapData] = useState<unknown>(null);
+  const [selectedMindMapTitle, setSelectedMindMapTitle] =
+    useState<string>("Mapa Mental");
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isBotOnline] = useState(true);
@@ -62,6 +68,10 @@ const ChatBot: React.FC = () => {
     setInput: setInputMessage,
     quotedMessage,
     setQuotedMessage,
+    addArtifact: (artifact: unknown) => {
+      // Log del artefacto creado
+      console.log("🧩 Artefacto creado:", artifact);
+    },
   });
 
   // ===== AUTO-SCROLL =====
@@ -144,6 +154,26 @@ const ChatBot: React.FC = () => {
 
   const handleCloseDocuments = () => {
     setIsDocumentsModalOpen(false);
+  };
+
+  const handleOpenArtifacts = () => {
+    setIsArtifactsModalOpen(true);
+  };
+
+  const handleCloseArtifacts = () => {
+    setIsArtifactsModalOpen(false);
+  };
+
+  const handleOpenMindMap = (artifactData: unknown, title?: string) => {
+    setSelectedMindMapData(artifactData);
+    setSelectedMindMapTitle(title || "Mapa Mental");
+    setIsMindMapModalOpen(true);
+  };
+
+  const handleCloseMindMap = () => {
+    setIsMindMapModalOpen(false);
+    setSelectedMindMapData(null);
+    setSelectedMindMapTitle("Mapa Mental");
   };
 
   const handleDocumentSelect = (document: Document) => {
@@ -351,12 +381,13 @@ const ChatBot: React.FC = () => {
 
   const handleViewMindMap = (artifactData: unknown) => {
     console.log("🗺️ Mostrando mapa mental:", artifactData);
-    // Implementar la lógica para mostrar el mapa mental
+    handleOpenMindMap(artifactData);
   };
 
   return (
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-      <div className="min-h-screen bg-background flex">
+      {/* Contenedor principal con altura completa de la ventana */}
+      <div className="h-screen bg-background flex overflow-hidden">
         {/* Sidebar Component */}
         <Sidebar
           isOpen={isSidebarOpen}
@@ -379,45 +410,90 @@ const ChatBot: React.FC = () => {
           onDocumentSelect={handleDocumentSelect}
         />
 
-        <div className="flex-1 flex flex-col min-w-0">
+        {/* Artifacts Modal */}
+        <ArtifactsModal
+          isOpen={isArtifactsModalOpen}
+          onClose={handleCloseArtifacts}
+          messages={messages}
+          onViewMindMap={handleViewMindMap}
+        />
+
+        {/* Mind Map Modal */}
+        {isMindMapModalOpen && selectedMindMapData && (
+          <MindMapModal
+            isOpen={isMindMapModalOpen}
+            onClose={handleCloseMindMap}
+            artifact={{
+              name: selectedMindMapTitle,
+              data: selectedMindMapData as {
+                name: string;
+                subtitle?: string;
+                icon?: string;
+                children?: Array<{
+                  name: string;
+                  subtitle?: string;
+                  icon?: string;
+                  children?: Array<{
+                    name: string;
+                    subtitle?: string;
+                    icon?: string;
+                    children?: Array<{
+                      name: string;
+                      subtitle?: string;
+                      icon?: string;
+                      children?: unknown[];
+                    }>;
+                  }>;
+                }>;
+              },
+            }}
+          />
+        )}
+
+        {/* Área de Chat - Flexbox vertical con altura completa */}
+        <div className="flex-1 flex flex-col min-w-0 h-full">
+          {/* Header del Chat - Altura fija */}
           <ChatHeader
             conversationTitle={currentChat?.title || "Nueva Conversación"}
+            onOpenArtifacts={handleOpenArtifacts}
           />
 
-          <div className="flex-1 min-h-0">
-            <div className="h-[calc(100vh-12rem)] overflow-y-auto p-6">
-              {messages.length === 0 ? (
-                <EmptyChatState
-                  conversationTitle={currentChat?.title || "Nueva Conversación"}
-                />
-              ) : (
-                <div className="space-y-4 max-w-4xl mx-auto">
-                  {messages.map((message) =>
-                    message.sender === "bot" ? (
-                      <BotMessage
-                        key={message.id}
-                        message={message}
-                        onQuickAction={handleQuickAction}
-                        onQuoteMessage={handleQuoteMessage}
-                        onFeedback={handleFeedback}
-                        onViewMindMap={handleViewMindMap}
-                      />
-                    ) : (
+          {/* Área de Mensajes - Toma el espacio restante disponible */}
+          <div className="flex-1 overflow-y-auto p-6">
+            {messages.length === 0 ? (
+              <EmptyChatState
+                conversationTitle={currentChat?.title || "Nueva Conversación"}
+              />
+            ) : (
+              <div className="space-y-4 max-w-4xl mx-auto">
+                {messages.map((message) =>
+                  message.sender === "bot" ? (
+                    <BotMessage
+                      key={message.id}
+                      message={message}
+                      onQuickAction={handleQuickAction}
+                      onQuoteMessage={handleQuoteMessage}
+                      onFeedback={handleFeedback}
+                      onViewMindMap={handleViewMindMap}
+                    />
+                  ) : (
+                    <div key={message.id} className="pl-24">
                       <UserMessage
-                        key={message.id}
+                        key={`user-${message.id}`}
                         message={message}
                         onQuickAction={handleQuickAction}
                         onQuoteMessage={handleQuoteMessage}
                         onViewMindMap={handleViewMindMap}
                       />
-                    )
-                  )}
-                  <div ref={messagesEndRef} />
-                </div>
-              )}
-            </div>
+                    </div>
+                  )
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            )}
           </div>
 
+          {/* Input del Chat - Altura fija */}
           <ChatInput
             inputMessage={inputMessage}
             onInputChange={setInputMessage}

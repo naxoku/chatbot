@@ -146,7 +146,7 @@ const App: React.FC = () => {
   );
 };
 
-// Componente ProtectedRoute temporal
+// Componente ProtectedRoute
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -177,7 +177,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
   return <>{children}</>;
 };
 
-// Componente NotFound temporal
+// Componente NotFound
 const NotFound: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">

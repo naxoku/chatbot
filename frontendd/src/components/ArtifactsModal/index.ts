@@ -1,0 +1,1 @@
+export { ArtifactsModal, default } from './ArtifactsModal';

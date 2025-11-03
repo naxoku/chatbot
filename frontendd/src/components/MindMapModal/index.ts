@@ -1,0 +1,1 @@
+export { MindMapModal, default } from './MindMapModal';

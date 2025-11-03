@@ -22,7 +22,6 @@ interface MessageArtifactsProps {
   artifact?: boolean | Artifact;
   artifactData?: Message["artifactData"];
   onViewMindMap?: (artifactData: unknown) => void;
-  isUser: boolean;
 }
 
 /**
@@ -103,7 +102,6 @@ export const MessageArtifacts: React.FC<MessageArtifactsProps> = ({
   artifact,
   artifactData,
   onViewMindMap,
-  isUser,
 }) => {
   const hasDocuments = documentLinks && documentLinks.length > 0;
   const hasMindMap = artifact && artifactData;

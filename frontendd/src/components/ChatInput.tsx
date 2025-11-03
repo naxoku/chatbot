@@ -82,8 +82,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   return (
-    <div className="p-6 border-t border-border bg-card shrink-0">
-      <div className="max-w-4xl mx-auto">
+    <div className="flex justify-center px-4 py-4 shrink-0">
+      <div className="w-full max-w-4xl rounded-xl bg-card p-4 shadow-lg border">
         {/* Mensaje citado - estilo WhatsApp */}
         {quotedMessage && (
           <div className="mb-3 p-3 rounded-lg bg-muted/50 border-l-2 border-l-primary">
@@ -122,11 +122,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               onChange={(e) => onInputChange(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Escribe tu mensaje aquí..."
-              className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+              className="flex min-h-11 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none"
               disabled={!isBotOnline || disabled || isTyping}
               style={{
                 maxHeight: "120px",
-                minHeight: "60px",
+                minHeight: "44px",
               }}
             />
           </div>
@@ -135,11 +135,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             disabled={
               !inputMessage.trim() || !isBotOnline || disabled || isTyping
             }
-            className="px-6 shrink-0"
+            className="px-6 h-11 w-11 shrink-0"
             type="button"
           >
             {isTyping ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center">
                 <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
               </div>
             ) : (

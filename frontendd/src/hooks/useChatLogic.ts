@@ -278,24 +278,26 @@ export const useChatLogic = ({
     console.log('🧠 ===== GENERANDO MAPA MENTAL =====');
     console.log('   ConversacionId:', conversacionId);
     
-    // Buscar el último mensaje del bot
-    const lastBotMsg = [...messages]
-      .reverse()
-      .find((m) => m.sender === 'bot');
-
-    if (!lastBotMsg || !lastBotMsg.content.trim()) {
-      console.warn('⚠️ No hay contexto válido');
-      alert('No hay contexto válido para generar un mapa mental.');
-      return;
-    }
-
     if (!conversacionId) {
       console.error('❌ No hay conversacionId');
       alert('La conversación debe guardarse antes de generar un mapa mental.');
       return;
     }
 
-    console.log('   Contexto:', lastBotMsg.content.substring(0, 100) + '...');
+    // Recopilar todo el contexto de la conversación
+    const contextoCompleto = messages
+      .filter((m) => m.sender === 'bot' && m.content.trim())
+      .map((m) => m.content.trim())
+      .join('\n\n');
+
+    if (!contextoCompleto.trim()) {
+      console.warn('⚠️ No hay contexto válido en los mensajes del bot');
+      alert('No hay contenido en los mensajes del bot para generar un mapa mental.');
+      return;
+    }
+
+    console.log('   Contexto completo:', contextoCompleto.substring(0, 200) + '...');
+    console.log('   Total caracteres:', contextoCompleto.length);
 
     // Crear mensaje de loading
     const mapMsg = backendService.createMessage('bot', 'Generando mapa mental...', {
@@ -305,7 +307,7 @@ export const useChatLogic = ({
 
     try {
       const mapaMental = await backendService.generateMindMap(
-        lastBotMsg.content,
+        contextoCompleto,
         conversacionId,
         `Mapa Mental de ${currentChat?.title || 'Conversación'}`
       );
