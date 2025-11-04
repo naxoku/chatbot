@@ -42,72 +42,125 @@
 }
 
 :root {
+  /* Configuración de bordes redondeados */
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.147 0.004 49.25);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.147 0.004 49.25);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.147 0.004 49.25);
-  --primary: oklch(0.216 0.006 56.043);
-  --primary-foreground: oklch(0.985 0.001 106.423);
-  --secondary: oklch(0.97 0.001 106.424);
-  --secondary-foreground: oklch(0.216 0.006 56.043);
-  --muted: oklch(0.97 0.001 106.424);
-  --muted-foreground: oklch(0.553 0.013 58.071);
-  --accent: oklch(0.97 0.001 106.424);
-  --accent-foreground: oklch(0.216 0.006 56.043);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.923 0.003 48.717);
-  --input: oklch(0.923 0.003 48.717);
-  --ring: oklch(0.709 0.01 56.259);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0.001 106.423);
-  --sidebar-foreground: oklch(0.147 0.004 49.25);
-  --sidebar-primary: oklch(0.216 0.006 56.043);
-  --sidebar-primary-foreground: oklch(0.985 0.001 106.423);
-  --sidebar-accent: oklch(0.97 0.001 106.424);
-  --sidebar-accent-foreground: oklch(0.216 0.006 56.043);
-  --sidebar-border: oklch(0.923 0.003 48.717);
-  --sidebar-ring: oklch(0.709 0.01 56.259);
+
+  /* ===== MODO CLARO ===== */
+  /* Paleta monocromática basada en Celeste #3E8BD6 */
+  /* Todas las variaciones se generan ajustando la luminosidad (L) del color base */
+
+  /* Colores de fondo - Máxima luminosidad */
+  --background: oklch(0.99 0.01 254); /* Celeste casi blanco (L: 99%) */
+  --foreground: oklch(
+    0.25 0.08 254
+  ); /* Celeste muy oscuro para texto (L: 25%) */
+
+  /* Tarjetas y contenedores - Pureza máxima */
+  --card: oklch(1 0 0); /* Blanco puro para contraste */
+  --card-foreground: oklch(0.25 0.08 254); /* Celeste muy oscuro */
+
+  /* Popovers y modales - Igual que tarjetas */
+  --popover: oklch(1 0 0); /* Blanco puro */
+  --popover-foreground: oklch(0.25 0.08 254); /* Celeste muy oscuro */
+
+  /* Color primario - Celeste base #3E8BD6 (L: 62%) */
+  --primary: oklch(0.62 0.15 254); /* Celeste vibrante original */
+  --primary-foreground: oklch(0.99 0.01 254); /* Celeste casi blanco */
+
+  /* Color secundario - Celeste más claro (L: 75%) */
+  --secondary: oklch(0.75 0.1 254); /* Celeste luminoso */
+  --secondary-foreground: oklch(0.2 0.08 254); /* Celeste oscuro */
+
+  /* Estados apagados - Celeste desaturado (L: 90%) */
+  --muted: oklch(0.9 0.02 254); /* Celeste muy pálido */
+  --muted-foreground: oklch(0.45 0.08 254); /* Celeste medio */
+
+  /* Acentos - Celeste medio-claro (L: 70%) */
+  --accent: oklch(0.7 0.12 254); /* Celeste suave */
+  --accent-foreground: oklch(0.2 0.08 254); /* Celeste oscuro */
+
+  /* Destructivo - Rojo (único color fuera de la paleta celeste) */
+  --destructive: oklch(0.55 0.22 25); /* Rojo para alertas */
+
+  /* Bordes y inputs - Celeste muy claro (L: 85%) */
+  --border: oklch(0.85 0.03 254); /* Celeste pálido */
+  --input: oklch(0.85 0.03 254); /* Igual que border */
+  --ring: oklch(0.62 0.15 254); /* Celeste primario para focus */
+
+  /* Gráficos - Gradiente de luminosidad del celeste */
+  --chart-1: oklch(0.62 0.15 254); /* Celeste base (L: 62%) */
+  --chart-2: oklch(0.55 0.15 254); /* Celeste oscuro (L: 55%) */
+  --chart-3: oklch(0.7 0.13 254); /* Celeste claro (L: 70%) */
+  --chart-4: oklch(0.48 0.14 254); /* Celeste muy oscuro (L: 48%) */
+  --chart-5: oklch(0.78 0.1 254); /* Celeste muy claro (L: 78%) */
+
+  /* Sidebar - Variaciones sutiles del celeste */
+  --sidebar: oklch(0.97 0.01 254); /* Celeste ultra claro (L: 97%) */
+  --sidebar-foreground: oklch(0.25 0.08 254); /* Celeste muy oscuro */
+  --sidebar-primary: oklch(0.62 0.15 254); /* Celeste base */
+  --sidebar-primary-foreground: oklch(0.99 0.01 254); /* Celeste casi blanco */
+  --sidebar-accent: oklch(0.9 0.02 254); /* Celeste pálido */
+  --sidebar-accent-foreground: oklch(0.25 0.08 254); /* Celeste muy oscuro */
+  --sidebar-border: oklch(0.85 0.03 254); /* Celeste claro */
+  --sidebar-ring: oklch(0.62 0.15 254); /* Celeste base */
 }
 
 .dark {
-  --background: oklch(0.147 0.004 49.25);
-  --foreground: oklch(0.985 0.001 106.423);
-  --card: oklch(0.216 0.006 56.043);
-  --card-foreground: oklch(0.985 0.001 106.423);
-  --popover: oklch(0.216 0.006 56.043);
-  --popover-foreground: oklch(0.985 0.001 106.423);
-  --primary: oklch(0.923 0.003 48.717);
-  --primary-foreground: oklch(0.216 0.006 56.043);
-  --secondary: oklch(0.268 0.007 34.298);
-  --secondary-foreground: oklch(0.985 0.001 106.423);
-  --muted: oklch(0.268 0.007 34.298);
-  --muted-foreground: oklch(0.709 0.01 56.259);
-  --accent: oklch(0.268 0.007 34.298);
-  --accent-foreground: oklch(0.985 0.001 106.423);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.553 0.013 58.071);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.216 0.006 56.043);
-  --sidebar-foreground: oklch(0.985 0.001 106.423);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0.001 106.423);
-  --sidebar-accent: oklch(0.268 0.007 34.298);
-  --sidebar-accent-foreground: oklch(0.985 0.001 106.423);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.553 0.013 58.071);
+  /* ===== MODO OSCURO ===== */
+  /* Paleta monocromática basada en Amarillo #FCC200 */
+
+  /* Colores de fondo - Mínima luminosidad con toque amarillo */
+  --background: oklch(0.18 0.03 85); /* Amarillo muy oscuro (L: 18%) */
+  --foreground: oklch(0.95 0.03 85); /* Amarillo casi blanco (L: 95%) */
+
+  /* Tarjetas - Elevación sutil sobre el fondo */
+  --card: oklch(0.22 0.04 85); /* Amarillo oscuro elevado (L: 22%) */
+  --card-foreground: oklch(0.95 0.03 85); /* Amarillo casi blanco */
+
+  /* Popovers - Igual que tarjetas */
+  --popover: oklch(0.22 0.04 85); /* Amarillo oscuro elevado */
+  --popover-foreground: oklch(0.95 0.03 85); /* Amarillo casi blanco */
+
+  /* Color primario - Amarillo brillante #FCC200 (L: 78%) */
+  --primary: oklch(0.78 0.14 85); /* Amarillo vibrante */
+  --primary-foreground: oklch(0.15 0.05 85); /* Amarillo muy oscuro */
+
+  /* Color secundario - Amarillo medio (L: 65%) */
+  --secondary: oklch(0.65 0.12 85); /* Amarillo medio */
+  --secondary-foreground: oklch(0.95 0.03 85); /* Amarillo casi blanco */
+
+  /* Estados apagados - Amarillo desaturado oscuro (L: 28%) */
+  --muted: oklch(0.28 0.03 85); /* Amarillo oscuro apagado */
+  --muted-foreground: oklch(0.65 0.08 85); /* Amarillo medio */
+
+  /* Acentos - Amarillo dorado (L: 50%) */
+  --accent: oklch(0.5 0.1 85); /* Amarillo intermedio */
+  --accent-foreground: oklch(0.95 0.03 85); /* Amarillo casi blanco */
+
+  /* Destructivo - Rojo más brillante para modo oscuro */
+  --destructive: oklch(0.62 0.24 25); /* Rojo brillante */
+
+  /* Bordes y inputs - Amarillo semi-transparente (L: 40%) */
+  --border: oklch(0.4 0.06 85 / 35%); /* Amarillo oscuro translúcido */
+  --input: oklch(0.4 0.06 85 / 45%); /* Amarillo oscuro más opaco */
+  --ring: oklch(0.78 0.14 85); /* Amarillo brillante para focus */
+
+  /* Gráficos - Gradiente de luminosidad del amarillo */
+  --chart-1: oklch(0.78 0.14 85); /* Amarillo brillante (L: 78%) */
+  --chart-2: oklch(0.85 0.12 85); /* Amarillo muy brillante (L: 85%) */
+  --chart-3: oklch(0.7 0.13 85); /* Amarillo medio (L: 70%) */
+  --chart-4: oklch(0.9 0.1 85); /* Amarillo ultra brillante (L: 90%) */
+  --chart-5: oklch(0.6 0.11 85); /* Amarillo oscuro (L: 60%) */
+
+  /* Sidebar - Oscuro con separación sutil */
+  --sidebar: oklch(0.2 0.03 85); /* Amarillo muy oscuro (L: 20%) */
+  --sidebar-foreground: oklch(0.95 0.03 85); /* Amarillo casi blanco */
+  --sidebar-primary: oklch(0.78 0.14 85); /* Amarillo brillante */
+  --sidebar-primary-foreground: oklch(0.15 0.05 85); /* Amarillo muy oscuro */
+  --sidebar-accent: oklch(0.28 0.03 85); /* Amarillo oscuro apagado */
+  --sidebar-accent-foreground: oklch(0.95 0.03 85); /* Amarillo casi blanco */
+  --sidebar-border: oklch(0.4 0.06 85 / 35%); /* Amarillo oscuro translúcido */
+  --sidebar-ring: oklch(0.78 0.14 85); /* Amarillo brillante */
 }
 
 @layer base {
@@ -116,5 +169,26 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Transiciones suaves para cambios de tema */
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+}
+
+/* Mejoras adicionales para contraste y accesibilidad */
+@layer utilities {
+  /* Utilidad para texto con máximo contraste */
+  .text-high-contrast {
+    color: var(--foreground);
+  }
+
+  /* Utilidad para fondos con buena visibilidad */
+  .bg-high-contrast {
+    background-color: var(--card);
+  }
+
+  /* Utilidad para bordes visibles */
+  .border-visible {
+    border-color: var(--border);
+    border-width: 1px;
   }
 }

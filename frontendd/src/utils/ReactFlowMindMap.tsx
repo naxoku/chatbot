@@ -308,8 +308,8 @@ const convertToFlowElements = (data: NestedMindMapData) => {
         markerEnd: {
           type: MarkerType.ArrowClosed,
           color: "#3b82f6",
-          width: 20,
-          height: 20,
+          width: 0,
+          height: 0,
         },
       };
       console.log("📋 [MindMap] Edge creado:", JSON.stringify(edge, null, 2));
@@ -389,9 +389,10 @@ const CustomNode = React.memo<{ data: FlowNodeData; selected?: boolean }>(
   ({ data, selected }) => {
     const [isExpanded, setIsExpanded] = useState(data.expanded || false);
     const { colors } = data;
-    
+
     // Detectar si es móvil
-    const isMobile = typeof window !== "undefined" ? window.innerWidth < 768 : false;
+    const isMobile =
+      typeof window !== "undefined" ? window.innerWidth < 768 : false;
 
     const handleToggle = useCallback(() => {
       const newExpanded = !isExpanded;
@@ -604,7 +605,7 @@ const ReactFlowMindMap: React.FC<ReactFlowMindMapProps> = ({ data }) => {
         {!isMobile && (
           <Controls className="bg-background/90 backdrop-blur-sm border rounded-lg shadow-md" />
         )}
-        
+
         {/* Solo mostrar minimapa en desktop */}
         {!isMobile && (
           <MiniMap
@@ -617,7 +618,7 @@ const ReactFlowMindMap: React.FC<ReactFlowMindMapProps> = ({ data }) => {
             maskColor="transparent"
           />
         )}
-        
+
         <Background
           color="hsl(var(--muted-foreground))"
           gap={isMobile ? 16 : 20}

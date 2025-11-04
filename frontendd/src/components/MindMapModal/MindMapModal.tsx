@@ -89,7 +89,9 @@ export const MindMapModal: React.FC<MindMapModalProps> = ({
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="w-[98vw] h-[95vh] max-w-none max-h-none p-0 max-w-sm sm:max-w-4xl">
           <DialogHeader className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-border">
-            <DialogTitle className="text-lg sm:text-xl">Error: Datos de mapa mental faltantes</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl">
+              Error: Datos de mapa mental faltantes
+            </DialogTitle>
             <DialogDescription className="text-sm">
               No se pudieron cargar los datos del mapa mental.
             </DialogDescription>
@@ -112,7 +114,9 @@ export const MindMapModal: React.FC<MindMapModalProps> = ({
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-[96vw] max-h-[92vh] p-0 max-w-sm sm:max-w-4xl">
           <DialogHeader className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-border">
-            <DialogTitle className="text-lg sm:text-xl">Error: Estructura de datos inválida</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl">
+              Error: Estructura de datos inválida
+            </DialogTitle>
             <DialogDescription className="text-sm">
               La estructura del mapa mental no es válida.
             </DialogDescription>
@@ -135,11 +139,13 @@ export const MindMapModal: React.FC<MindMapModalProps> = ({
       <DialogContent className="max-w-[96vw] max-h-[92vh] p-0 max-w-sm sm:max-w-4xl">
         <DialogHeader className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-border">
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <i className="fas fa-project-diagram text-sm text-primary"></i>
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0">
+              <i className="fas fa-project-diagram text-sm text-amber-600 dark:text-amber-400"></i>
             </div>
             <div className="min-w-0 flex-1">
-              <DialogTitle className="text-lg sm:text-xl truncate">{artifact.name}</DialogTitle>
+              <DialogTitle className="text-lg sm:text-xl truncate">
+                {artifact.name}
+              </DialogTitle>
               {artifact.description && (
                 <DialogDescription className="text-xs sm:text-sm line-clamp-2">
                   {artifact.description}

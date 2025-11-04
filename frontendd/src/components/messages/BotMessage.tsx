@@ -91,68 +91,87 @@ export const BotMessage: React.FC<BotMessageProps> = ({
               <QuotedMessage message={message} />
 
               <style>{`
-                @keyframes sky-pulse {
-                  0%, 100% {
-                    background-color: rgb(224 242 254);
-                    box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.4);
+                /* Estilo minimalista inspirado en Google NotebookLM con modo oscuro */
+                @keyframes gentle-wave {
+                  0% {
+                    transform: translateX(-100%);
                   }
-                  50% {
-                    background-color: rgb(186 230 253);
-                    box-shadow: 0 0 0 8px rgba(14, 165, 233, 0.1);
+                  100% {
+                    transform: translateX(100%);
                   }
                 }
+
+                @keyframes subtle-fade {
+                  0%, 100% {
+                    opacity: 0.7;
+                  }
+                  50% {
+                    opacity: 1;
+                  }
+                }
+
+                .mindmap-generating {
+                  position: relative;
+                  overflow: hidden;
+                }
+
+                .mindmap-generating::before {
+                  content: '';
+                  position: absolute;
+                  top: 0;
+                  left: 0;
+                  width: 100%;
+                  height: 100%;
+                  background: linear-gradient(
+                    90deg,
+                    transparent 0%,
+                    oklch(0.78 0.14 85 / 0.3) 50%,
+                    transparent 100%
+                  );
+                  animation: gentle-wave 2.5s ease-in-out infinite;
+                  pointer-events: none;
+                }
+
+                .dark .mindmap-generating::before {
+                  background: linear-gradient(
+                    90deg,
+                    transparent 0%,
+                    oklch(0.95 0.03 85 / 0.4) 50%,
+                    transparent 100%
+                  );
+                }
+
+                .mindmap-content {
+                  position: relative;
+                  z-index: 1;
+                }
+
+                .mindmap-text {
+                  animation: subtle-fade 2s ease-in-out infinite;
+                }
+
+                .mindmap-complete {
+                  animation: mindmap-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                }
+
                 @keyframes mindmap-enter {
                   0% {
                     opacity: 0;
-                    transform: scale(0.8) translateY(10px);
+                    transform: translateY(8px);
                   }
                   100% {
                     opacity: 1;
-                    transform: scale(1) translateY(0);
+                    transform: translateY(0);
                   }
-                }
-                @keyframes content-fade {
-                  0% {
-                    opacity: 0.3;
-                    transform: translateX(-10px);
-                  }
-                  100% {
-                    opacity: 1;
-                    transform: translateX(0);
-                  }
-                }
-                @media (prefers-color-scheme: dark) {
-                  @keyframes sky-pulse-dark {
-                    0%, 100% {
-                      background-color: rgb(7 89 133 / 0.3);
-                      box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.2);
-                    }
-                    50% {
-                      background-color: rgb(12 74 110 / 0.5);
-                      box-shadow: 0 0 0 8px rgba(14, 165, 233, 0.05);
-                    }
-                  }
-                  .dark .mindmap-generating {
-                    animation: sky-pulse-dark 2.5s ease-in-out infinite;
-                  }
-                }
-                .mindmap-generating {
-                  animation: sky-pulse 2.5s ease-in-out infinite;
-                }
-                .mindmap-complete {
-                  animation: mindmap-enter 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-                }
-                .mindmap-content-fade {
-                  animation: content-fade 0.6s ease-out;
                 }
               `}</style>
 
-              <div className="p-3 rounded-full bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800 mindmap-generating">
-                <div className="flex items-center justify-center space-x-3">
-                  <div className="p-2 bg-sky-100 dark:bg-sky-900/50 rounded-full animate-pulse">
-                    <Brain className="w-5 h-5 text-sky-600 dark:text-sky-400" />
+              <div className="p-4 rounded-xl bg-sky-50 dark:bg-amber-950/20 border border-sky-200 dark:border-amber-800/50 mindmap-generating">
+                <div className="flex items-center justify-center space-x-3 mindmap-content">
+                  <div className="p-2 bg-sky-100 dark:bg-amber-900/40 rounded-lg">
+                    <Brain className="w-5 h-5 text-sky-600 dark:text-amber-400" />
                   </div>
-                  <span className="font-medium text-sky-800 dark:text-sky-200 animate-pulse">
+                  <span className="font-medium text-base text-sky-800 dark:text-amber-200 mindmap-text">
                     Generando mapa mental...
                   </span>
                 </div>
@@ -175,7 +194,9 @@ export const BotMessage: React.FC<BotMessageProps> = ({
     };
 
     // Extraer contexto del mensaje (primeros 50 caracteres del contenido)
-    const contextText = message.content.substring(0, 50) + (message.content.length > 50 ? "..." : "");
+    const contextText =
+      message.content.substring(0, 50) +
+      (message.content.length > 50 ? "..." : "");
 
     return (
       <div className="flex justify-center px-2">
@@ -187,17 +208,17 @@ export const BotMessage: React.FC<BotMessageProps> = ({
 
               <div
                 onClick={handleViewMindMap}
-                className="p-3 rounded-full bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800 cursor-pointer hover:bg-sky-100 dark:hover:bg-sky-950/50 transition-all mindmap-complete"
+                className="p-4 rounded-xl bg-gradient-to-br from-sky-50 to-blue-50 dark:from-amber-950/20 dark:to-yellow-950/20 border border-sky-200 dark:border-amber-800/50 cursor-pointer hover:border-sky-300 dark:hover:border-amber-700/70 hover:shadow-md transition-all duration-200 mindmap-complete group"
               >
-                <div className="flex items-center space-x-3 mindmap-content-fade">
-                  <div className="p-2 bg-sky-100 dark:bg-sky-900/50 rounded-full shrink-0 transition-all duration-500 hover:rotate-12">
-                    <Brain className="w-5 h-5 text-sky-600 dark:text-sky-400 transition-colors duration-300" />
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-sky-100 dark:bg-amber-900/40 rounded-lg shrink-0">
+                    <Brain className="w-5 h-5 text-sky-600 dark:text-amber-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sky-800 dark:text-sky-200 truncate text-base transition-colors duration-300">
+                    <h3 className="font-semibold text-base text-sky-800 dark:text-amber-200 truncate">
                       Mapa mental
                     </h3>
-                    <p className="text-sm text-sky-600 dark:text-sky-400 truncate transition-colors duration-300">
+                    <p className="text-sm text-sky-600 dark:text-amber-400 truncate">
                       {contextText}
                     </p>
                   </div>
@@ -206,7 +227,7 @@ export const BotMessage: React.FC<BotMessageProps> = ({
                       e.stopPropagation();
                       handleViewMindMap();
                     }}
-                    className="px-4 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium rounded-full shrink-0 transition-all duration-300 hover:scale-110 hover:shadow-md"
+                    className="px-4 py-1.5 bg-sky-600 hover:bg-sky-700 dark:bg-amber-600 dark:hover:bg-amber-700 text-white text-sm font-medium rounded-lg shrink-0 transition-colors duration-200"
                   >
                     Ver
                   </button>
