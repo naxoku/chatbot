@@ -2,10 +2,10 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
-import logoVrae from "../assets/logo_vrae.png";
-import fondoVrae from "../assets/fondo_vrae.jpg";
-import clickIcon from "../assets/click.png";
-import infotin from "../assets/infotin.png"; // Asegúrate de que infotin.png también se importe si se usa
+import logoVrae from "../assets/logo_vrae.webp";
+import fondoVrae from "../assets/fondo_vrae.webp";
+import clickIcon from "../assets/click.webp";
+import infotin from "../assets/infotin.webp";
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -16,29 +16,16 @@ const Home: React.FC = () => {
 
   const currentYear = new Date().getFullYear();
 
-  // Departamentos/Direcciones
-  const departments = [
-    "DIRINF",
-    "DDPER",
-    "DFIN",
-    "DGDC",
-    "DCR"
-  ];
-
-  const departmentsFull = [
-    "Dirección de Informática",
-    "Dirección de Desarrollo de Personas",
-    "Dirección de Finanzas",
-    "Dirección de Gestión y Desarrollo de Campus",
-    "Dirección de Crédito y Recaudación"
-  ];
-
   return (
     <div className="h-screen bg-[#3E8BD6] relative overflow-hidden flex flex-col">
       {/* Patrón de fondo con imagen */}
       <div
         className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url('${fondoVrae}')` }}
+        style={{
+          backgroundImage: `url('${fondoVrae}')`,
+          height: 'calc(100vh - 120px)',
+          bottom: '120px'
+        }}
       />
 
       {/* Header */}
@@ -122,26 +109,16 @@ const Home: React.FC = () => {
           <div className="text-center mb-1 md:mb-2">
             <h2 className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold text-white tracking-wider leading-tight">
               <span className="block sm:inline">
-                {departments.slice(0, 2).join(" - ")}
+                DIRIN - DDPER - DFIN - DGDC - DCR
               </span>
-              {departments.length > 2 && (
-                <span className="block sm:inline sm:ml-2">
-                  {departments.slice(2).join(" - ")}
-                </span>
-              )}
             </h2>
           </div>
           {/* Nombres completos */}
           <div className="text-center">
             <h4 className="text-xs sm:text-sm md:text-base text-white/95 leading-relaxed px-2">
               <span className="block lg:inline">
-                {departmentsFull.slice(0, 2).join(" - ")}
+                Dirección de Informática - Dirección de Desarrollo de Personas - Dirección de Finanzas - Dirección de Gestión y Desarrollo de Campus - Dirección de Crédito y Recaudación
               </span>
-              {departmentsFull.length > 2 && (
-                <span className="block lg:inline lg:ml-2 mt-1 lg:mt-0">
-                  {departmentsFull.slice(2).join(" - ")}
-                </span>
-              )}
             </h4>
           </div>
         </div>

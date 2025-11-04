@@ -14,6 +14,9 @@ import { AppContext } from "../App";
 import { LOGIN } from "../config";
 import axios from "axios";
 
+import logoVrae from "../assets/logo_vrae.webp";
+import fondoVrae from "../assets/fondo_vrae.webp";
+
 interface LoginFormData {
   email: string;
   password: string;
@@ -169,129 +172,179 @@ const Login: React.FC = () => {
     }
   };
 
+  const currentYear = new Date().getFullYear();
+
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="absolute top-4 right-4">
-        <ModeToggle />
-      </div>
-      <Card className="w-full max-w-md bg-card border border-border shadow-sm">
-        <CardHeader className="text-center pb-6">
-          <CardTitle className="text-2xl font-bold text-card-foreground">
-            Iniciar Sesión
-          </CardTitle>
-          <CardDescription className="text-muted-foreground mt-2">
-            Accede a tu cuenta para continuar
-          </CardDescription>
-        </CardHeader>
+    <div className="h-screen bg-[#3E8BD6] relative overflow-hidden flex flex-col">
+      {/* Patrón de fondo con imagen */}
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{
+          backgroundImage: `url('${fondoVrae}')`,
+          height: 'calc(100vh - 120px)',
+          bottom: '120px'
+        }}
+      />
 
-        <CardContent>
-          <form onSubmit={handleLogin} className="space-y-6">
-            {/* Error general */}
-            {errors.general && (
-              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-                <p className="text-sm text-destructive flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-2" />
-                  {errors.general}
-                </p>
-              </div>
-            )}
-
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-card-foreground mb-2">
-                Correo electrónico
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange("email", e.target.value)}
-                  className={`w-full pl-10 pr-4 py-3 border rounded-lg bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors text-sm ${
-                    errors.email
-                      ? "border-destructive ring-destructive"
-                      : "border-border"
-                  }`}
-                  placeholder="tu.correo@uct.cl"
-                />
-              </div>
-              {errors.email && (
-                <p className="mt-2 text-sm text-destructive">{errors.email}</p>
-              )}
+      {/* Header */}
+      <header className="relative z-10 flex-shrink-0">
+        <div className="container mx-auto px-3 py-2 md:px-4 md:py-4">
+          <div className="flex items justify-between">
+            {/* Logo UCT */}
+            <div className="bg-transparent flex items-center p-0">
+              <img
+                src={logoVrae}
+                alt="Logo UCT"
+                className="w-full h-12 md:h-16 lg:h-20 object-contain"
+              />
             </div>
+            {/* Mode Toggle */}
+            <div className="flex-shrink-0">
+              <ModeToggle />
+            </div>
+          </div>
+        </div>
+      </header>
 
-            {/* Contraseña */}
-            <div>
-              <label className="block text-sm font-medium text-card-foreground mb-2">
-                Contraseña
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={formData.password}
-                  onChange={(e) =>
-                    handleInputChange("password", e.target.value)
-                  }
-                  className={`w-full pl-10 pr-10 py-3 border rounded-lg bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors text-sm ${
-                    errors.password
-                      ? "border-destructive ring-destructive"
-                      : "border-border"
-                  }`}
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none transition-colors"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
+      {/* Main Content - Flex grow para ocupar espacio disponible */}
+      <main className="relative z-10 flex-grow flex items-center justify-center">
+        <div className="container mx-auto px-3 md:px-4">
+          <div className="max-w-md mx-auto">
+            <Card className="w-full bg-card/95 backdrop-blur-sm border border-border shadow-xl">
+              <CardHeader className="text-center pb-6">
+                <CardTitle className="text-2xl font-bold text-card-foreground">
+                  Iniciar Sesión
+                </CardTitle>
+                <CardDescription className="text-muted-foreground mt-2">
+                  Accede a tu cuenta para continuar
+                </CardDescription>
+              </CardHeader>
+
+              <CardContent>
+                <form onSubmit={handleLogin} className="space-y-6">
+                  {/* Error general */}
+                  {errors.general && (
+                    <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                      <p className="text-sm text-destructive flex items-center">
+                        <AlertCircle className="h-4 w-4 mr-2" />
+                        {errors.general}
+                      </p>
+                    </div>
                   )}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="mt-2 text-sm text-destructive">
-                  {errors.password}
-                </p>
-              )}
-            </div>
 
-            {/* Checkbox y link */}
-            <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center text-card-foreground">
-                <input
-                  type="checkbox"
-                  checked={formData.rememberMe}
-                  onChange={(e) =>
-                    handleInputChange("rememberMe", e.target.checked)
-                  }
-                  className="rounded border-border text-primary focus:ring-primary focus:ring-offset-1 focus:ring-offset-card"
-                />
-                <span className="ml-2">Recordarme</span>
-              </label>
-            </div>
+                  {/* Email */}
+                  <div>
+                    <label className="block text-sm font-medium text-card-foreground mb-2">
+                      Correo electrónico
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                      <input
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => handleInputChange("email", e.target.value)}
+                        className={`w-full pl-10 pr-4 py-3 border rounded-lg bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors text-sm ${
+                          errors.email
+                            ? "border-destructive ring-destructive"
+                            : "border-border"
+                        }`}
+                        placeholder="tu.correo@uct.cl"
+                      />
+                    </div>
+                    {errors.email && (
+                      <p className="mt-2 text-sm text-destructive">{errors.email}</p>
+                    )}
+                  </div>
 
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-3 text-sm font-medium transition-colors"
-            >
-              {isLoading ? (
-                <div className="flex items-center justify-center">
-                  <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin mr-2" />
-                  Iniciando sesión...
-                </div>
-              ) : (
-                "Iniciar Sesión"
-              )}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+                  {/* Contraseña */}
+                  <div>
+                    <label className="block text-sm font-medium text-card-foreground mb-2">
+                      Contraseña
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={formData.password}
+                        onChange={(e) =>
+                          handleInputChange("password", e.target.value)
+                        }
+                        className={`w-full pl-10 pr-10 py-3 border rounded-lg bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors text-sm ${
+                          errors.password
+                            ? "border-destructive ring-destructive"
+                            : "border-border"
+                        }`}
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none transition-colors"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                    {errors.password && (
+                      <p className="mt-2 text-sm text-destructive">
+                        {errors.password}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Checkbox y link */}
+                  <div className="flex items-center justify-between text-sm">
+                    <label className="flex items-center text-card-foreground">
+                      <input
+                        type="checkbox"
+                        checked={formData.rememberMe}
+                        onChange={(e) =>
+                          handleInputChange("rememberMe", e.target.checked)
+                        }
+                        className="rounded border-border text-primary focus:ring-primary focus:ring-offset-1 focus:ring-offset-card"
+                      />
+                      <span className="ml-2">Recordarme</span>
+                    </label>
+                  </div>
+
+                  {/* Submit Button */}
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-3 text-sm font-medium transition-colors"
+                  >
+                    {isLoading ? (
+                      <div className="flex items-center justify-center">
+                        <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin mr-2" />
+                        Iniciando sesión...
+                      </div>
+                    ) : (
+                      "Iniciar Sesión"
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="relative z-10 bg-[#FCC200] py-3 sm:py-4 md:py-6 lg:py-8 flex-shrink-0 flex items-center justify-center">
+        <div className="container mx-auto px-3 md:px-4">
+          <div className="text-center space-y-1 md:space-y-2">
+            <p className="text-sm sm:text-base md:text-lg font-bold text-[#3E8BD6]">
+              Asistente virtual VRAE
+            </p>
+            <p className="text-xs sm:text-sm md:text-base text-[#3E8BD6]/80">
+              {currentYear} Asistente virtual UCT. Todos los derechos reservados.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

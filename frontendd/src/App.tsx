@@ -4,15 +4,55 @@ import React, {
   createContext,
   useMemo,
   useEffect,
-  useContext,
+  Suspense,
 } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import ChatBot from "./pages/ChatBot";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "./components/theme-provider";
+import { LazyLoading } from "./components/LazyLoading";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import { CHECK_SESSION } from "./config";
+
+// Lazy loading de páginas para code-splitting
+const Home = React.lazy(() => import("./pages/Home"));
+const Login = React.lazy(() => import("./pages/Login"));
+const ChatBot = React.lazy(() => import("./pages/ChatBot"));
+const ProtectedRoute = React.lazy(() => import("./components/ProtectedRoute"));
+const NotFound = React.lazy(() => import("./pages/NotFound"));
+
+// Hook para obtener el tipo de loading según la ruta
+const useLoadingType = (): string => {
+  const location = useLocation();
+  
+  if (location.pathname === "/chat") return "chat";
+  if (location.pathname === "/") return "home";
+  if (location.pathname === "/login") return "login";
+  if (location.pathname === "/404" || location.pathname === "*") return "notfound";
+  
+  return "default";
+};
+
+// Componente de loading global (solo para verificación inicial)
+const GlobalLoading: React.FC = () => (
+  <div className="h-screen flex items-center justify-center bg-background">
+    <div className="text-center">
+      <div className="w-16 h-16 mx-auto mb-4 bg-primary rounded-full flex items-center justify-center animate-pulse">
+        <i className="fas fa-brain text-primary-foreground text-2xl"></i>
+      </div>
+      <div className="flex items-center justify-center space-x-2">
+        <i className="fas fa-spinner fa-spin text-2xl text-primary"></i>
+        <p className="text-lg text-foreground">
+          Iniciando Asistente UCT...
+        </p>
+      </div>
+    </div>
+  </div>
+);
+
+// Componente de loading específico por página
+const SpecificLoading: React.FC = () => {
+  const loadingType = useLoadingType();
+  return <LazyLoading>{loadingType}</LazyLoading>;
+};
 
 // Interfaces para TypeScript
 interface Artifact {
@@ -92,19 +132,7 @@ const App: React.FC = () => {
   if (isCheckingAuth) {
     return (
       <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-        <div className="h-screen flex items-center justify-center bg-background">
-          <div className="text-center">
-            <div className="w-16 h-16 mx-auto mb-4 bg-primary rounded-full flex items-center justify-center animate-pulse">
-              <i className="fas fa-brain text-primary-foreground text-2xl"></i>
-            </div>
-            <div className="flex items-center justify-center space-x-2">
-              <i className="fas fa-spinner fa-spin text-2xl text-primary"></i>
-              <p className="text-lg text-foreground">
-                Iniciando Asistente UCT...
-              </p>
-            </div>
-          </div>
-        </div>
+        <GlobalLoading />
       </ThemeProvider>
     );
   }
@@ -114,90 +142,37 @@ const App: React.FC = () => {
       <BrowserRouter>
         <AppContext.Provider value={contextValue}>
           <div className="min-h-screen bg-background transition-colors duration-300">
-            <Routes>
-              {/* Ruta Home - Accesible siempre */}
-              <Route path="/" element={<Home />} />
+            <Suspense fallback={<SpecificLoading />}>
+              <Routes>
+                {/* Ruta Home - Accesible siempre */}
+                <Route path="/" element={<Home />} />
 
-              {/* Ruta Login - Redirige a /chat si ya está autenticado */}
-              <Route
-                path="/login"
-                element={
-                  isAuthenticated ? <Navigate to="/chat" replace /> : <Login />
-                }
-              />
+                {/* Ruta Login - Redirige a /chat si ya está autenticado */}
+                <Route
+                  path="/login"
+                  element={
+                    isAuthenticated ? <Navigate to="/chat" replace /> : <Login />
+                  }
+                />
 
-              {/* Ruta Chat - Protegida, requiere autenticación */}
-              <Route
-                path="/chat"
-                element={
-                  <ProtectedRoute>
-                    <ChatBot />
-                  </ProtectedRoute>
-                }
-              />
+                {/* Ruta Chat - Protegida, requiere autenticación */}
+                <Route
+                  path="/chat"
+                  element={
+                    <ProtectedRoute>
+                      <ChatBot />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Ruta 404 - Para cualquier ruta no encontrada */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+                {/* Ruta 404 - Para cualquier ruta no encontrada */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
           </div>
         </AppContext.Provider>
       </BrowserRouter>
     </ThemeProvider>
-  );
-};
-
-// Componente ProtectedRoute
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const { isAuthenticated } = useContext(AppContext);
-
-  if (isAuthenticated === null) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 bg-primary rounded-full flex items-center justify-center animate-pulse">
-            <i className="fas fa-brain text-primary-foreground text-2xl"></i>
-          </div>
-          <div className="flex items-center justify-center space-x-2">
-            <i className="fas fa-spinner fa-spin text-2xl text-primary"></i>
-            <p className="text-lg text-foreground">
-              Verificando autenticación...
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return <>{children}</>;
-};
-
-// Componente NotFound
-const NotFound: React.FC = () => {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <div className="w-20 h-20 mx-auto mb-6 bg-muted rounded-full flex items-center justify-center">
-          <i className="fas fa-exclamation-triangle text-4xl text-muted-foreground"></i>
-        </div>
-        <h1 className="text-4xl font-bold text-foreground mb-4">404</h1>
-        <p className="text-xl text-muted-foreground mb-8">
-          Página no encontrada
-        </p>
-        <a
-          href="/"
-          className="inline-flex items-center px-6 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors duration-200"
-        >
-          <i className="fas fa-home mr-2"></i>
-          Volver al inicio
-        </a>
-      </div>
-    </div>
   );
 };
 

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useContext } from "react";
+import React, { memo, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import { BotMessage } from "@/components/messages/BotMessage";
@@ -28,17 +28,20 @@ interface DocumentData {
   keywords?: string[];
 }
 
-const ChatBot: React.FC = () => {
+// Props interface para memoización
+type ChatBotProps = object;
+
+const ChatBot: React.FC<ChatBotProps> = () => {
   const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { setIsAuthenticated } = useContext(AppContext);
+  const { setIsAuthenticated } = React.useContext(AppContext);
 
   // ===== ESTADO LOCAL =====
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isDocumentsModalOpen, setIsDocumentsModalOpen] = useState(false);
-  const [isArtifactsModalOpen, setIsArtifactsModalOpen] = useState(false);
-  const [isMindMapModalOpen, setIsMindMapModalOpen] = useState(false);
-  const [selectedMindMapData, setSelectedMindMapData] = useState<{
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
+  const [isDocumentsModalOpen, setIsDocumentsModalOpen] = React.useState(false);
+  const [isArtifactsModalOpen, setIsArtifactsModalOpen] = React.useState(false);
+  const [isMindMapModalOpen, setIsMindMapModalOpen] = React.useState(false);
+  const [selectedMindMapData, setSelectedMindMapData] = React.useState<{
     name: string;
     subtitle?: string;
     icon?: string;
@@ -59,17 +62,16 @@ const ChatBot: React.FC = () => {
       }>;
     }>;
   } | null>(null);
-  const [selectedMindMapTitle, setSelectedMindMapTitle] =
-    useState<string>("Mapa Mental");
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [inputMessage, setInputMessage] = useState("");
-  const [isBotOnline] = useState(true);
-  const [activeConversationId, setActiveConversationId] = useState<string>("1");
-  const [quotedMessage, setQuotedMessage] = useState<Message | null>(null);
-  const [currentChat, setCurrentChat] = useState<Conversation | null>(null);
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedParameters, setSelectedParameters] = useState<string[]>([]);
-  const [selectedDocuments, setSelectedDocuments] = useState<DocumentData[]>([]); // Estado para documentos seleccionados
+  const [selectedMindMapTitle, setSelectedMindMapTitle] = React.useState<string>("Mapa Mental");
+  const [messages, setMessages] = React.useState<Message[]>([]);
+  const [inputMessage, setInputMessage] = React.useState("");
+  const [isBotOnline] = React.useState(true);
+  const [activeConversationId, setActiveConversationId] = React.useState<string>("1");
+  const [quotedMessage, setQuotedMessage] = React.useState<Message | null>(null);
+  const [currentChat, setCurrentChat] = React.useState<Conversation | null>(null);
+  const [conversations, setConversations] = React.useState<Conversation[]>([]);
+  const [selectedParameters, setSelectedParameters] = React.useState<string[]>([]);
+  const [selectedDocuments, setSelectedDocuments] = React.useState<DocumentData[]>([]);
 
   // ===== HOOK PARA CONVERSACIONES =====
   const {
@@ -94,63 +96,22 @@ const ChatBot: React.FC = () => {
     quotedMessage,
     setQuotedMessage,
     addArtifact: (artifact: unknown) => {
-      // Log del artefacto creado
       console.log("🧩 Artefacto creado:", artifact);
     },
   });
 
-  // ===== AUTO-SCROLL =====
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  // ===== CARGAR CONVERSACIONES AL INICIAR =====
-  useEffect(() => {
-    const initializeConversations = async () => {
-      console.log("🚀 Inicializando conversaciones...");
-      await loadConversations();
-    };
-
-    initializeConversations();
-  }, [loadConversations]);
-
-  // ===== SINCRONIZAR CONVERSACIONES CARGADAS =====
-  useEffect(() => {
-    if (loadedConversations.length > 0) {
-      console.log(
-        "📥 Sincronizando conversaciones cargadas:",
-        loadedConversations.length
-      );
-      setConversations(loadedConversations);
-    }
-  }, [loadedConversations, setConversations]);
-
-  // ===== LOG DEL ESTADO =====
-  useEffect(() => {
-    console.log("📊 ===== ESTADO ACTUAL =====");
-    console.log("   Mensajes:", messages.length);
-    console.log("   CurrentChat:", currentChat?.conversacionId || "ninguno");
-    console.log("   ConversacionIdRef:", conversacionIdRef.current);
-    console.log("   Conversaciones:", conversations.length);
-    console.log("   IsTyping:", isTyping);
-  }, [messages, currentChat, conversations, isTyping, conversacionIdRef]);
-
   // ===== HANDLERS =====
-
-  const handleNewConversation = () => {
+  
+  const handleNewConversation = useCallback(() => {
     console.log("🆕 Nueva conversación");
     setCurrentChat(null);
     setMessages([]);
     setQuotedMessage(null);
     setSelectedParameters([]);
     conversacionIdRef.current = null;
-  };
+  }, [conversacionIdRef]);
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = useCallback(async () => {
     console.log("📤 ===== HANDLER SEND MESSAGE =====");
     console.log("   Input:", inputMessage.substring(0, 50));
     console.log("   Parámetros:", selectedParameters);
@@ -163,35 +124,28 @@ const ChatBot: React.FC = () => {
     }
 
     const newConvId = await sendMessage(inputMessage, selectedParameters, selectedDocuments);
-
     if (newConvId) {
       console.log("✅ Mensaje enviado, nuevo conversacionId:", newConvId);
     }
-  };
+  }, [inputMessage, selectedParameters, selectedDocuments, sendMessage, conversacionIdRef]);
 
-  const handleKeyPress = () => {
-    // El manejo de teclas ya está en ChatInput, este es solo un pass-through
-    // No hacer nada aquí, ChatInput maneja todo
-  };
-
-  const handleOpenDocuments = () => {
+  const handleOpenDocuments = useCallback(() => {
     setIsDocumentsModalOpen(true);
-  };
+  }, []);
 
-  const handleCloseDocuments = () => {
+  const handleCloseDocuments = useCallback(() => {
     setIsDocumentsModalOpen(false);
-  };
+  }, []);
 
-  const handleOpenArtifacts = () => {
+  const handleOpenArtifacts = useCallback(() => {
     setIsArtifactsModalOpen(true);
-  };
+  }, []);
 
-  const handleCloseArtifacts = () => {
+  const handleCloseArtifacts = useCallback(() => {
     setIsArtifactsModalOpen(false);
-  };
+  }, []);
 
-  const handleOpenMindMap = (artifactData: unknown, title?: string) => {
-    // Validar y cast el tipo de datos
+  const handleOpenMindMap = useCallback((artifactData: unknown, title?: string) => {
     if (artifactData && typeof artifactData === 'object' && 'name' in artifactData) {
       setSelectedMindMapData(artifactData as {
         name: string;
@@ -217,36 +171,33 @@ const ChatBot: React.FC = () => {
       setSelectedMindMapTitle(title || "Mapa Mental");
       setIsMindMapModalOpen(true);
     }
-  };
+  }, []);
 
-  const handleCloseMindMap = () => {
+  const handleCloseMindMap = useCallback(() => {
     setIsMindMapModalOpen(false);
     setSelectedMindMapData(null);
     setSelectedMindMapTitle("Mapa Mental");
-  };
+  }, []);
 
-  const handleDocumentsSelect = (documents: DocumentData[]) => {
+  const handleDocumentsSelect = useCallback((documents: DocumentData[]) => {
     console.log("📄 Documentos seleccionados:", documents);
     setSelectedDocuments(documents);
-  };
+  }, []);
 
-  // Función para eliminar un documento individualmente
-  const handleRemoveDocument = (documentId: string) => {
+  const handleRemoveDocument = useCallback((documentId: string) => {
     console.log("🗑️ Eliminando documento:", documentId);
     setSelectedDocuments(prev => prev.filter(doc => doc.id !== documentId));
-  };
+  }, []);
 
-  // Función para añadir nuevos documentos (abre el modal)
-  const handleAddDocuments = () => {
+  const handleAddDocuments = useCallback(() => {
     console.log("➕ Añadiendo nuevos documentos");
     setIsDocumentsModalOpen(true);
-  };
+  }, []);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     try {
       console.log("🚪 Cerrando sesión...");
       
-      // Llamar al endpoint de logout
       const response = await fetch(LOGOUT, {
         method: "POST",
         credentials: "include",
@@ -254,31 +205,23 @@ const ChatBot: React.FC = () => {
 
       if (!response.ok) {
         console.error("❌ Error al cerrar sesión en el backend:", response.status);
-        // Continuar con el logout local incluso si falla el backend
       } else {
         console.log("✅ Logout exitoso en el backend");
       }
 
-      // Actualizar el estado de autenticación en el contexto
       setIsAuthenticated(false);
-      
-      // Limpiar el localStorage si se usa
       localStorage.removeItem("sessionToken");
-      
-      // Redirigir al login
       navigate("/login");
       
     } catch (error) {
       console.error("❌ Error durante el logout:", error);
-      
-      // En caso de error, aún intentar limpiar el estado local
       setIsAuthenticated(false);
       localStorage.removeItem("sessionToken");
       navigate("/login");
     }
-  };
+  }, [navigate, setIsAuthenticated]);
 
-  const handleSelectConversation = async (id: string) => {
+  const handleSelectConversation = useCallback(async (id: string) => {
     console.log("🔄 Seleccionando conversación:", id);
     setActiveConversationId(id);
 
@@ -286,8 +229,6 @@ const ChatBot: React.FC = () => {
       const conv = conversations.find((c) => c.id === id);
       if (conv) {
         setCurrentChat(conv);
-
-        // Cargar mensajes de la conversación
         const loadedMessages = await loadConversationMessages(id);
         console.log("✅ Mensajes cargados:", loadedMessages.length);
         setMessages(loadedMessages);
@@ -298,37 +239,24 @@ const ChatBot: React.FC = () => {
       alert("Error al cargar los mensajes de la conversación");
       setMessages([]);
     }
-  };
+  }, [conversations, loadConversationMessages]);
 
-  const handleRenameConversation = async (id: string, newTitle: string) => {
+  const handleRenameConversation = useCallback(async (id: string, newTitle: string) => {
     console.log("✏️ Renombrando conversación:", id, newTitle);
 
-    // Actualizar estado local inmediatamente para mejor UX
-    setConversations((prev) =>
-      prev.map((conv) => (conv.id === id ? { ...conv, title: newTitle } : conv))
-    );
-
-    // Actualizar también currentChat si es la conversación activa
+    setConversations(prev => prev.map((conv) => (conv.id === id ? { ...conv, title: newTitle } : conv)));
     if (currentChat?.id === id) {
-      setCurrentChat((prev) => (prev ? { ...prev, title: newTitle } : null));
+      setCurrentChat(prev => prev ? { ...prev, title: newTitle } : null);
     }
 
     try {
-      // Llamar al backend para renombrar la conversación
       const success = await backendService.renameConversation(id, newTitle);
-
       if (!success) {
         console.error("❌ Error al renombrar conversación en el backend");
-        alert(
-          "Error al renombrar la conversación. Por favor, inténtalo de nuevo."
-        );
-
-        // Revertir cambios en caso de error
+        alert("Error al renombrar la conversación. Por favor, inténtalo de nuevo.");
         const originalConv = conversations.find((c) => c.id === id);
         if (originalConv) {
-          setConversations((prev) =>
-            prev.map((conv) => (conv.id === id ? originalConv : conv))
-          );
+          setConversations(prev => prev.map((conv) => (conv.id === id ? originalConv : conv)));
           if (currentChat?.id === id) {
             setCurrentChat(originalConv);
           }
@@ -338,41 +266,26 @@ const ChatBot: React.FC = () => {
       }
     } catch (error) {
       console.error("❌ Error al renombrar conversación:", error);
-      alert(
-        "Error de conexión al renombrar la conversación. Por favor, inténtalo de nuevo."
-      );
-
-      // Revertir cambios en caso de error
+      alert("Error de conexión al renombrar la conversación. Por favor, inténtalo de nuevo.");
       const originalConv = conversations.find((c) => c.id === id);
       if (originalConv) {
-        setConversations((prev) =>
-          prev.map((conv) => (conv.id === id ? originalConv : conv))
-        );
+        setConversations(prev => prev.map((conv) => (conv.id === id ? originalConv : conv)));
         if (currentChat?.id === id) {
           setCurrentChat(originalConv);
         }
       }
     }
-  };
+  }, [conversations, currentChat]);
 
-  const handleDeleteConversation = async (id: string) => {
+  const handleDeleteConversation = useCallback(async (id: string) => {
     console.log("🗑️ Eliminando conversación:", id);
 
-    // Confirmar antes de eliminar
-    const confirmed = window.confirm(
-      "¿Estás seguro de que quieres eliminar esta conversación? Esta acción no se puede deshacer."
-    );
-    if (!confirmed) {
-      return;
-    }
+    const confirmed = window.confirm("¿Estás seguro de que quieres eliminar esta conversación? Esta acción no se puede deshacer.");
+    if (!confirmed) return;
 
-    // Guardar conversación eliminada para posible reversión
     const conversationToDelete = conversations.find((conv) => conv.id === id);
+    setConversations(prev => prev.filter((conv) => conv.id !== id));
 
-    // Actualizar estado local inmediatamente para mejor UX
-    setConversations((prev) => prev.filter((conv) => conv.id !== id));
-
-    // Si la conversación activa se está eliminando, cambiar a otra o crear nueva
     if (activeConversationId === id) {
       const remaining = conversations.filter((conv) => conv.id !== id);
       if (remaining.length > 0) {
@@ -383,36 +296,26 @@ const ChatBot: React.FC = () => {
     }
 
     try {
-      // Llamar al backend para eliminar la conversación
       const success = await backendService.deleteConversation(id);
-
       if (!success) {
         console.error("❌ Error al eliminar conversación en el backend");
-        alert(
-          "Error al eliminar la conversación. Por favor, inténtalo de nuevo."
-        );
-
-        // Restaurar conversación en caso de error
+        alert("Error al eliminar la conversación. Por favor, inténtalo de nuevo.");
         if (conversationToDelete) {
-          setConversations((prev) => [...prev, conversationToDelete]);
+          setConversations(prev => [...prev, conversationToDelete]);
         }
       } else {
         console.log("✅ Conversación eliminada correctamente");
       }
     } catch (error) {
       console.error("❌ Error al eliminar conversación:", error);
-      alert(
-        "Error de conexión al eliminar la conversación. Por favor, inténtalo de nuevo."
-      );
-
-      // Restaurar conversación en caso de error
+      alert("Error de conexión al eliminar la conversación. Por favor, inténtalo de nuevo.");
       if (conversationToDelete) {
-        setConversations((prev) => [...prev, conversationToDelete]);
+        setConversations(prev => [...prev, conversationToDelete]);
       }
     }
-  };
+  }, [conversations, activeConversationId, handleNewConversation]);
 
-  const handleQuickAction = (action: QuickAction, originalMessage: Message) => {
+  const handleQuickAction = useCallback((action: QuickAction, originalMessage: Message) => {
     console.log("⚡ Acción rápida:", action.id);
 
     if (action.id === "mapa-mental") {
@@ -420,18 +323,14 @@ const ChatBot: React.FC = () => {
       if (convId) {
         generarMapaMental(messages, convId);
       } else {
-        alert(
-          "Debes tener una conversación guardada para generar un mapa mental."
-        );
+        alert("Debes tener una conversación guardada para generar un mapa mental.");
       }
     } else {
-      // Para otras acciones, citar el mensaje
       setQuotedMessage({
         ...originalMessage,
         timestamp: new Date(),
       });
 
-      // Y agregar el texto de la acción al input
       let actionText = "";
       switch (action.id) {
         case "resumen":
@@ -441,40 +340,66 @@ const ChatBot: React.FC = () => {
           actionText = "Por favor, explica mejor el mensaje anterior";
           break;
         case "ejemplo":
-          actionText =
-            "Por favor, dame ejemplos relacionados con el mensaje anterior";
+          actionText = "Por favor, dame ejemplos relacionados con el mensaje anterior";
           break;
         default:
           actionText = action.text;
       }
       setInputMessage(actionText);
     }
-  };
+  }, [conversacionIdRef, currentChat, generarMapaMental, messages]);
 
-  const handleQuoteMessage = (messageToQuote: Message) => {
+  const handleQuoteMessage = useCallback((messageToQuote: Message) => {
     console.log("💬 Citando mensaje:", messageToQuote.id);
     setQuotedMessage({
       ...messageToQuote,
       timestamp: new Date(),
     });
-  };
+  }, []);
 
-  const handleClearQuotedMessage = () => {
+  const handleClearQuotedMessage = useCallback(() => {
     console.log("🧹 Limpiando mensaje citado");
     setQuotedMessage(null);
-  };
+  }, []);
 
-  const handleViewMindMap = (artifactData: unknown) => {
+  const handleViewMindMap = useCallback((artifactData: unknown) => {
     console.log("🗺️ Mostrando mapa mental:", artifactData);
     handleOpenMindMap(artifactData);
-  };
+  }, [handleOpenMindMap]);
+
+  // ===== EFECTOS =====
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
+
+  useEffect(() => {
+    const initializeConversations = async () => {
+      console.log("🚀 Inicializando conversaciones...");
+      await loadConversations();
+    };
+    initializeConversations();
+  }, [loadConversations]);
+
+  useEffect(() => {
+    if (loadedConversations.length > 0) {
+      console.log("📥 Sincronizando conversaciones cargadas:", loadedConversations.length);
+      setConversations(loadedConversations);
+    }
+  }, [loadedConversations]);
+
+  // ===== COMPONENTES PESADOS =====
+  const MemoizedSidebar = React.useMemo(() => memo(Sidebar), []);
+  const MemoizedChatHeader = React.useMemo(() => memo(ChatHeader), []);
+  const MemoizedChatInput = React.useMemo(() => memo(ChatInput), []);
 
   return (
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-      {/* Contenedor principal con altura completa de la ventana */}
       <div className="h-screen bg-background flex overflow-hidden">
-        {/* Sidebar Component */}
-        <Sidebar
+        <MemoizedSidebar
           isOpen={isSidebarOpen}
           onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
           isBotOnline={isBotOnline}
@@ -488,7 +413,6 @@ const ChatBot: React.FC = () => {
           onDeleteConversation={handleDeleteConversation}
         />
 
-        {/* Documents Modal */}
         <DocumentsModal
           isOpen={isDocumentsModalOpen}
           onClose={handleCloseDocuments}
@@ -496,7 +420,6 @@ const ChatBot: React.FC = () => {
           preselectedDocuments={selectedDocuments}
         />
 
-        {/* Artifacts Modal */}
         <ArtifactsModal
           isOpen={isArtifactsModalOpen}
           onClose={handleCloseArtifacts}
@@ -504,7 +427,6 @@ const ChatBot: React.FC = () => {
           onViewMindMap={handleViewMindMap}
         />
 
-        {/* Mind Map Modal */}
         {isMindMapModalOpen && selectedMindMapData && (
           <MindMapModal
             isOpen={isMindMapModalOpen}
@@ -517,15 +439,12 @@ const ChatBot: React.FC = () => {
           />
         )}
 
-        {/* Área de Chat - Flexbox vertical con altura completa */}
         <div className="flex-1 flex flex-col min-w-0 h-full">
-          {/* Header del Chat - Altura fija */}
-          <ChatHeader
+          <MemoizedChatHeader
             conversationTitle={currentChat?.title || "Nueva Conversación"}
             onOpenArtifacts={handleOpenArtifacts}
           />
 
-          {/* Área de Mensajes - Toma el espacio restante disponible */}
           <div className="flex-1 overflow-y-auto p-6">
             {messages.length === 0 ? (
               <EmptyChatState
@@ -560,12 +479,11 @@ const ChatBot: React.FC = () => {
             )}
           </div>
 
-          {/* Input del Chat - Altura fija */}
-          <ChatInput
+          <MemoizedChatInput
             inputMessage={inputMessage}
             onInputChange={setInputMessage}
             onSendMessage={handleSendMessage}
-            onKeyPress={handleKeyPress}
+            onKeyPress={() => {}}
             isBotOnline={isBotOnline}
             quotedMessage={quotedMessage}
             onClearQuotedMessage={handleClearQuotedMessage}
@@ -580,4 +498,4 @@ const ChatBot: React.FC = () => {
   );
 };
 
-export default ChatBot;
+export default memo(ChatBot);
