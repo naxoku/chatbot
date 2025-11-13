@@ -49,7 +49,10 @@ router.post("/stream", requireLogin, async (req, res) => {
   const { pregunta, conversacionId, documentosSeleccionados } = req.body;
   console.log("👉 Stream - Pregunta recibida:", pregunta);
   console.log("👉 Stream - ID de conversación:", conversacionId);
-  console.log("👉 Stream - Documentos seleccionados:", documentosSeleccionados?.length || 0);
+  console.log(
+    "👉 Stream - Documentos seleccionados:",
+    documentosSeleccionados?.length || 0
+  );
 
   // Configurar headers para SSE
   res.writeHead(200, {
@@ -285,7 +288,10 @@ router.post("/", requireLogin, async (req, res) => {
   const { pregunta, conversacionId, documentosSeleccionados } = req.body;
   console.log("👉 Pregunta recibida:", pregunta);
   console.log("👉 ID de conversación:", conversacionId);
-  console.log("👉 Documentos seleccionados:", documentosSeleccionados?.length || 0);
+  console.log(
+    "👉 Documentos seleccionados:",
+    documentosSeleccionados?.length || 0
+  );
 
   try {
     // Preparar request body para n8n
@@ -295,7 +301,10 @@ router.post("/", requireLogin, async (req, res) => {
       documentosSeleccionados: documentosSeleccionados || [],
     };
 
-    console.log("📤 Enviando a n8n (chat normal):", JSON.stringify(n8nRequestBody, null, 2));
+    console.log(
+      "📤 Enviando a n8n (chat normal):",
+      JSON.stringify(n8nRequestBody, null, 2)
+    );
 
     // const response = await fetch("https://skynet.uct.cl/webhook/chat-semantic-search", {
     const response = await fetch(
@@ -409,6 +418,23 @@ router.post("/mapa-mental", requireLogin, async (req, res) => {
   }
 
   try {
+    // ✅ Verificar que la conversación existe y pertenece al usuario
+    const conversacionCheck = await db.query(
+      "SELECT id FROM conversaciones WHERE id = $1 AND usuario_id = $2",
+      [conversacionId, req.session.user.id]
+    );
+
+    if (conversacionCheck.rows.length === 0) {
+      console.warn(
+        "⚠️ Conversación no encontrada o no pertenece al usuario:",
+        conversacionId
+      );
+      return res.status(404).json({
+        error:
+          "La conversación especificada no existe o no tienes permisos para acceder a ella.",
+      });
+    }
+
     const response = await fetch("https://skynet.uct.cl/webhook/mapa-mental", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

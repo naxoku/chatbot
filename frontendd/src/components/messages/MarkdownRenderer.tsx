@@ -39,7 +39,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 
   return (
     <div
-      className="message-content prose prose-sm max-w-none dark:prose-invert"
+      className="message-content prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground prose-a:text-primary prose-strong:text-foreground prose-code:text-primary prose-pre:bg-muted prose-code:bg-muted/50"
       dangerouslySetInnerHTML={{ __html: htmlContent }}
     />
   );

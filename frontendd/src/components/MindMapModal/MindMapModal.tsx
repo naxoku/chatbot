@@ -1,5 +1,5 @@
-import React from "react";
-import ReactFlowMindMap from "../../utils/ReactFlowMindMap";
+import React, { useState } from "react";
+import EChartsTree from "../../utils/EChartsTree";
 import {
   Dialog,
   DialogContent,
@@ -7,6 +7,22 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+
+interface DocumentReference {
+  document: string;
+  section: string;
+  page: string;
+  quote: string;
+}
+
+interface MindMapNodeData {
+  name: string;
+  subtitle?: string;
+  icon?: string;
+  reference?: DocumentReference;
+  value?: number;
+  children?: MindMapNodeData[];
+}
 
 interface MindMapModalProps {
   isOpen: boolean;
@@ -17,18 +33,25 @@ interface MindMapModalProps {
       name: string;
       subtitle?: string;
       icon?: string;
+      reference?: DocumentReference;
       children?: Array<{
         name: string;
         subtitle?: string;
         icon?: string;
+        reference?: DocumentReference;
+        value?: number;
         children?: Array<{
           name: string;
           subtitle?: string;
           icon?: string;
+          reference?: DocumentReference;
+          value?: number;
           children?: Array<{
             name: string;
             subtitle?: string;
             icon?: string;
+            reference?: DocumentReference;
+            value?: number;
             children?: unknown[];
           }>;
         }>;
@@ -37,152 +60,190 @@ interface MindMapModalProps {
     description?: string;
     createdAt?: string;
   };
+  onNodeClick?: (nodeData: MindMapNodeData) => void;
 }
 
 export const MindMapModal: React.FC<MindMapModalProps> = ({
   isOpen,
   onClose,
   artifact,
+  onNodeClick,
 }) => {
-  // Debug logs para diagnosticar problemas
+  const [referenceModalOpen, setReferenceModalOpen] = useState(false);
+  const [selectedNodeData, setSelectedNodeData] =
+    useState<MindMapNodeData | null>(null);
+
+  // Debug logs
   console.log("🗺️ [MindMapModal] Props recibidas:", {
     isOpen,
     hasArtifact: !!artifact,
     artifactName: artifact?.name,
     hasData: !!artifact?.data,
-    dataKeys: artifact?.data ? Object.keys(artifact.data) : null,
   });
 
-  if (artifact?.data) {
-    console.log(
-      "📋 [MindMapModal] Estructura del artifact.data:",
-      JSON.stringify(artifact.data, null, 2)
-    );
-  }
-
-  if (artifact) {
-    console.log(
-      "🔍 [MindMapModal] Artifact completo:",
-      JSON.stringify(artifact, null, 2)
-    );
-  }
-
-  // Validación más robusta con logs detallados
-  if (!isOpen) {
-    console.log("🚪 [MindMapModal] Modal no está abierto");
-    return null;
-  }
-
-  if (!artifact) {
-    console.error("❌ [MindMapModal] Error: No se recibió artifact");
-    return null;
-  }
-
-  if (!artifact.name) {
-    console.error("❌ [MindMapModal] Error: artifact.name está faltando");
-    return null;
-  }
-
-  if (!artifact.data) {
-    console.error("❌ [MindMapModal] Error: artifact.data está faltando");
+  if (!isOpen) return null;
+  if (!artifact || !artifact.name || !artifact.data) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="w-[98vw] h-[95vh] max-w-none max-h-none p-0 max-w-sm sm:max-w-4xl">
-          <DialogHeader className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-border">
-            <DialogTitle className="text-lg sm:text-xl">
-              Error: Datos de mapa mental faltantes
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 dark:text-red-400">
+              Error
             </DialogTitle>
-            <DialogDescription className="text-sm">
+            <DialogDescription>
               No se pudieron cargar los datos del mapa mental.
             </DialogDescription>
           </DialogHeader>
-          <div className="p-4 sm:p-6">
-            <p className="text-sm text-muted-foreground">
-              Los datos del mapa mental no están disponibles. Por favor, intenta
-              generar un nuevo mapa mental.
-            </p>
-          </div>
         </DialogContent>
       </Dialog>
     );
   }
 
-  // Validación adicional de la estructura de datos
   if (!artifact.data.name) {
-    console.error("❌ [MindMapModal] Error: artifact.data.name está faltando");
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-[96vw] max-h-[92vh] p-0 max-w-sm sm:max-w-4xl">
-          <DialogHeader className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-border">
-            <DialogTitle className="text-lg sm:text-xl">
-              Error: Estructura de datos inválida
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 dark:text-red-400">
+              Error
             </DialogTitle>
-            <DialogDescription className="text-sm">
+            <DialogDescription>
               La estructura del mapa mental no es válida.
             </DialogDescription>
           </DialogHeader>
-          <div className="p-4 sm:p-6">
-            <p className="text-xs sm:text-sm text-muted-foreground font-mono break-all">
-              El mapa mental no tiene un nodo raíz válido. Estructura recibida:{" "}
-              {JSON.stringify(artifact.data, null, 2)}
-            </p>
-          </div>
         </DialogContent>
       </Dialog>
     );
   }
 
-  console.log("✅ [MindMapModal] Modal se renderizará correctamente");
-
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[96vw] max-h-[92vh] p-0 max-w-sm sm:max-w-4xl">
-        <DialogHeader className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-border">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0">
-              <i className="fas fa-project-diagram text-sm text-amber-600 dark:text-amber-400"></i>
-            </div>
-            <div className="min-w-0 flex-1">
-              <DialogTitle className="text-lg sm:text-xl truncate">
-                {artifact.name}
-              </DialogTitle>
-              {artifact.description && (
-                <DialogDescription className="text-xs sm:text-sm line-clamp-2">
-                  {artifact.description}
-                </DialogDescription>
-              )}
-            </div>
-          </div>
-        </DialogHeader>
-
-        {artifact.createdAt && (
-          <div className="px-4 sm:px-6 py-2.5 sm:py-3 border-b border-border bg-muted/50">
-            <div className="flex items-center justify-end text-xs sm:text-sm text-muted-foreground">
-              <span className="flex items-center gap-1 shrink-0">
-                <i className="fas fa-clock text-xs"></i>
-                <span className="hidden sm:inline">
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="w-[99vw] h-[98vh] max-w-none max-h-none p-0">
+          {/* Header minimalista */}
+          <DialogHeader className="px-6 py-4 border-b border-border/50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center">
+                  <i className="fas fa-project-diagram text-blue-600 dark:text-blue-400"></i>
+                </div>
+                <div>
+                  <DialogTitle className="text-lg font-semibold">
+                    {artifact.name}
+                  </DialogTitle>
+                  {artifact.description && (
+                    <DialogDescription className="text-sm mt-0.5">
+                      {artifact.description}
+                    </DialogDescription>
+                  )}
+                </div>
+              </div>
+              {artifact.createdAt && (
+                <div className="text-xs text-muted-foreground">
                   {new Date(artifact.createdAt).toLocaleDateString("es-ES", {
                     day: "numeric",
                     month: "short",
                     year: "numeric",
                   })}
-                </span>
-                <span className="sm:hidden">
-                  {new Date(artifact.createdAt).toLocaleDateString("es-ES", {
-                    day: "numeric",
-                    month: "short",
-                  })}
-                </span>
-              </span>
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          </DialogHeader>
 
-        <div className="flex-1 min-h-0 w-full h-[calc(100%-100px)] sm:h-[calc(100%-120px)]">
-          <ReactFlowMindMap data={artifact.data} />
-        </div>
-      </DialogContent>
-    </Dialog>
+          {/* Contenedor del mapa */}
+          <div className="flex-1 w-full h-[calc(100%-70px)] p-4">
+            <EChartsTree
+              data={artifact.data}
+              onNodeClick={(nodeData) => {
+                if (nodeData.reference) {
+                  setSelectedNodeData(nodeData);
+                  setReferenceModalOpen(true);
+                }
+                if (onNodeClick) {
+                  onNodeClick(nodeData);
+                }
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de referencias - Minimalista */}
+      <Dialog open={referenceModalOpen} onOpenChange={setReferenceModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span>{selectedNodeData?.icon || "📄"}</span>
+              {selectedNodeData?.name}
+            </DialogTitle>
+            <DialogDescription>Referencia del documento</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {selectedNodeData?.reference && (
+              <>
+                <div className="space-y-2">
+                  <div className="text-sm font-medium text-muted-foreground">
+                    Documento
+                  </div>
+                  <div className="text-sm bg-muted/50 p-3 rounded-lg">
+                    {selectedNodeData.reference.document}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium text-muted-foreground">
+                      Sección
+                    </div>
+                    <div className="text-sm bg-muted/50 p-3 rounded-lg">
+                      {selectedNodeData.reference.section}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium text-muted-foreground">
+                      Página
+                    </div>
+                    <div className="text-sm bg-muted/50 p-3 rounded-lg">
+                      {selectedNodeData.reference.page}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="text-sm font-medium text-muted-foreground">
+                    Cita textual
+                  </div>
+                  <div className="text-sm bg-amber-50 dark:bg-amber-950/20 border-l-2 border-amber-500 p-3 rounded-lg italic">
+                    "{selectedNodeData.reference.quote}"
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="text-sm font-medium text-muted-foreground">
+                    Formato de citación
+                  </div>
+                  <div className="text-sm font-mono bg-muted/50 p-3 rounded-lg">
+                    {selectedNodeData.reference.document},{" "}
+                    {selectedNodeData.reference.section}, p.{" "}
+                    {selectedNodeData.reference.page}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="flex justify-end pt-4 border-t">
+            <button
+              onClick={() => setReferenceModalOpen(false)}
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              Cerrar
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
