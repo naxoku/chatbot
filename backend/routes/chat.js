@@ -1,16 +1,20 @@
+/**
+ * RUTAS DE CHAT
+ *
+ * Maneja la comunicación con el chatbot y el streaming de respuestas.
+ * Se conecta con el servicio n8n Skynet para procesar mensajes.
+ */
+
 const express = require("express");
 const { nanoid } = require("nanoid");
 const { db, queryWithRetry } = require("../db");
 const requireLogin = require("../middleware/auth");
 const { normalizeMessages } = require("../middleware/normalizeMessages");
+const logger = require("../logger");
 
 const router = express.Router();
 
-/**
- * 🧠 Normaliza la respuesta del chatbot (Skynet)
- * - Garantiza estructura { respuesta, documentosRecomendados }
- * - Filtra documentos incompletos o duplicados
- */
+//Normalizar la respuesta del chatbot (n8n)
 function normalizeChatbotResponse(data) {
   let respuesta =
     data?.respuesta ||
@@ -20,7 +24,7 @@ function normalizeChatbotResponse(data) {
   let documentos =
     data?.documentosRecomendados || data?.output?.documentosRecomendados || [];
 
-  // 🔹 Filtrar solo documentos válidos
+  // Filtrar solo documentos válidos
   documentos = documentos.filter(
     (d) =>
       d &&
@@ -31,7 +35,7 @@ function normalizeChatbotResponse(data) {
       typeof d.url === "string"
   );
 
-  // 🔹 Eliminar duplicados (por título o URL)
+  // Eliminar duplicados (por título o URL)
   const unique = new Map();
   for (const doc of documentos) {
     const key = doc.url || doc.title;
@@ -44,23 +48,20 @@ function normalizeChatbotResponse(data) {
   };
 }
 
-// 📡 Endpoint de chat con streaming SSE
+// Endpoint de chat con streaming SSE
 router.post("/stream", requireLogin, async (req, res) => {
   const { pregunta, conversacionId, documentosSeleccionados } = req.body;
-  console.log("👉 Stream - Pregunta recibida:", pregunta);
-  console.log("👉 Stream - ID de conversación:", conversacionId);
-  console.log(
-    "👉 Stream - Documentos seleccionados:",
-    documentosSeleccionados?.length || 0
-  );
+  logger.info("CHAT", `Solicitud de stream: "${pregunta?.substring(0, 50)}..." | Conv: ${conversacionId || 'new'} | Docs: ${documentosSeleccionados?.length || 0}`);
 
-  // Configurar headers para SSE
+  // Configurar headers para SSE (sin romper CORS)
+  const origin = req.headers.origin;
   res.writeHead(200, {
     "Content-Type": "text/event-stream",
     "Cache-Control": "no-cache",
     Connection: "keep-alive",
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "Cache-Control",
+    "Access-Control-Allow-Origin": origin || "http://localhost:8080",
+    "Access-Control-Allow-Credentials": "true",
+    "Access-Control-Allow-Headers": "Cache-Control, Content-Type",
   });
 
   // Función para enviar eventos SSE
@@ -85,19 +86,16 @@ router.post("/stream", requireLogin, async (req, res) => {
       documentosSeleccionados: documentosSeleccionados || [],
     };
 
-    console.log("📤 Enviando a n8n:", JSON.stringify(n8nRequestBody, null, 2));
+    logger.info("CHAT", `Enviando a n8n: ${JSON.stringify(n8nRequestBody, null, 2)}`);
 
-    // Hacer fetch al webhook de n8n en streaming mode
-    const n8nResponse = await fetch(
-      "https://skynet.uct.cl/webhook/chat-streaming",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(n8nRequestBody),
-      }
-    );
+    // Hacer fetch al webhook de n8n en modo streaming
+    const n8nResponse = await fetch("https://skynet.uct.cl/webhook/chat-streaming", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(n8nRequestBody),
+    });
 
-    console.log("👉 Stream - Status Skynet:", n8nResponse.status);
+    logger.info("CHAT", `Respuesta de Skynet: ${n8nResponse.status}`);
 
     if (!n8nResponse.ok) {
       sendEvent("error", { message: "Error al contactar con el asistente" });
@@ -110,11 +108,10 @@ router.post("/stream", requireLogin, async (req, res) => {
     let documentosRecomendados = [];
 
     try {
-      // Leer el stream progresivamente
       const reader = n8nResponse.body.getReader();
       const decoder = new TextDecoder();
       let accumulatedText = "";
-      let buffer = ""; // Buffer para manejar líneas divididas
+      let buffer = "";
 
       try {
         while (true) {
@@ -123,8 +120,6 @@ router.post("/stream", requireLogin, async (req, res) => {
 
           buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split("\n");
-
-          // Mantener la última línea parcial en el buffer
           buffer = lines.pop() || "";
 
           for (const line of lines) {
@@ -134,46 +129,38 @@ router.post("/stream", requireLogin, async (req, res) => {
             try {
               const data = JSON.parse(trimmedLine);
 
-              // Procesar según el tipo
               if (data.type === "item" && data.content) {
                 const textChunk = data.content;
                 accumulatedText += textChunk;
 
-                // Enviar chunk inmediatamente al frontend
                 sendEvent("chunk", {
                   text: textChunk,
                   fullText: accumulatedText,
                 });
               } else if (data.type === "end") {
-                // Fin del streaming
                 finalResponse = accumulatedText || "Respuesta completada";
                 break;
               }
-            } catch (lineError) {
-              // Ignorar líneas que no son JSON válido
+            } catch {
               continue;
             }
           }
 
-          // Si encontramos el final, salir del loop
           if (finalResponse) break;
         }
       } finally {
         reader.releaseLock();
       }
 
-      // Asegurar que tenemos una respuesta final
       if (!finalResponse) {
         finalResponse = accumulatedText || "No hay respuesta disponible.";
       }
 
-      // Normalizar documentos recomendados
       const normalizedDocs = normalizeChatbotResponse({
         respuesta: finalResponse,
         documentosRecomendados,
       }).documentosRecomendados;
 
-      // Crear mensajes para la base de datos
       const nuevoMensaje = {
         id: nanoid(),
         sender: "user",
@@ -197,9 +184,7 @@ router.post("/stream", requireLogin, async (req, res) => {
 
       let finalConversacionId = conversacionId;
 
-      // Guardar en base de datos
       if (conversacionId) {
-        // Actualizar conversación existente
         const result = await db.query(
           "SELECT chat_history FROM conversaciones WHERE id = $1 AND usuario_id = $2",
           [conversacionId, req.session.user.id]
@@ -210,21 +195,19 @@ router.post("/stream", requireLogin, async (req, res) => {
           chatHistory = normalizeMessages(chatHistory);
           chatHistory.push(nuevoMensaje, nuevaRespuesta);
 
-          await db.query(
-            "UPDATE conversaciones SET chat_history = $1 WHERE id = $2",
-            [JSON.stringify(chatHistory), conversacionId]
-          );
+          await db.query("UPDATE conversaciones SET chat_history = $1 WHERE id = $2", [
+            JSON.stringify(chatHistory),
+            conversacionId,
+          ]);
 
-          console.log("✅ Stream - Conversación actualizada:", conversacionId);
+          logger.success("CHAT", `Conversación actualizada: ${conversacionId}`);
         } else {
-          console.warn("⚠️ Stream - Conversación no encontrada, creando nueva");
+          logger.warn("CHAT", "Conversación no encontrada, creando nueva");
         }
       }
 
       if (!conversacionId || !finalConversacionId) {
-        // Crear nueva conversación
-        const titulo =
-          pregunta.substring(0, 50) + (pregunta.length > 50 ? "..." : "");
+        const titulo = pregunta.substring(0, 50) + (pregunta.length > 50 ? "..." : "");
         const nuevoChatHistory = [nuevoMensaje, nuevaRespuesta];
 
         const newResult = await db.query(
@@ -238,27 +221,23 @@ router.post("/stream", requireLogin, async (req, res) => {
         );
 
         finalConversacionId = newResult.rows[0].id;
-        console.log(
-          "✅ Stream - Nueva conversación creada:",
-          finalConversacionId
-        );
+        logger.success("CHAT", `Nueva conversación creada: ${finalConversacionId}`);
       }
 
-      // Enviar evento final con todos los datos
       sendEvent("complete", {
         respuesta: finalResponse,
         documentosRecomendados: normalizedDocs,
         conversacionId: finalConversacionId,
       });
     } catch (streamError) {
-      console.error("❌ Error en stream:", streamError);
+      logger.error("CHAT", "Error procesando stream:", streamError.message);
       sendEvent("error", {
         message: "Error al procesar la respuesta del asistente",
         details: streamError.message,
       });
     }
   } catch (err) {
-    console.error("❌ Error en stream:", err);
+    logger.error("CHAT", "Error en endpoint de stream:", err.message);
     sendEvent("error", {
       message: "Error al procesar la respuesta del asistente",
       details: err.message,
@@ -268,12 +247,12 @@ router.post("/stream", requireLogin, async (req, res) => {
   }
 });
 
-// 🔍 Endpoint de debugging para verificar conexión
+
+// Endpoint de debugging para verificar conexión
 router.post("/debug", (req, res) => {
-  console.log("🔍 Debug endpoint llamado");
-  console.log("🔍 Session user:", req.session?.user);
-  console.log("🔍 Request body:", req.body);
-  console.log("🔍 Headers:", req.headers);
+  logger.info("CHAT", "Endpoint de debug llamado");
+  logger.info("CHAT", `Usuario de sesión: ${req.session?.user?.usuario || 'ninguno'}`);
+  logger.info("CHAT", `Claves del body de la solicitud: ${Object.keys(req.body || {}).join(', ')}`);
 
   res.json({
     message: "Debug successful",
@@ -283,15 +262,10 @@ router.post("/debug", (req, res) => {
   });
 });
 
-// 📩 Ruta de chat normal
+// Ruta de chat normal
 router.post("/", requireLogin, async (req, res) => {
   const { pregunta, conversacionId, documentosSeleccionados } = req.body;
-  console.log("👉 Pregunta recibida:", pregunta);
-  console.log("👉 ID de conversación:", conversacionId);
-  console.log(
-    "👉 Documentos seleccionados:",
-    documentosSeleccionados?.length || 0
-  );
+  logger.info("CHAT", `Solicitud de chat: "${pregunta?.substring(0, 50)}..." | Conv: ${conversacionId || 'new'} | Docs: ${documentosSeleccionados?.length || 0}`);
 
   try {
     // Preparar request body para n8n
@@ -301,10 +275,7 @@ router.post("/", requireLogin, async (req, res) => {
       documentosSeleccionados: documentosSeleccionados || [],
     };
 
-    console.log(
-      "📤 Enviando a n8n (chat normal):",
-      JSON.stringify(n8nRequestBody, null, 2)
-    );
+    logger.info("CHAT", `Enviando a n8n (chat normal): ${JSON.stringify(n8nRequestBody, null, 2)}`);
 
     // const response = await fetch("https://skynet.uct.cl/webhook/chat-semantic-search", {
     const response = await fetch(
@@ -316,16 +287,16 @@ router.post("/", requireLogin, async (req, res) => {
       }
     );
 
-    console.log("👉 Status Skynet (Chat normal):", response.status);
+    logger.info("CHAT", `Respuesta de Skynet: ${response.status}`);
 
     const data = await response.json();
-    console.log("👉 Data recibida (Semantic Search):", data);
+    logger.info("CHAT", `Respuesta recibida (${JSON.stringify(data).length} caracteres)`);
 
-    // ✅ Normalizar respuesta del chatbot
+    // Normalizar respuesta del chatbot
     const { respuesta, documentosRecomendados } =
       normalizeChatbotResponse(data);
 
-    // ✅ Crear mensajes normalizados
+    // Crear mensajes normalizados
     const nuevoMensaje = {
       id: nanoid(),
       sender: "user",
@@ -348,7 +319,7 @@ router.post("/", requireLogin, async (req, res) => {
     };
 
     if (conversacionId) {
-      // 🧩 Actualizar conversación existente
+      // Actualizar conversación existente
       const result = await db.query(
         "SELECT chat_history FROM conversaciones WHERE id = $1 AND usuario_id = $2",
         [conversacionId, req.session.user.id]
@@ -365,14 +336,14 @@ router.post("/", requireLogin, async (req, res) => {
           [JSON.stringify(chatHistory), conversacionId]
         );
 
-        console.log("✅ Conversación actualizada:", conversacionId);
+        logger.success("CHAT", `Conversación actualizada: ${conversacionId}`);
         return res.json({ respuesta, documentosRecomendados, conversacionId });
       } else {
-        console.warn("⚠️ Conversación no encontrada, creando nueva");
+        logger.warn("CHAT", "Conversación no encontrada, creando nueva");
       }
     }
 
-    // 🆕 Crear nueva conversación
+    // Crear nueva conversación
     const titulo =
       pregunta.substring(0, 50) + (pregunta.length > 50 ? "..." : "");
     const nuevoChatHistory = [nuevoMensaje, nuevaRespuesta];
@@ -388,7 +359,7 @@ router.post("/", requireLogin, async (req, res) => {
     );
 
     const newConversacionId = newResult.rows[0].id;
-    console.log("✅ Nueva conversación creada:", newConversacionId);
+    logger.success("CHAT", `Nueva conversación creada: ${newConversacionId}`);
 
     res.json({
       respuesta,
@@ -396,19 +367,15 @@ router.post("/", requireLogin, async (req, res) => {
       conversacionId: newConversacionId,
     });
   } catch (err) {
-    console.error("❌ Error en chat:", err);
+    logger.error("CHAT", "Error en endpoint de chat:", err.message);
     res.status(500).json({ respuesta: "Error al contactar con el asistente." });
   }
 });
 
-// 🧭 Generar mapa mental
+// Generar mapa mental
 router.post("/mapa-mental", requireLogin, async (req, res) => {
   const { contexto, titulo, conversacionId } = req.body;
-  console.log(
-    "📝 Contexto recibido para mapa mental:",
-    contexto?.substring(0, 100)
-  );
-  console.log("📝 ID de conversación para asociar mapa:", conversacionId);
+  logger.info("CHAT", `Solicitud de mapa mental: "${contexto?.substring(0, 50)}..." | Conv: ${conversacionId}`);
 
   if (!conversacionId) {
     return res.status(400).json({
@@ -418,36 +385,16 @@ router.post("/mapa-mental", requireLogin, async (req, res) => {
   }
 
   try {
-    // ✅ Verificar que la conversación existe y pertenece al usuario
-    const conversacionCheck = await db.query(
-      "SELECT id FROM conversaciones WHERE id = $1 AND usuario_id = $2",
-      [conversacionId, req.session.user.id]
-    );
-
-    if (conversacionCheck.rows.length === 0) {
-      console.warn(
-        "⚠️ Conversación no encontrada o no pertenece al usuario:",
-        conversacionId
-      );
-      return res.status(404).json({
-        error:
-          "La conversación especificada no existe o no tienes permisos para acceder a ella.",
-      });
-    }
-
     const response = await fetch("https://skynet.uct.cl/webhook/mapa-mental", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ contexto }),
     });
 
-    console.log("👉 Status Skynet (Mapa Mental):", response.status);
+    logger.info("CHAT", `Respuesta de mapa mental de Skynet: ${response.status}`);
 
     const data = await response.json();
-    console.log(
-      "👉 Data recibida (mapa mental):",
-      JSON.stringify(data).substring(0, 200)
-    );
+    logger.info("CHAT", `Datos de mapa mental recibidos (${JSON.stringify(data).length} caracteres)`);
 
     const mapaMental = data.respuesta || {};
 
@@ -466,7 +413,7 @@ router.post("/mapa-mental", requireLogin, async (req, res) => {
     );
 
     const nuevoMapaId = result.rows[0].id;
-    console.log("✅ Mapa mental guardado con ID:", nuevoMapaId);
+    logger.success("CHAT", `Mapa mental guardado: ${nuevoMapaId}`);
 
     // Asociar mapa mental a la conversación
     await db.query(
@@ -476,7 +423,7 @@ router.post("/mapa-mental", requireLogin, async (req, res) => {
       [JSON.stringify([nuevoMapaId]), conversacionId, req.session.user.id]
     );
 
-    console.log("✅ Mapa asociado a conversación:", conversacionId);
+    logger.success("CHAT", `Mapa asociado a conversación: ${conversacionId}`);
 
     mapaMental.id = nuevoMapaId;
     mapaMental.fecha_creacion = result.rows[0].fecha_creacion;
@@ -487,7 +434,7 @@ router.post("/mapa-mental", requireLogin, async (req, res) => {
         "Mapa mental guardado y asociado a la conversación correctamente",
     });
   } catch (err) {
-    console.error("❌ Error en mapa mental:", err);
+    logger.error("CHAT", "Error en mapa mental:", err.message);
     res.status(500).json({
       error: "Error al generar o guardar el mapa mental.",
       details: err.message,

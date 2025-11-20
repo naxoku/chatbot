@@ -1,6 +1,14 @@
+/**
+ * RUTAS DE MAPAS MENTALES
+ *
+ * Gestiona la creación, almacenamiento y recuperación de mapas mentales
+ * generados a partir de conversaciones del chatbot.
+ */
+
 const express = require("express");
 const { db, queryWithRetry } = require("../db");
 const requireLogin = require("../middleware/auth");
+const logger = require("../logger");
 
 const router = express.Router();
 
@@ -13,7 +21,7 @@ router.get("/", requireLogin, async (req, res) => {
     );
     res.json({ success: true, mapas: result.rows });
   } catch (err) {
-    console.error("Error al obtener mapas mentales:", err);
+    logger.error("MAPS", "Error obteniendo mapas mentales:", err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -34,7 +42,7 @@ router.get("/:id", requireLogin, async (req, res) => {
 
     res.json({ success: true, mapa: result.rows[0] });
   } catch (err) {
-    console.error("Error al obtener mapa mental:", err);
+    logger.error("MAPS", "Error obteniendo mapa mental:", err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -49,7 +57,7 @@ router.post("/", requireLogin, async (req, res) => {
     );
     res.json({ success: true, mapa: result.rows[0] });
   } catch (err) {
-    console.error("Error al guardar mapa mental:", err);
+    logger.error("MAPS", "Error guardando mapa mental:", err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -87,7 +95,7 @@ router.put("/:id", requireLogin, async (req, res) => {
 
     res.json({ success: true, mapa: result.rows[0] });
   } catch (err) {
-    console.error("Error al actualizar mapa mental:", err);
+    logger.error("MAPS", "Error actualizando mapa mental:", err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -105,7 +113,7 @@ router.get("/conversacion/:conversacionId", requireLogin, async (req, res) => {
 
     res.json({ success: true, mapas: result.rows });
   } catch (err) {
-    console.error("Error al obtener mapas mentales de conversación:", err);
+    logger.error("MAPS", "Error obteniendo mapas mentales de conversación:", err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });

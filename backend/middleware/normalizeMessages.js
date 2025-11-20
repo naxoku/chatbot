@@ -8,6 +8,16 @@ const { nanoid } = require("nanoid");
  * @returns {Array} - Array de mensajes normalizados con estructura estándar
  */
 function normalizeMessages(messages) {
+  // Si es un string, intentar parsearlo como JSON
+  if (typeof messages === 'string') {
+    try {
+      messages = JSON.parse(messages);
+    } catch (error) {
+      console.error("❌ Error al parsear chat_history como JSON:", error);
+      return [];
+    }
+  }
+
   if (!Array.isArray(messages)) {
     console.error(
       "❌ normalizeMessages recibió datos inválidos:",

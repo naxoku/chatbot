@@ -1,269 +1,517 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
-/* Permite alternar entre modo oscuro y modo claro */
-@custom-variant dark (&:where(.dark, .dark *));
-
-/* Simplificadas las animaciones para mejor rendimiento */
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+/* ===== FUENTES PERSONALIZADAS ===== */
+@font-face {
+  font-family: "Vista Sans";
+  src: url("../fonts/VistaSanReg.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
 }
 
-.animate-fade-in {
-  animation: fade-in 0.2s ease-out forwards;
-}
-
-/* Eliminada animación bounce-slow innecesaria */
-
-/* Estilos personalizados para scrollbars minimalistas */
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.3);
-  border-radius: 2px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(156, 163, 175, 0.5);
-}
-
-.dark ::-webkit-scrollbar-thumb {
-  background: rgba(75, 85, 99, 0.3);
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(75, 85, 99, 0.5);
-}
-
-/* Ocultar scrollbar en textarea del chat */
-textarea::-webkit-scrollbar {
-  display: none;
-}
-
-textarea {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-/* Estilos minimalistas para contenido markdown */
-/* Reducido tamaño de fuente para mensajes más compactos */
-.message-content {
-  font-size: 0.875rem;
-  line-height: 1.5;
-}
-
-.message-content p {
-  margin-bottom: 0.5rem;
-}
-
-.message-content p:last-child {
-  margin-bottom: 0;
-}
-
-/* Encabezados minimalistas */
-.message-content h1,
-.message-content h2,
-.message-content h3,
-.message-content h4 {
-  font-weight: 600;
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
-  line-height: 1.3;
-}
-
-.message-content h1 {
-  font-size: 1.375rem;
-}
-
-.message-content h2 {
-  font-size: 1.25rem;
-}
-
-.message-content h3 {
-  font-size: 1.125rem;
-}
-
-.message-content h4 {
-  font-size: 1rem;
-}
-
-/* Listas minimalistas */
-.message-content ul,
-.message-content ol {
-  margin: 0.5rem 0;
-  padding-left: 1.5rem;
-}
-
-.message-content ul {
-  list-style-type: disc;
-}
-
-.message-content ol {
-  list-style-type: decimal;
-}
-
-.message-content li {
-  margin-bottom: 0.375rem;
-  line-height: 1.5;
-}
-
-.message-content li:last-child {
-  margin-bottom: 0;
-}
-
-/* Listas anidadas */
-.message-content ul ul,
-.message-content ol ul {
-  list-style-type: circle;
-  margin-top: 0.375rem;
-}
-
-.message-content ol ol {
-  list-style-type: lower-alpha;
-  margin-top: 0.375rem;
-}
-
-/* Énfasis */
-.message-content strong {
-  font-weight: 600;
-}
-
-.message-content em {
+@font-face {
+  font-family: "Vista Sans";
+  src: url("../fonts/VistaSanRegIta.ttf") format("truetype");
+  font-weight: 400;
   font-style: italic;
+  font-display: swap;
 }
 
-/* Enlaces minimalistas */
-.message-content a {
-  color: #3b82f6;
-  text-decoration: none;
-  border-bottom: 1px solid transparent;
-  transition: border-color 0.2s;
+@font-face {
+  font-family: "Vista Sans";
+  src: url("../fonts/VistaSanLig.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
 }
 
-.message-content a:hover {
-  border-bottom-color: #3b82f6;
+@font-face {
+  font-family: "Vista Sans";
+  src: url("../fonts/VistaSanLigIta.ttf") format("truetype");
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
 }
 
-.dark .message-content a {
-  color: #60a5fa;
+@font-face {
+  font-family: "Vista Sans";
+  src: url("../fonts/VistaSanMed.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
 }
 
-.dark .message-content a:hover {
-  border-bottom-color: #60a5fa;
+@font-face {
+  font-family: "Vista Sans";
+  src: url("../fonts/VistaSanMedIta.ttf") format("truetype");
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
 }
 
-/* Código inline minimalista */
-.message-content code {
-  background-color: rgba(0, 0, 0, 0.06);
-  padding: 0.125rem 0.375rem;
-  border-radius: 0.25rem;
-  font-size: 0.875em;
-  font-family: "SF Mono", "Monaco", "Inconsolata", "Fira Code", monospace;
+@font-face {
+  font-family: "Vista Sans";
+  src: url("../fonts/VistaSanBol.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
 }
 
-.dark .message-content code {
-  background-color: rgba(255, 255, 255, 0.08);
+@font-face {
+  font-family: "Vista Sans";
+  src: url("../fonts/VistaSanBolIta.ttf") format("truetype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
 }
 
-/* Bloques de código minimalistas */
-.message-content pre {
-  background-color: rgba(0, 0, 0, 0.04);
-  padding: 0.75rem;
-  border-radius: 0.375rem;
-  overflow-x: auto;
-  margin: 0.5rem 0;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 }
 
-.dark .message-content pre {
-  background-color: rgba(0, 0, 0, 0.2);
-  border-color: rgba(255, 255, 255, 0.06);
+:root {
+  /* Configuración de bordes redondeados */
+  --radius: 0.625rem;
+
+  /* ===== MODO CLARO ===== */
+  /* Paleta monocromática basada en Celeste #3E8BD6 */
+  /* Todas las variaciones se generan ajustando la luminosidad (L) del color base */
+
+  /* Colores de fondo - Máxima luminosidad */
+  --background: oklch(0.99 0.01 254); /* Celeste casi blanco (L: 99%) */
+  --foreground: oklch(
+    0.25 0.08 254
+  ); /* Celeste muy oscuro para texto (L: 25%) */
+
+  /* Tarjetas y contenedores - Pureza máxima */
+  --card: oklch(1 0 0); /* Blanco puro para contraste */
+  --card-foreground: oklch(0.25 0.08 254); /* Celeste muy oscuro */
+
+  /* Popovers y modales - Igual que tarjetas */
+  --popover: oklch(1 0 0); /* Blanco puro */
+  --popover-foreground: oklch(0.25 0.08 254); /* Celeste muy oscuro */
+
+  /* Color primario - Celeste base #3E8BD6 (L: 62%) */
+  --primary: oklch(0.62 0.15 254); /* Celeste vibrante original */
+  --primary-foreground: oklch(0.99 0.01 254); /* Celeste casi blanco */
+
+  /* Color secundario - Celeste más claro (L: 75%) */
+  --secondary: oklch(0.75 0.1 254); /* Celeste luminoso */
+  --secondary-foreground: oklch(0.2 0.08 254); /* Celeste oscuro */
+
+  /* Estados apagados - Celeste desaturado (L: 90%) */
+  --muted: oklch(0.9 0.02 254); /* Celeste muy pálido */
+  --muted-foreground: oklch(0.45 0.08 254); /* Celeste medio */
+
+  /* Acentos - Celeste medio-claro (L: 70%) */
+  --accent: oklch(0.7 0.12 254); /* Celeste suave */
+  --accent-foreground: oklch(0.2 0.08 254); /* Celeste oscuro */
+
+  /* Destructivo - Rojo (único color fuera de la paleta celeste) */
+  --destructive: oklch(0.55 0.22 25); /* Rojo para alertas */
+
+  /* Bordes y inputs - Celeste muy claro (L: 85%) */
+  --border: oklch(0.85 0.03 254); /* Celeste pálido */
+  --input: oklch(0.85 0.03 254); /* Igual que border */
+  --ring: oklch(0.62 0.15 254); /* Celeste primario para focus */
+
+  /* Gráficos - Gradiente de luminosidad del celeste */
+  --chart-1: oklch(0.62 0.15 254); /* Celeste base (L: 62%) */
+  --chart-2: oklch(0.55 0.15 254); /* Celeste oscuro (L: 55%) */
+  --chart-3: oklch(0.7 0.13 254); /* Celeste claro (L: 70%) */
+  --chart-4: oklch(0.48 0.14 254); /* Celeste muy oscuro (L: 48%) */
+  --chart-5: oklch(0.78 0.1 254); /* Celeste muy claro (L: 78%) */
+
+  /* Sidebar - Variaciones sutiles del celeste */
+  --sidebar: oklch(0.97 0.01 254); /* Celeste ultra claro (L: 97%) */
+  --sidebar-foreground: oklch(0.25 0.08 254); /* Celeste muy oscuro */
+  --sidebar-primary: oklch(0.62 0.15 254); /* Celeste base */
+  --sidebar-primary-foreground: oklch(0.99 0.01 254); /* Celeste casi blanco */
+  --sidebar-accent: oklch(0.9 0.02 254); /* Celeste pálido */
+  --sidebar-accent-foreground: oklch(0.25 0.08 254); /* Celeste muy oscuro */
+  --sidebar-border: oklch(0.85 0.03 254); /* Celeste claro */
+  --sidebar-ring: oklch(0.62 0.15 254); /* Celeste base */
 }
 
-.message-content pre code {
-  background-color: transparent;
-  padding: 0;
-  font-size: 0.875rem;
-  line-height: 1.5;
+.dark {
+  /* ===== MODO OSCURO ===== */
+  /* Paleta monocromática basada en Azul Oscuro */
+
+  /* Colores de fondo - Mínima luminosidad con toque azul */
+  --background: oklch(0.15 0.02 254); /* Azul muy oscuro (L: 15%) */
+  --foreground: oklch(0.98 0.01 254); /* Azul casi blanco mejorado para contraste AA (L: 98%) */
+
+  /* Tarjetas - Elevación sutil sobre el fondo */
+  --card: oklch(0.2 0.03 254); /* Azul oscuro elevado (L: 20%) */
+  --card-foreground: oklch(0.95 0.02 254); /* Azul casi blanco */
+
+  /* Popovers - Igual que tarjetas */
+  --popover: oklch(0.2 0.03 254); /* Azul oscuro elevado */
+  --popover-foreground: oklch(0.95 0.02 254); /* Azul casi blanco */
+
+  /* Color primario - Azul brillante (L: 65%) */
+  --primary: oklch(0.65 0.15 254); /* Azul vibrante */
+  --primary-foreground: oklch(0.15 0.05 254); /* Azul muy oscuro */
+
+  /* Color secundario - Azul medio (L: 55%) */
+  --secondary: oklch(0.55 0.12 254); /* Azul medio */
+  --secondary-foreground: oklch(0.95 0.02 254); /* Azul casi blanco */
+
+  /* Estados apagados - Azul desaturado oscuro (L: 25%) */
+  --muted: oklch(0.25 0.02 254); /* Azul oscuro apagado */
+  --muted-foreground: oklch(0.72 0.06 254); /* Azul medio mejorado para contraste AA (L: 72%) */
+
+  /* Acentos - Azul intermedio (L: 45%) */
+  --accent: oklch(0.45 0.1 254); /* Azul intermedio */
+  --accent-foreground: oklch(0.95 0.02 254); /* Azul casi blanco */
+
+  /* Destructivo - Rojo más brillante para modo oscuro */
+  --destructive: oklch(0.62 0.24 25); /* Rojo brillante */
+
+  /* Bordes y inputs - Azul semi-transparente (L: 35%) */
+  --border: oklch(0.35 0.05 254 / 35%); /* Azul oscuro translúcido */
+  --input: oklch(0.35 0.05 254 / 45%); /* Azul oscuro más opaco */
+  --ring: oklch(0.65 0.15 254); /* Azul brillante para focus */
+
+  /* Gráficos - Gradiente de luminosidad del azul */
+  --chart-1: oklch(0.65 0.15 254); /* Azul brillante (L: 65%) */
+  --chart-2: oklch(0.75 0.13 254); /* Azul muy brillante (L: 75%) */
+  --chart-3: oklch(0.55 0.14 254); /* Azul medio (L: 55%) */
+  --chart-4: oklch(0.8 0.12 254); /* Azul ultra brillante (L: 80%) */
+  --chart-5: oklch(0.45 0.11 254); /* Azul oscuro (L: 45%) */
+
+  /* Sidebar - Oscuro con separación sutil */
+  --sidebar: oklch(0.18 0.02 254); /* Azul muy oscuro (L: 18%) */
+  --sidebar-foreground: oklch(0.95 0.02 254); /* Azul casi blanco */
+  --sidebar-primary: oklch(0.65 0.15 254); /* Azul brillante */
+  --sidebar-primary-foreground: oklch(0.15 0.05 254); /* Azul muy oscuro */
+  --sidebar-accent: oklch(0.25 0.02 254); /* Azul oscuro apagado */
+  --sidebar-accent-foreground: oklch(0.95 0.02 254); /* Azul casi blanco */
+  --sidebar-border: oklch(0.35 0.05 254 / 35%); /* Azul oscuro translúcido */
+  --sidebar-ring: oklch(0.65 0.15 254); /* Azul brillante */
 }
 
-/* Citas minimalistas */
-.message-content blockquote {
-  border-left: 2px solid #e5e7eb;
-  padding-left: 0.75rem;
-  margin: 0.5rem 0;
-  color: #6b7280;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Vista Sans", system-ui, -apple-system, BlinkMacSystemFont,
+      "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
+      "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+      "Noto Color Emoji";
+    /* Transiciones suaves para cambios de tema */
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
 }
 
-.dark .message-content blockquote {
-  border-left-color: #374151;
-  color: #9ca3af;
-}
+/* Mejoras adicionales para contraste y accesibilidad */
+@layer utilities {
+  /* Utilidad para texto con máximo contraste */
+  .text-high-contrast {
+    color: var(--foreground);
+  }
 
-/* Tablas minimalistas */
-.message-content table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 0.5rem 0;
-  font-size: 0.875rem;
-}
+  /* Utilidad para fondos con buena visibilidad */
+  .bg-high-contrast {
+    background-color: var(--card);
+  }
 
-.message-content table th,
-.message-content table td {
-  border: 1px solid #e5e7eb;
-  padding: 0.5rem;
-  text-align: left;
-}
+  /* Utilidad para bordes visibles */
+  .border-visible {
+    border-color: var(--border);
+    border-width: 1px;
+  }
 
-.dark .message-content table th,
-.dark .message-content table td {
-  border-color: #374151;
-}
+  /* ===== ESTILOS PERSONALIZADOS PARA MARKDOWN ===== */
 
-.message-content table th {
-  background-color: rgba(0, 0, 0, 0.02);
-  font-weight: 600;
-}
+  /* Contenedor principal del contenido markdown */
+  .message-content {
+    color: var(--foreground);
+    line-height: 1.6;
+  }
 
-.dark .message-content table th {
-  background-color: rgba(255, 255, 255, 0.03);
-}
+  /* Títulos */
+  .message-content h1,
+  .message-content h2,
+  .message-content h3,
+  .message-content h4,
+  .message-content h5,
+  .message-content h6 {
+    color: var(--foreground);
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+  }
 
-/* Línea horizontal minimalista */
-.message-content hr {
-  border: 0;
-  border-top: 1px solid #e5e7eb;
-  margin: 0.75rem 0;
-}
+  .message-content h1 {
+    font-size: 1.5rem;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 0.5rem;
+  }
 
-.dark .message-content hr {
-  border-top-color: #374151;
-}
+  .message-content h2 {
+    font-size: 1.25rem;
+  }
 
-/* Imágenes */
-.message-content img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 0.375rem;
-  margin: 0.5rem 0;
-}
+  .message-content h3 {
+    font-size: 1.125rem;
+  }
 
-/* Utilidad para truncar texto */
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  .message-content h4,
+  .message-content h5,
+  .message-content h6 {
+    font-size: 1rem;
+  }
+
+  /* Párrafos */
+  .message-content p {
+    margin-bottom: 1rem;
+    color: var(--foreground);
+  }
+
+  /* Listas */
+  .message-content ul,
+  .message-content ol {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+  }
+
+  .message-content ul {
+    list-style-type: disc;
+  }
+
+  .message-content ol {
+    list-style-type: decimal;
+  }
+
+  .message-content li {
+    margin-bottom: 0.5rem;
+    color: var(--foreground);
+  }
+
+  .message-content li::marker {
+    color: var(--primary);
+  }
+
+  /* Listas anidadas */
+  .message-content ul ul,
+  .message-content ol ol,
+  .message-content ul ol,
+  .message-content ol ul {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Enlaces */
+  .message-content a {
+    color: var(--primary);
+    text-decoration: underline;
+    text-decoration-color: var(--primary);
+    text-underline-offset: 2px;
+    transition: all 0.2s ease;
+  }
+
+  .message-content a:hover {
+    color: var(--primary);
+    text-decoration-color: var(--primary-foreground);
+    filter: brightness(0.9);
+  }
+
+  /* Texto en negrita */
+  .message-content strong,
+  .message-content b {
+    font-weight: 600;
+    color: var(--foreground);
+  }
+
+  /* Texto en cursiva */
+  .message-content em,
+  .message-content i {
+    font-style: italic;
+    color: var(--foreground);
+  }
+
+  /* Código inline */
+  .message-content code {
+    background-color: var(--muted);
+    color: var(--primary);
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    font-family: "Courier New", monospace;
+    font-size: 0.875em;
+    font-weight: 500;
+    border: 1px solid var(--border);
+  }
+
+  /* Bloques de código */
+  .message-content pre {
+    background-color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+    font-family: "Courier New", monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .message-content pre code {
+    background: none;
+    padding: 0;
+    border: none;
+    color: var(--foreground);
+    font-weight: 400;
+  }
+
+  /* Citas (blockquote) */
+  .message-content blockquote {
+    border-left: 4px solid var(--primary);
+    padding-left: 1rem;
+    margin: 1rem 0;
+    background-color: var(--muted);
+    border-radius: 0.25rem;
+    padding: 0.75rem 1rem;
+    color: var(--muted-foreground);
+    font-style: italic;
+  }
+
+  /* Tablas */
+  .message-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    overflow: hidden;
+  }
+
+  .message-content th,
+  .message-content td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .message-content th {
+    background-color: var(--muted);
+    font-weight: 600;
+    color: var(--foreground);
+    border-bottom: 2px solid var(--border);
+  }
+
+  .message-content td {
+    color: var(--foreground);
+  }
+
+  .message-content tr:last-child td {
+    border-bottom: none;
+  }
+
+  .message-content tr:hover {
+    background-color: var(--muted);
+  }
+
+  /* Líneas horizontales */
+  .message-content hr {
+    border: none;
+    height: 1px;
+    background: var(--border);
+    margin: 2rem 0;
+    border-radius: 0.5rem;
+  }
+
+  /* Imágenes */
+  .message-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border);
+    margin: 1rem 0;
+  }
+
+  /* Elementos de tarea (checkboxes) */
+  .message-content input[type="checkbox"] {
+    margin-right: 0.5rem;
+  }
+
+  /* Texto tachado */
+  .message-content del,
+  .message-content s {
+    text-decoration: line-through;
+    color: var(--muted-foreground);
+  }
+
+  /* Mejorar la legibilidad en modo oscuro */
+  .dark .message-content {
+    color: var(--foreground);
+  }
+
+  .dark .message-content a:hover {
+    filter: brightness(1.2);
+  }
+
+  /* Responsive para elementos de markdown */
+  @media (max-width: 640px) {
+    .message-content h1 {
+      font-size: 1.25rem;
+    }
+
+    .message-content h2 {
+      font-size: 1.125rem;
+    }
+
+    .message-content h3 {
+      font-size: 1rem;
+    }
+
+    .message-content table {
+      font-size: 0.875rem;
+    }
+
+    .message-content th,
+    .message-content td {
+      padding: 0.5rem;
+    }
+  }
 }

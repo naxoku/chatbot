@@ -1,18 +1,23 @@
+/**
+ * RUTAS DE AUTENTICACIÓN
+ *
+ * Maneja login, logout y verificación de sesiones de usuario.
+ * Se conecta con la API LDAP de la UCT para validar credenciales.
+ */
+
 const express = require("express");
 const axios = require("axios");
 const { db, queryWithRetry } = require("../db");
+const logger = require("../logger");
 
 const router = express.Router();
 
-// Login
+// POST /auth/login - Iniciar sesión
 router.post("/login", async (req, res) => {
-  console.log("🔍 Request body:", req.body);
-  console.log("🔍 Content-Type:", req.headers["content-type"]);
-
+  logger.info("AUTH", `Intento de login: ${req.body?.email || 'sin email'}`);
   const { email, password } = req.body;
 
   if (!email || !password) {
-    console.log("❌ Missing email or password");
     return res.json({
       success: false,
       message: "Email y contraseña son requeridos",
@@ -20,9 +25,7 @@ router.post("/login", async (req, res) => {
   }
 
   try {
-    console.log("🔄 Calling UCT API...");
-
-    // Llamada a la API de validación externa
+    // Validar credenciales con API de la UCT
     const response = await axios.post(
       "https://api-ldap.uct.cl/validacion",
       { email, password },
@@ -34,25 +37,19 @@ router.post("/login", async (req, res) => {
       }
     );
 
-    console.log("✅ UCT API response:", response.data);
     const data = response.data;
 
     if (data && data.success && data.data?.authenticated) {
-      console.log("🔐 User authenticated, checking database...");
       const { Rut, cn, uid } = data.data;
 
-      // Verificamos si el usuario ya existe
+      // Verificar si usuario existe en BD, si no, crearlo
       const existingUser = await queryWithRetry(
         "SELECT id FROM usuarios WHERE correo_electronico = $1",
         [email]
       );
 
-      console.log("📊 Database query result:", existingUser.rows);
-
       let userId;
       if (existingUser.rows.length === 0) {
-        console.log("➕ Creating new user...");
-        // Insertamos el usuario en la nueva tabla
         const result = await queryWithRetry(
           `INSERT INTO usuarios (rut, nombre, correo_electronico, usuario)
            VALUES ($1, $2, $3, $4)
@@ -64,9 +61,7 @@ router.post("/login", async (req, res) => {
         userId = existingUser.rows[0].id;
       }
 
-      console.log("💾 User ID:", userId);
-
-      // Guardamos en sesión
+      // Guardar usuario en sesión
       req.session.user = {
         id: userId,
         email,
@@ -75,22 +70,19 @@ router.post("/login", async (req, res) => {
         usuario: uid,
       };
 
-      console.log("🎉 Login successful!");
       return res.json({
         success: true,
         message: `Bienvenido ${cn}`,
         user: req.session.user,
       });
     } else {
-      console.log("❌ Authentication failed:", data?.message);
       return res.json({
         success: false,
         message: data?.message || "Credenciales inválidas",
       });
     }
   } catch (err) {
-    console.error("❌ Error en login:", err.message);
-    console.error("❌ Stack trace:", err.stack);
+    logger.error("AUTH", "Error de login:", err.message);
     return res.json({
       success: false,
       message: "Error en el servicio de autenticación",
@@ -98,7 +90,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// Insertar conversación
+// POST /auth/conversacion - Guardar conversación (parece estar en el lugar equivocado)
 router.post("/conversacion", async (req, res) => {
   const { pregunta, respuesta } = req.body;
 
@@ -129,7 +121,7 @@ router.post("/conversacion", async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Error al guardar conversación:", err.message);
+    logger.error("AUTH", "Error guardando conversación:", err.message);
     return res.json({
       success: false,
       message: "Error al guardar la conversación",
@@ -137,7 +129,7 @@ router.post("/conversacion", async (req, res) => {
   }
 });
 
-// Logout
+// POST /auth/logout - Cerrar sesión
 router.post("/logout", (req, res) => {
   req.session.destroy(() => {
     res.clearCookie("connect.sid");
@@ -145,7 +137,7 @@ router.post("/logout", (req, res) => {
   });
 });
 
-// Check session
+// GET /auth/checkSession - Verificar si hay sesión activa
 router.get("/checkSession", (req, res) => {
   if (req.session.user) {
     res.json({ logged_in: true, user: req.session.user });

@@ -1,8 +1,16 @@
+/**
+ * RUTAS DE ESTADO DEL SISTEMA
+ *
+ * Proporciona información sobre la salud del sistema, incluyendo
+ * estado de base de datos, servicios externos y recursos del servidor.
+ */
+
 const express = require("express");
 const router = express.Router();
 const { db, queryWithRetry } = require("../db");
 const si = require("systeminformation");
 const axios = require("axios");
+const logger = require("../logger");
 
 const N8N_WEBHOOK_URL_STATUS = "https://skynet.uct.cl/webhook/health-status";
 
@@ -20,7 +28,7 @@ router.get("/status", async (req, res) => {
       responseTime: `${Number(dbEndTime - dbStartTime) / 1_000_000}ms`,
     };
   } catch (error) {
-    console.error("Database check failed:", error);
+    logger.error("STATUS", "Verificación de base de datos fallida:", error.message);
     overallStatus = "offline";
     checks.database = {
       status: "offline",
@@ -57,7 +65,7 @@ router.get("/status", async (req, res) => {
       };
     }
   } catch (error) {
-    console.error("Check a n8n webhook ha fallado:", error.message);
+    logger.error("STATUS", "Verificación de webhook n8n fallida:", error.message);
     overallStatus = "offline";
     checks.n8n = {
       status: "offline",
@@ -83,7 +91,7 @@ router.get("/status", async (req, res) => {
       overallStatus = "degraded";
     }
   } catch (error) {
-    console.error("System information check failed:", error);
+    logger.error("STATUS", "Verificación de información del sistema fallida:", error.message);
     overallStatus = overallStatus === "online" ? "degraded" : overallStatus;
     checks.system = {
       status: "unavailable",

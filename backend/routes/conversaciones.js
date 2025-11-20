@@ -1,3 +1,10 @@
+/**
+ * RUTAS DE CONVERSACIONES
+ *
+ * CRUD completo para gestionar las conversaciones de los usuarios.
+ * Incluye crear, leer, actualizar y eliminar conversaciones.
+ */
+
 const express = require("express");
 const { db, queryWithRetry } = require("../db");
 const requireLogin = require("../middleware/auth");
@@ -5,6 +12,7 @@ const {
   normalizeMessages,
   validateChatHistory,
 } = require("../middleware/normalizeMessages");
+const logger = require("../logger");
 
 const router = express.Router();
 
@@ -24,7 +32,7 @@ router.get("/", requireLogin, async (req, res) => {
 
     res.json({ success: true, conversaciones: conversacionesNormalizadas });
   } catch (err) {
-    console.error("❌ Error al obtener conversaciones:", err);
+    logger.error("CONV", "Error obteniendo conversaciones:", err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -51,7 +59,7 @@ router.get("/:id", requireLogin, async (req, res) => {
 
     res.json({ success: true, conversacion });
   } catch (err) {
-    console.error("❌ Error al obtener conversación:", err);
+    logger.error("CONV", "Error obteniendo conversación:", err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -61,15 +69,12 @@ router.post("/", requireLogin, async (req, res) => {
   const { chat_history, titulo, mapas_mentales_ids } = req.body;
 
   try {
-    // ✅ Normalizar mensajes antes de guardar
+    // Normalizar mensajes antes de guardar
     const normalizedChatHistory = normalizeMessages(chat_history || []);
 
     // Validar que la estructura sea correcta
     if (!validateChatHistory(normalizedChatHistory)) {
-      console.error(
-        "❌ Chat history con formato inválido:",
-        normalizedChatHistory
-      );
+      logger.error("CONV", "Formato de historial de chat inválido");
       return res.status(400).json({
         success: false,
         error: "Formato de chat_history inválido",
@@ -86,11 +91,11 @@ router.post("/", requireLogin, async (req, res) => {
       ]
     );
 
-    console.log(`✅ Conversación creada: ID ${result.rows[0].id}`);
+    logger.success("CONV", `Conversación creada: ID ${result.rows[0].id}`);
 
     res.json({ success: true, conversacion: result.rows[0] });
   } catch (err) {
-    console.error("❌ Error al guardar conversación:", err);
+    logger.error("CONV", "Error guardando conversación:", err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -100,7 +105,7 @@ router.put("/:id", requireLogin, async (req, res) => {
   const { chat_history, mapas_mentales_ids, titulo } = req.body;
 
   try {
-    // ✅ Normalizar mensajes antes de actualizar
+    // Normalizar mensajes antes de actualizar
     const normalizedChatHistory = normalizeMessages(chat_history || []);
 
     // Validar que la estructura sea correcta
@@ -138,11 +143,11 @@ router.put("/:id", requireLogin, async (req, res) => {
       });
     }
 
-    console.log(`✅ Conversación actualizada: ID ${req.params.id}`);
+    logger.success("CONV", `Conversación actualizada: ID ${req.params.id}`);
 
     res.json({ success: true, conversacion: result.rows[0] });
   } catch (err) {
-    console.error("❌ Error al actualizar conversación:", err);
+    logger.error("CONV", "Error actualizando conversación:", err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -153,9 +158,7 @@ router.delete("/:id", requireLogin, async (req, res) => {
     const conversacionId = req.params.id;
     const usuarioId = req.session.user.id;
 
-    console.log(
-      `🗑️ Intentando eliminar conversación ${conversacionId} del usuario ${usuarioId}`
-    );
+    logger.info("CONV", `Eliminando conversación ${conversacionId} del usuario ${usuarioId}`);
 
     // Verificar que la conversación existe y pertenece al usuario
     const checkResult = await queryWithRetry(
@@ -176,7 +179,7 @@ router.delete("/:id", requireLogin, async (req, res) => {
       [conversacionId, usuarioId]
     );
 
-    console.log(`✅ Conversación ${conversacionId} eliminada correctamente`);
+    logger.success("CONV", `Conversación ${conversacionId} eliminada correctamente`);
 
     res.json({
       success: true,
@@ -184,7 +187,7 @@ router.delete("/:id", requireLogin, async (req, res) => {
       conversacionId,
     });
   } catch (err) {
-    console.error("❌ Error al eliminar conversación:", err);
+    logger.error("CONV", "Error eliminando conversación:", err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
