@@ -34,7 +34,7 @@ interface SidebarProps {
 }
 
 // Componente interno que contiene el contenido completo del sidebar
-const SidebarContent: React.FC<Omit<SidebarProps, "isOpen" | "onToggle">> = ({
+const SidebarContent: React.FC<Omit<SidebarProps, "isOpen" | "onToggle"> & { onClose?: () => void }> = ({
   isBotOnline,
   onToggleBotStatus,
   onNewConversation,
@@ -45,6 +45,7 @@ const SidebarContent: React.FC<Omit<SidebarProps, "isOpen" | "onToggle">> = ({
   onSelectConversation,
   onRenameConversation,
   onDeleteConversation,
+  onClose,
 }) => {
   return (
     <div className="flex flex-col h-full">
@@ -63,7 +64,7 @@ const SidebarContent: React.FC<Omit<SidebarProps, "isOpen" | "onToggle">> = ({
         <Button
           variant="default"
           className="w-full justify-start bg-primary text-primary-foreground hover:bg-primary/90"
-          onClick={onNewConversation}
+          onClick={() => { onNewConversation(); onClose?.(); }}
         >
           <Plus className="h-4 w-4 shrink-0 mr-2" />
           <span className="truncate">Nueva Conversación</span>
@@ -72,7 +73,7 @@ const SidebarContent: React.FC<Omit<SidebarProps, "isOpen" | "onToggle">> = ({
         <Button
           variant="ghost"
           className="w-full justify-start text-foreground hover:bg-muted hover:text-foreground"
-          onClick={onOpenDocuments}
+          onClick={() => { onOpenDocuments(); onClose?.(); }}
         >
           <FileText className="h-4 w-4 shrink-0 mr-2" />
           <span className="truncate">Documentos</span>
@@ -83,7 +84,7 @@ const SidebarContent: React.FC<Omit<SidebarProps, "isOpen" | "onToggle">> = ({
       <div className="flex-1 overflow-y-auto p-2">
         <div className="space-y-1">
           <div className="px-2 py-1.5">
-            <h3 className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wider">
+            <h3 className="text-sm font-medium text-muted-foreground/70 uppercase tracking-wider">
               Conversaciones
             </h3>
           </div>
@@ -93,14 +94,14 @@ const SidebarContent: React.FC<Omit<SidebarProps, "isOpen" | "onToggle">> = ({
                 key={conv.id}
                 conversation={conv}
                 isActive={activeConversationId === conv.id}
-                onSelect={onSelectConversation}
+                onSelect={() => { onSelectConversation?.(conv.id); onClose?.(); }}
                 onRename={onRenameConversation}
                 onDelete={onDeleteConversation}
               />
             ))
           ) : (
             <div className="px-2 py-4 text-center">
-              <p className="text-xs text-muted-foreground/50">
+              <p className="text-sm text-muted-foreground/50">
                 No hay conversaciones
               </p>
             </div>
@@ -146,7 +147,7 @@ const SidebarContent: React.FC<Omit<SidebarProps, "isOpen" | "onToggle">> = ({
           <Button
             variant="ghost"
             className="w-full justify-start text-destructive hover:bg-destructive/10"
-            onClick={onLogout}
+            onClick={() => { onLogout(); onClose?.(); }}
           >
             <LogOut className="mr-2 h-4 w-4 shrink-0" />
             <span className="truncate">Cerrar Sesión</span>
@@ -173,6 +174,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const handleClose = () => setMobileOpen(false);
+
   const contentProps = {
     isBotOnline,
     onToggleBotStatus,
@@ -184,6 +187,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     onSelectConversation,
     onRenameConversation,
     onDeleteConversation,
+    onClose: handleClose,
   };
 
   return (
@@ -316,7 +320,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {isOpen && (
             <div className="space-y-1">
               <div className="px-2 py-1.5">
-                <h3 className="text-xs font-medium text-muted-foreground/80 uppercase tracking-wider">
+                <h3 className="text-sm font-medium text-muted-foreground/80 uppercase tracking-wider">
                   Conversaciones
                 </h3>
               </div>
@@ -333,7 +337,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 ))
               ) : (
                 <div className="px-2 py-4 text-center">
-                  <p className="text-xs text-muted-foreground/50">
+                  <p className="text-sm text-muted-foreground/50">
                     No hay conversaciones
                   </p>
                 </div>
@@ -368,7 +372,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     }`}
                     aria-label={isBotOnline ? "Bot en línea" : "Bot desconectado"}
                   />
-                  <span className="text-xs font-medium text-foreground truncate">
+                  <span className="text-sm font-medium text-foreground truncate">
                     {isBotOnline ? "En línea" : "Desconectado"}
                     {onToggleBotStatus && " (click)"}
                   </span>

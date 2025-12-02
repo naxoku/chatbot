@@ -1,0 +1,22 @@
+# Dependencies
+node_modules
+
+# Development files
+.git
+.gitignore
+*.md
+.vscode
+.idea
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db

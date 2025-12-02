@@ -19,8 +19,9 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
             onClick={onOpenArtifacts}
             className="absolute right-0 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors z-10"
             title="Ver artefactos"
+            aria-label="Ver artefactos"
           >
-            <FileText className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <FileText className="w-5 h-5 text-gray-600 dark:text-gray-400" aria-hidden="true" />
           </button>
         )}
 

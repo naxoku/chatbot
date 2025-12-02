@@ -86,8 +86,8 @@ const FeedbackButtons: React.FC<FeedbackButtonsProps> = ({
 const FeedbackSubmittedIndicator: React.FC<{ isHelpful?: boolean }> = ({
   isHelpful,
 }) => (
-  <span className="text-xs text-muted-foreground">
-    <Check className="w-3 h-3 inline mr-1" />
+  <span className="text-sm text-muted-foreground">
+    <Check className="w-3 h-3 inline mr-1" aria-hidden="true" />
     {isHelpful ? "Marcado como útil" : "Feedback enviado"}
   </span>
 );
@@ -97,18 +97,8 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
   onFeedback,
   isUser,
 }) => {
-  // Usar hooks personalizados para lógica de estado
-  const { copiedMessageId, copyToClipboard } = useCopyToClipboard();
-  const { getFeedbackState, handleFeedback } = useMessageFeedback(onFeedback);
-
-  const feedbackState = getFeedbackState(message.id);
-  const isContext = message.isContext;
-  const isCopied = copiedMessageId === message.id;
-
-  // No mostrar acciones para mensajes de contexto
-  if (isContext) {
-    return null;
-  }
+  const { isCopied, copyToClipboard } = useCopyToClipboard();
+  const { feedbackState, handleFeedback } = useMessageFeedback(onFeedback);
 
   return (
     <div className="flex items-center gap-1">

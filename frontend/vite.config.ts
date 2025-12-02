@@ -250,12 +250,28 @@ export default defineConfig({
     open: true,
     proxy: {
       "/api": {
-        target: "http://localhost:3000",
+        target: `http://localhost:${process.env.VITE_BACKEND_PORT || 3000}`,
         changeOrigin: true,
         secure: false,
       },
     },
   },
+
+  // Hay que asegurarse de que dependiendo del entorno la ruta de la api sea la correcta (que en producción cuando sea la ruta de asistentevirtual.uct.cl) y si es en desarrollo localhost:3000 o el puerto que se defina. Esto para todo el proyecto.
+
+  // server: {
+  //   port: 5173,
+  //   open: true,
+  //   proxy: {
+  //     "/api": {
+  //       target: `http://localhost:${process.env.VITE_BACKEND_PORT || 3000}`,
+  //       changeOrigin: true,
+  //       secure: false,
+  //     },
+  //   },
+  // },
+
+  // Lo otro es revisar el tema de las versiones de node y dependencias para que todo esté alineado y en su última versión estable.
 
   // Optimizaciones para desarrollo
   esbuild: {

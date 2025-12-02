@@ -1,5 +1,5 @@
 import axios from "axios";
-import { API_BASE } from "@/config";
+import { API_BASE, API_MINIO_BASE } from "@/config";
 
 interface Document {
   id: string;
@@ -14,10 +14,35 @@ interface Document {
 export const documentService = {
   async fetchDocuments(): Promise<Document[]> {
     try {
-      const response = await axios.get(`${API_BASE}/api/documentos`);
-      return response.data;
+      // Fetch list of objects from MinIO through backend
+      const response = await axios.get(`${API_MINIO_BASE}/list`);
+      const files: string[] = response.data?.files || [];
+
+      // Map MinIO keys to frontend Document shape
+      const documents: Document[] = files.map((key) => {
+        const segments = key.split("/");
+        const filename = segments[segments.length - 1] || key;
+        const category = segments.length > 1 ? segments[0] : "Archivos";
+        const extMatch = filename.match(/\.([0-9a-z]+)$/i);
+
+        const type = extMatch ? extMatch[1].toLowerCase() : "file";
+        const id = `minio-${encodeURIComponent(key)}`;
+        const url = `${API_MINIO_BASE}/download?key=${encodeURIComponent(key)}`;
+
+        return {
+          id,
+          title: filename,
+          description: filename,
+          category,
+          type,
+          url,
+          keywords: [],
+        };
+      });
+
+      return documents;
     } catch (error) {
-      console.error("Error fetching documents:", error);
+      console.error("Error fetching documents from MinIO:", error);
       throw error;
     }
   },

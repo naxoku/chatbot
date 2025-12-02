@@ -12,6 +12,31 @@ const Home: React.FC = () => {
 
   React.useEffect(() => {
     document.title = "Inicio - Asistente virtual VRAE";
+    // Preload the background image when this route is mounted to avoid global preloads
+    let link = document.querySelector(
+      `link[rel=\"preload\"][as=\"image\"][href=\"${fondoVrae}\"]`
+    ) as HTMLLinkElement | null;
+
+    let created = false;
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "preload";
+      link.as = "image";
+      link.href = fondoVrae;
+      (link as any).fetchpriority = "high";
+      document.head.appendChild(link);
+      created = true;
+    }
+
+    return () => {
+      if (created && link && link.parentElement === document.head) {
+        try {
+          document.head.removeChild(link);
+        } catch (err) {
+          // ignore
+        }
+      }
+    };
   }, []);
 
   const handleLoginClick = () => {
@@ -120,7 +145,7 @@ const Home: React.FC = () => {
           </div>
           {/* Nombres completos */}
           <div className="text-center">
-            <h4 className="text-xs sm:text-sm md:text-base text-white/95 leading-relaxed px-2">
+            <h4 className="text-sm sm:text-base md:text-lg text-white/95 leading-relaxed px-2">
               <span className="block lg:inline">
                 Dirección de Informática - Dirección de Desarrollo de Personas -
                 Dirección de Finanzas - Dirección de Gestión y Desarrollo de
@@ -138,7 +163,7 @@ const Home: React.FC = () => {
             <p className="text-sm sm:text-base md:text-lg font-bold text-[#3E8BD6]">
               Asistente virtual VRAE
             </p>
-            <p className="text-xs sm:text-sm md:text-base text-[#3E8BD6]/80">
+            <p className="text-sm sm:text-base md:text-lg text-[#3E8BD6]/80">
               {currentYear} Asistente virtual UCT. Todos los derechos
               reservados.
             </p>

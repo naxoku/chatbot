@@ -5,7 +5,8 @@
  * del backend del chatbot: autenticación, conversaciones, documentos, etc.
  */
 
-require("dotenv").config();
+const path = require('path');
+require("dotenv").config({ path: path.resolve(__dirname, '..', '.env') });
 const express = require("express");
 const session = require("express-session");
 const cors = require("cors");
@@ -17,6 +18,7 @@ const convRoutes = require("./routes/conversaciones");
 const docRoutes = require("./routes/documentos");
 const mapasRoutes = require("./routes/mapas_mentales");
 const statusRoutes = require("./routes/status");
+const minioRoutes = require("./routes/minio");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -71,6 +73,7 @@ app.use("/api/conversaciones", convRoutes); // Gestión de conversaciones
 app.use("/api/documentos", docRoutes);      // Gestión de documentos
 app.use("/api/mapas-mentales", mapasRoutes);// Mapas mentales
 app.use("/api", statusRoutes);              // Estado del sistema
+app.use("/api/minio", minioRoutes);         // Almacenamiento MinIO (integrado)
 
 // Iniciar servidor
 app.listen(PORT, () => {

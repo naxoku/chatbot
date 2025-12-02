@@ -6,30 +6,30 @@ export const getDocumentIcon = (url: string): React.ReactNode => {
 
   switch (extension) {
     case "pdf":
-      return <FileText className="h-5 w-5 text-red-600" />;
+      return <FileText className="h-5 w-5 text-red-600" aria-hidden="true" />;
     case "doc":
     case "docx":
-      return <FileText className="h-5 w-5 text-blue-600" />;
+      return <FileText className="h-5 w-5 text-blue-600" aria-hidden="true" />;
     case "xls":
     case "xlsx":
-      return <FileText className="h-5 w-5 text-green-600" />;
+      return <FileText className="h-5 w-5 text-green-600" aria-hidden="true" />;
     case "ppt":
     case "pptx":
-      return <FileText className="h-5 w-5 text-orange-600" />;
+      return <FileText className="h-5 w-5 text-orange-600" aria-hidden="true" />;
     case "jpg":
     case "jpeg":
     case "png":
     case "gif":
-      return <Image className="h-5 w-5 text-purple-600" />;
+      return <Image className="h-5 w-5 text-purple-600" aria-hidden="true" />;
     case "mp4":
     case "avi":
     case "mov":
-      return <Video className="h-5 w-5 text-pink-600" />;
+      return <Video className="h-5 w-5 text-pink-600" aria-hidden="true" />;
     case "mp3":
     case "wav":
-      return <Music className="h-5 w-5 text-indigo-600" />;
+      return <Music className="h-5 w-5 text-indigo-600" aria-hidden="true" />;
     default:
-      return <File className="h-5 w-5 text-gray-600" />;
+      return <File className="h-5 w-5 text-gray-600" aria-hidden="true" />;
   }
 };
 

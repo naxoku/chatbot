@@ -1,5 +1,6 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { Reply, Sparkles } from "lucide-react";
+import { createPortal } from "react-dom";
 import { type QuickAction } from "../config/quickActions";
 import type { Message } from "../../services/backendService";
 
@@ -22,12 +23,17 @@ export const MessageQuickActions: React.FC<MessageQuickActionsProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showMenuAbove, setShowMenuAbove] = useState(false);
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const clickedInsideMenu = menuRef.current?.contains(target);
+      const clickedInsideContainer = containerRef.current?.contains(target);
+      if (!clickedInsideMenu && !clickedInsideContainer) {
         setIsOpen(false);
       }
     };
@@ -41,18 +47,91 @@ export const MessageQuickActions: React.FC<MessageQuickActionsProps> = ({
     };
   }, [isOpen]);
 
-  // Detectar posición y ajustar menú
-  useEffect(() => {
-    if (isOpen && buttonRef.current) {
-      const buttonRect = buttonRef.current.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-      const spaceBelow = viewportHeight - buttonRect.bottom;
-      const viewportWidth = window.innerWidth;
+  // Recalculate position and placement when the menu opens and on resize/scroll
+  useLayoutEffect(() => {
+    let rafId: number | null = null;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsOpen(false);
+    };
 
-      // Si hay poco espacio o pantalla muy pequeña, mostrar arriba
-      // También mostrar arriba en pantallas muy estrechas
-      setShowMenuAbove(spaceBelow < 200 || viewportWidth < 640);
+    const calculatePosition = () => {
+      if (!isOpen || !buttonRef.current || !menuRef.current) return;
+      const buttonRect = buttonRef.current.getBoundingClientRect();
+      const menuRect = menuRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+      const margin = 8; // gap between button and menu
+
+      const spaceAbove = buttonRect.top;
+      const spaceBelow = viewportHeight - buttonRect.bottom;
+
+      // Prefer below, if there's enough space; otherwise show above
+      let shouldShowAbove = spaceBelow < menuRect.height + margin && spaceAbove >= menuRect.height + margin;
+
+      // Additional UX rule: avoid overlapping the chat input area when opening downwards
+      // and avoid overlaying the header when opening upwards. If the menu placed below
+      // would intersect the chat input, prefer opening above. Conversely, if opening
+      // above would intersect the top header, prefer opening below.
+      try {
+        const chatInput = document.querySelector('textarea[aria-label="Campo de mensaje"]');
+        const chatHeader = document.querySelector('#main-content .h-14');
+        if (chatInput) {
+          const chatInputRect = chatInput.getBoundingClientRect();
+          const belowTop = buttonRect.bottom + margin;
+          const belowBottom = belowTop + menuRect.height;
+          // If opening below would overlap chatInput, prefer above if possible
+          if (belowBottom > chatInputRect.top - margin && spaceAbove >= menuRect.height + margin) {
+            shouldShowAbove = true;
+          }
+        }
+
+        if (chatHeader && shouldShowAbove) {
+          const headerRect = chatHeader.getBoundingClientRect();
+          const aboveBottom = buttonRect.top - margin;
+          const aboveTop = aboveBottom - menuRect.height;
+          // If opening above would cover header, then fallback to below
+          if (aboveTop < headerRect.bottom + margin && spaceBelow >= menuRect.height + margin) {
+            shouldShowAbove = false;
+          }
+        }
+      } catch (err) {
+        // On some browsers or environments, querySelector or getBoundingClientRect may fail — ignore and use default behavior
+      }
+
+      setShowMenuAbove(shouldShowAbove);
+
+      // Calculate left to center the menu relative to button, but clamp to viewport
+      const desiredLeft = buttonRect.left + buttonRect.width / 2 - menuRect.width / 2;
+      const minLeft = margin;
+      const maxLeft = viewportWidth - menuRect.width - margin;
+      const left = Math.max(minLeft, Math.min(desiredLeft, maxLeft));
+
+      // Calculate top based on above/below
+      const top = shouldShowAbove
+        ? buttonRect.top - menuRect.height - margin
+        : buttonRect.bottom + margin;
+
+      setMenuStyle({ position: "fixed", top: `${Math.max(margin, top)}px`, left: `${left}px`, zIndex: 9999 });
+
+      // Focus the first interactive element for accessibility
+      const firstBtn = menuRef.current?.querySelector<HTMLButtonElement>("button");
+      firstBtn?.focus();
+    };
+
+    if (isOpen) {
+      // Wait next frame so menuRef has actual size
+      rafId = requestAnimationFrame(calculatePosition);
+      window.addEventListener("resize", calculatePosition);
+      window.addEventListener("scroll", calculatePosition, true);
+      window.addEventListener("keydown", handleKeyDown);
     }
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      window.removeEventListener("resize", calculatePosition);
+      window.removeEventListener("scroll", calculatePosition, true);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, [isOpen]);
 
   const handleActionClick = (action: QuickAction) => {
@@ -74,7 +153,7 @@ export const MessageQuickActions: React.FC<MessageQuickActionsProps> = ({
   }
 
   return (
-    <div className="relative" ref={menuRef}>
+    <div className="relative" ref={containerRef}>
       <button
         ref={buttonRef}
         onClick={(e) => {
@@ -89,21 +168,24 @@ export const MessageQuickActions: React.FC<MessageQuickActionsProps> = ({
         <Sparkles className="w-3.5 h-3.5" />
       </button>
 
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setIsOpen(false)}
-          />
+          {isOpen && (
+            <>
+              {/* Backdrop */}
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setIsOpen(false)}
+              />
 
-          {/* Menu */}
-          <div
-            className={`absolute ${
-              showMenuAbove ? "bottom-full mb-2" : "top-full mt-2"
-            } left-1/2 transform -translate-x-1/2 z-50 w-48 sm:w-56 md:w-64 rounded-lg shadow-lg border border-border bg-popover text-popover-foreground animate-in fade-in zoom-in-95 duration-200`}
-            onClick={(e) => e.stopPropagation()}
-          >
+              {/* Menu rendered into body to avoid clipping in scrollable containers */}
+              {createPortal(
+                <div
+                  ref={menuRef}
+                  role="menu"
+                  aria-hidden={!isOpen}
+                  style={menuStyle ?? { visibility: "hidden" }}
+                  className={`rounded-lg shadow-lg border border-border bg-popover text-popover-foreground animate-in fade-in zoom-in-95 duration-200 w-48 sm:w-56 md:w-64`}
+                  onClick={(e) => e.stopPropagation()}
+                >
             <div className="py-1">
               {/* Acción de responder */}
               <button
@@ -136,7 +218,9 @@ export const MessageQuickActions: React.FC<MessageQuickActionsProps> = ({
                 </button>
               ))}
             </div>
-          </div>
+            </div>,
+            document.body
+          )}
         </>
       )}
     </div>

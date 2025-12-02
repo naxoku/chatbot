@@ -70,6 +70,21 @@ export const BotMessage: React.FC<BotMessageProps> = ({
   onQuoteMessage,
   onViewMindMap,
 }) => {
+  // Si el mensaje no tiene contenido, mostrar mensaje de procesamiento
+  if (!message.content || message.content.trim() === "") {
+    return (
+      <div role="log" className="flex justify-center px-2">
+        <div className="w-full max-w-4xl">
+          <div className="flex gap-3 justify-start">
+            <div className="w-full md:max-w-[70%]">
+              <div className="text-sm text-muted-foreground">Procesando mensaje...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Detectar si es un mensaje de generación de mapa mental
   const isGeneratingMindMap =
     message.content === "Generando mapa mental..." && message.artifact;
@@ -125,7 +140,7 @@ export const BotMessage: React.FC<BotMessageProps> = ({
                   background: linear-gradient(
                     90deg,
                     transparent 0%,
-                    oklch(0.78 0.14 85 / 0.3) 50%,
+                    oklch(0.78 0.14 254 / 0.3) 50%,
                     transparent 100%
                   );
                   animation: gentle-wave 2.5s ease-in-out infinite;
@@ -136,7 +151,7 @@ export const BotMessage: React.FC<BotMessageProps> = ({
                   background: linear-gradient(
                     90deg,
                     transparent 0%,
-                    oklch(0.95 0.03 85 / 0.4) 50%,
+                    oklch(0.65 0.15 254 / 0.4) 50%,
                     transparent 100%
                   );
                 }
@@ -166,12 +181,12 @@ export const BotMessage: React.FC<BotMessageProps> = ({
                 }
               `}</style>
 
-              <div className="p-4 rounded-xl bg-sky-50 dark:bg-amber-950/20 border border-sky-200 dark:border-amber-800/50 mindmap-generating">
+              <div className="p-4 rounded-xl bg-sky-50 dark:bg-blue-950/20 border border-sky-200 dark:border-blue-800/50 mindmap-generating">
                 <div className="flex items-center justify-center space-x-3 mindmap-content">
-                  <div className="p-2 bg-sky-100 dark:bg-amber-900/40 rounded-lg">
-                    <Brain className="w-5 h-5 text-sky-600 dark:text-amber-400" />
+                  <div className="p-2 bg-sky-100 dark:bg-blue-900/40 rounded-lg">
+                    <Brain className="w-5 h-5 text-sky-600 dark:text-blue-400" />
                   </div>
-                  <span className="font-medium text-base text-sky-800 dark:text-amber-200 mindmap-text">
+                  <span className="font-medium text-base text-sky-800 dark:text-blue-200 mindmap-text">
                     Generando mapa mental...
                   </span>
                 </div>
@@ -208,17 +223,17 @@ export const BotMessage: React.FC<BotMessageProps> = ({
 
               <div
                 onClick={handleViewMindMap}
-                className="p-4 rounded-xl bg-gradient-to-br from-sky-50 to-blue-50 dark:from-amber-950/20 dark:to-yellow-950/20 border border-sky-200 dark:border-amber-800/50 cursor-pointer hover:border-sky-300 dark:hover:border-amber-700/70 hover:shadow-md transition-all duration-200 mindmap-complete group"
+                className="p-4 rounded-xl bg-gradient-to-br from-sky-50 to-blue-50 dark:from-blue-950/20 dark:to-indigo-950/20 border border-sky-200 dark:border-blue-800/50 cursor-pointer hover:border-sky-300 dark:hover:border-blue-700/70 hover:shadow-md transition-all duration-200 mindmap-complete group"
               >
                 <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-sky-100 dark:bg-amber-900/40 rounded-lg shrink-0">
-                    <Brain className="w-5 h-5 text-sky-600 dark:text-amber-400" />
+                  <div className="p-2 bg-sky-100 dark:bg-blue-900/40 rounded-lg shrink-0">
+                    <Brain className="w-5 h-5 text-sky-600 dark:text-blue-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-base text-sky-800 dark:text-amber-200 truncate">
+                    <h3 className="font-semibold text-base text-sky-800 dark:text-blue-200 truncate">
                       Mapa mental
                     </h3>
-                    <p className="text-sm text-sky-600 dark:text-amber-400 truncate">
+                    <p className="text-sm text-sky-600 dark:text-blue-400 truncate">
                       {contextText}
                     </p>
                   </div>
@@ -227,7 +242,7 @@ export const BotMessage: React.FC<BotMessageProps> = ({
                       e.stopPropagation();
                       handleViewMindMap();
                     }}
-                    className="px-4 py-1.5 bg-sky-600 hover:bg-sky-700 dark:bg-amber-600 dark:hover:bg-amber-700 text-white text-sm font-medium rounded-lg shrink-0 transition-colors duration-200"
+                    className="px-4 py-1.5 bg-sky-600 hover:bg-sky-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white text-sm font-medium rounded-lg shrink-0 transition-colors duration-200"
                   >
                     Ver
                   </button>
@@ -265,6 +280,7 @@ export const BotMessage: React.FC<BotMessageProps> = ({
                 artifact={message.artifact}
                 artifactData={message.artifactData}
                 onViewMindMap={onViewMindMap}
+                isUser={false}
               />
               {/* Acciones horizontales debajo del mensaje */}
               <div className="flex items-center justify-between gap-2 mt-2">

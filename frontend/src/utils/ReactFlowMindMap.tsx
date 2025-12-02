@@ -433,13 +433,13 @@ const CustomNode = React.memo<{ data: FlowNodeData; selected?: boolean }>(
 
           <div className="flex-1 min-w-0">
             <h3
-              className={`font-semibold text-xs sm:text-sm leading-tight mb-1 ${colors.text}`}
+              className={`font-semibold text-sm sm:text-base leading-tight mb-1 ${colors.text}`}
             >
               {data.title}
             </h3>
             {data.subtitle && (
               <p
-                className={`text-xs leading-relaxed ${colors.text} opacity-80`}
+                className={`text-sm sm:text-base leading-relaxed ${colors.text} opacity-80`}
               >
                 {data.subtitle}
               </p>

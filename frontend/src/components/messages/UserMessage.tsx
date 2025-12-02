@@ -28,7 +28,7 @@ export const UserMessage: React.FC<UserMessageProps> = ({
           <div className="w-full md:max-w-[70%]">
             {/* Mensaje citado */}
             {message.quotedMessageId && (
-              <div className="mb-2 px-3 py-2 rounded-lg border-l-2 text-xs bg-blue-50 border-blue-400 text-blue-700 dark:bg-blue-900/20 dark:border-blue-500 dark:text-blue-300">
+              <div className="mb-2 px-3 py-2 rounded-lg border-l-2 text-sm bg-blue-50 border-blue-400 text-blue-700 dark:bg-blue-900/20 dark:border-blue-500 dark:text-blue-300">
                 <div className="flex items-center gap-1.5 mb-1 font-medium">
                   <i className="fas fa-reply text-xs"></i>
                   <span>
@@ -43,7 +43,7 @@ export const UserMessage: React.FC<UserMessageProps> = ({
               </div>
             )}
 
-            <div className="p-3 rounded-tl-lg rounded-tr-lg rounded-bl-md bg-primary text-primary-foreground">
+            <div className="p-3 rounded-tl-lg rounded-tr-lg rounded-bl-md bg-primary text-primary-foreground user-message">
               {/* Parámetros del mensaje */}
               <MessageParameters parameters={undefined} isUser={true} />
 
@@ -56,11 +56,12 @@ export const UserMessage: React.FC<UserMessageProps> = ({
                 artifact={message.artifact}
                 artifactData={message.artifactData}
                 onViewMindMap={onViewMindMap}
+                isUser={true}
               />
               {/* Acciones horizontales debajo del mensaje */}
               <div className="flex items-center justify-between gap-2 mt-2">
                 {/* Timestamp a la izquierda */}
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   {formatMessageTimestamp(message.timestamp)}
                 </p>
 

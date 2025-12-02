@@ -126,7 +126,7 @@ export const DocumentsModal: React.FC<DocumentsModalProps> = ({
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-border gap-2">
           <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-accent rounded-lg sm:rounded-xl flex items-center justify-center shrink-0">
-              <FolderOpen className="text-accent-foreground h-4 w-4 sm:h-5 sm:w-5" />
+              <FolderOpen className="text-accent-foreground h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
             </div>
             <div className="min-w-0 flex-1">
               <h2 className="text-lg sm:text-xl font-semibold text-card-foreground truncate">
@@ -145,6 +145,7 @@ export const DocumentsModal: React.FC<DocumentsModalProps> = ({
                   size="sm"
                   onClick={clearAllSelections}
                   className="rounded-lg px-2 sm:px-3"
+                  aria-label="Limpiar selección"
                 >
                   <X className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
                   <span className="hidden sm:inline">Limpiar</span>
@@ -154,6 +155,7 @@ export const DocumentsModal: React.FC<DocumentsModalProps> = ({
                   size="sm"
                   onClick={selectAllDocuments}
                   className="rounded-lg px-2 sm:px-3"
+                  aria-label="Seleccionar todos"
                 >
                   <CheckSquare className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
                   <span className="hidden sm:inline">Todo</span>
@@ -165,6 +167,7 @@ export const DocumentsModal: React.FC<DocumentsModalProps> = ({
               size="icon"
               onClick={onClose}
               className="rounded-lg shrink-0"
+              aria-label="Cerrar modal"
             >
               <X className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
@@ -175,7 +178,7 @@ export const DocumentsModal: React.FC<DocumentsModalProps> = ({
         <div className="p-4 sm:p-6 border-b border-border space-y-3 sm:space-y-4">
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
             <Input
               type="text"
               placeholder="Buscar documentos..."
@@ -206,7 +209,7 @@ export const DocumentsModal: React.FC<DocumentsModalProps> = ({
           {error ? (
             <div className="text-center py-8 sm:py-12">
               <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 rounded-xl bg-muted flex items-center justify-center">
-                <AlertCircle className="text-destructive h-6 w-6 sm:h-8 sm:w-8" />
+                <AlertCircle className="text-destructive h-6 w-6 sm:h-8 sm:w-8" aria-hidden="true" />
               </div>
               <p className="text-sm text-muted-foreground mb-4">
                 Error al cargar documentos
@@ -218,7 +221,7 @@ export const DocumentsModal: React.FC<DocumentsModalProps> = ({
           ) : loading ? (
             <div className="text-center py-8 sm:py-12">
               <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 rounded-xl bg-muted flex items-center justify-center">
-                <Loader2 className="text-muted-foreground h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
+                <Loader2 className="text-muted-foreground h-5 w-5 sm:h-6 sm:w-6 animate-spin" aria-hidden="true" />
               </div>
               <p className="text-sm text-muted-foreground">
                 Cargando documentos...
@@ -227,12 +230,12 @@ export const DocumentsModal: React.FC<DocumentsModalProps> = ({
           ) : filteredDocuments.length === 0 ? (
             <div className="text-center py-8 sm:py-12">
               <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 rounded-xl bg-muted flex items-center justify-center">
-                <Search className="text-muted-foreground h-6 w-6 sm:h-8 sm:w-8" />
+                <Search className="text-muted-foreground h-6 w-6 sm:h-8 sm:w-8" aria-hidden="true" />
               </div>
               <p className="text-sm text-muted-foreground mb-1">
                 No se encontraron documentos
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Intenta con otros términos de búsqueda
               </p>
             </div>
@@ -262,24 +265,24 @@ export const DocumentsModal: React.FC<DocumentsModalProps> = ({
                             doc.type
                           )}`}
                         >
-                          {getDocumentIcon(doc.url)}
+                          {getDocumentIcon(doc.title)}
                         </div>
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-medium text-sm mb-1 line-clamp-2 text-card-foreground">
                           {doc.title}
                         </h3>
-                        <p className="text-xs mb-2 line-clamp-2 text-muted-foreground">
+                        <p className="text-sm mb-2 line-clamp-2 text-muted-foreground">
                           {doc.description}
                         </p>
                         <div className="flex items-center justify-between">
-                          <span className="text-xs px-2 py-1 rounded-md bg-secondary text-secondary-foreground">
+                          <span className="text-sm px-2 py-1 rounded-md bg-secondary text-secondary-foreground">
                             {doc.category}
                           </span>
                           {selected ? (
-                            <CheckSquare className="h-4 w-4 text-primary shrink-0" />
+                            <CheckSquare className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
                           ) : (
-                            <Square className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <Square className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden="true" />
                           )}
                         </div>
                       </div>
@@ -315,7 +318,7 @@ export const DocumentsModal: React.FC<DocumentsModalProps> = ({
               >
                 {selectedDocuments.length > 0 ? (
                   <>
-                    <CheckSquare className="h-4 w-4 sm:mr-2" />
+                    <CheckSquare className="h-4 w-4 sm:mr-2" aria-hidden="true" />
                     <span className="hidden sm:inline">Usar Documentos</span>
                     <span className="sm:hidden">Usar ({selectedDocuments.length})</span>
                   </>

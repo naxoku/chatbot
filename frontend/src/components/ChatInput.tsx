@@ -153,7 +153,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       variant="secondary"
                       className="group cursor-default text-xs px-3 py-1.5 hover:bg-secondary/80 transition-colors"
                     >
-                      <FileText className="h-3.5 w-3.5 mr-1.5 text-secondary-foreground/70" />
+                      <FileText className="h-3.5 w-3.5 mr-1.5 text-secondary-foreground/70" aria-hidden="true" />
                       <span className="font-medium">{document.title}</span>
                       {onRemoveDocument && (
                         <Button

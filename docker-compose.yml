@@ -3,13 +3,20 @@ services:
     build: ./backend
     container_name: chatbot_backend
     ports:
-      - "3000:3000"
+      - "${PORT:-3000}:3000"
     env_file:
       - .env
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
     restart: always
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        - VITE_ENVIRONMENT=docker
+        - VITE_BACKEND_PORT=3000
     container_name: chatbot_frontend
     ports:
       - "8080:80"

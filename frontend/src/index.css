@@ -138,7 +138,7 @@
 
   /* Estados apagados - Celeste desaturado (L: 90%) */
   --muted: oklch(0.9 0.02 254); /* Celeste muy pálido */
-  --muted-foreground: oklch(0.45 0.08 254); /* Celeste medio */
+  --muted-foreground: oklch(0.2 0.08 254); /* Celeste muy oscuro para mejor contraste AA */
 
   /* Acentos - Celeste medio-claro (L: 70%) */
   --accent: oklch(0.7 0.12 254); /* Celeste suave */
@@ -196,7 +196,7 @@
 
   /* Estados apagados - Azul desaturado oscuro (L: 25%) */
   --muted: oklch(0.25 0.02 254); /* Azul oscuro apagado */
-  --muted-foreground: oklch(0.72 0.06 254); /* Azul medio mejorado para contraste AA (L: 72%) */
+  --muted-foreground: oklch(0.85 0.06 254); /* Azul claro para mejor contraste AA */
 
   /* Acentos - Azul intermedio (L: 45%) */
   --accent: oklch(0.45 0.1 254); /* Azul intermedio */
@@ -489,6 +489,107 @@
 
   .dark .message-content a:hover {
     filter: brightness(1.2);
+  }
+
+  /* User messages - force white text for contrast */
+  .user-message .message-content,
+  .user-message .message-content * {
+    color: var(--primary-foreground) !important;
+  }
+
+  .dark .user-message {
+    background-color: #4691E8 !important;
+  }
+
+  .dark .user-message .message-content,
+  .dark .user-message .message-content * {
+    color: white !important;
+  }
+
+  .user-message .prose-p {
+    color: var(--primary-foreground) !important;
+  }
+
+  .user-message .prose-headings {
+    color: var(--primary-foreground) !important;
+  }
+
+  .user-message .prose-strong {
+    color: var(--primary-foreground) !important;
+  }
+
+  .user-message .prose-code {
+    color: var(--primary-foreground) !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .user-message .prose-pre {
+    background-color: rgba(0, 0, 0, 0.2) !important;
+  }
+
+  .user-message .text-muted-foreground {
+    color: rgba(255, 255, 255, 0.8) !important;
+  }
+
+  .dark .user-message .text-muted-foreground {
+    color: white !important;
+  }
+
+  .user-message button {
+    color: rgba(255, 255, 255, 0.8) !important;
+  }
+
+  .dark .user-message button {
+    color: white !important;
+  }
+
+  .user-message button:hover {
+    color: var(--primary-foreground) !important;
+  }
+
+  .dark .user-message button:hover {
+    color: white !important;
+  }
+
+  .user-message .message-content a {
+    color: inherit !important;
+    text-decoration-color: inherit !important;
+  }
+
+  .user-message .message-content a:hover {
+    color: inherit !important;
+    text-decoration-color: var(--primary) !important;
+  }
+
+  /* User message artifacts - adjust colors for contrast */
+  .user-message-artifacts {
+    border-color: var(--primary-foreground) !important;
+  }
+
+  .user-message-artifacts p {
+    color: var(--primary-foreground) !important;
+  }
+
+  .user-message-artifacts .fas {
+    color: var(--primary-foreground) !important;
+  }
+
+  /* User mindmap artifact - adjust colors */
+  .user-mindmap-artifact {
+    border-color: var(--primary-foreground) !important;
+    background-color: transparent !important;
+  }
+
+  .user-mindmap-artifact p {
+    color: var(--primary-foreground) !important;
+  }
+
+  .user-mindmap-artifact h3 {
+    color: var(--primary-foreground) !important;
+  }
+
+  .user-mindmap-artifact .lucide {
+    color: var(--primary-foreground) !important;
   }
 
   /* Responsive para elementos de markdown */

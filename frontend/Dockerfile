@@ -5,6 +5,12 @@ WORKDIR /app
 # Instalar dependencias de compilación para paquetes nativos
 RUN apk add --no-cache build-base autoconf automake libtool zlib-dev libpng-dev nasm
 
+# Variables de entorno para Vite (disponibles en build time)
+ARG VITE_ENVIRONMENT=docker
+ARG VITE_BACKEND_PORT=3000
+ENV VITE_ENVIRONMENT=$VITE_ENVIRONMENT
+ENV VITE_BACKEND_PORT=$VITE_BACKEND_PORT
+
 COPY package*.json ./
 RUN npm install
 COPY . .

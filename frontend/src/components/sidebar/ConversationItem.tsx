@@ -127,7 +127,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
               <span className="text-sm font-medium truncate w-full text-foreground">
                 {conversation.title}
               </span>
-              <span className="text-xs text-foreground/60 truncate w-full">
+              <span className="text-sm text-foreground/60 truncate w-full">
                 {conversation.lastMessage}
               </span>
             </div>
