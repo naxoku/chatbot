@@ -1,77 +1,603 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
-/* Permite alternar entre modo oscuro y modo claro,
- si no está siempre estará activo el modo oscuro */
-@custom-variant dark (&:where(.dark, .dark *));
+/* ===== FUENTES PERSONALIZADAS ===== */
+@font-face {
+  font-family: "Vista Sans";
+  src: url("../fonts/VistaSanReg.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
+@font-face {
+  font-family: "Vista Sans";
+  src: url("../fonts/VistaSanRegIta.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Vista Sans";
+  src: url("../fonts/VistaSanLig.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Vista Sans";
+  src: url("../fonts/VistaSanLigIta.ttf") format("truetype");
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Vista Sans";
+  src: url("../fonts/VistaSanMed.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Vista Sans";
+  src: url("../fonts/VistaSanMedIta.ttf") format("truetype");
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Vista Sans";
+  src: url("../fonts/VistaSanBol.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Vista Sans";
+  src: url("../fonts/VistaSanBolIta.ttf") format("truetype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  /* Configuración de bordes redondeados */
+  --radius: 0.625rem;
+
+  /* ===== MODO CLARO ===== */
+  /* Paleta monocromática basada en Celeste #3E8BD6 */
+  /* Todas las variaciones se generan ajustando la luminosidad (L) del color base */
+
+  /* Colores de fondo - Máxima luminosidad */
+  --background: oklch(0.99 0.01 254); /* Celeste casi blanco (L: 99%) */
+  --foreground: oklch(
+    0.25 0.08 254
+  ); /* Celeste muy oscuro para texto (L: 25%) */
+
+  /* Tarjetas y contenedores - Pureza máxima */
+  --card: oklch(1 0 0); /* Blanco puro para contraste */
+  --card-foreground: oklch(0.25 0.08 254); /* Celeste muy oscuro */
+
+  /* Popovers y modales - Igual que tarjetas */
+  --popover: oklch(1 0 0); /* Blanco puro */
+  --popover-foreground: oklch(0.25 0.08 254); /* Celeste muy oscuro */
+
+  /* Color primario - Celeste base #3E8BD6 (L: 62%) */
+  --primary: oklch(0.62 0.15 254); /* Celeste vibrante original */
+  --primary-foreground: oklch(0.99 0.01 254); /* Celeste casi blanco */
+
+  /* Color secundario - Celeste más claro (L: 75%) */
+  --secondary: oklch(0.75 0.1 254); /* Celeste luminoso */
+  --secondary-foreground: oklch(0.2 0.08 254); /* Celeste oscuro */
+
+  /* Estados apagados - Celeste desaturado (L: 90%) */
+  --muted: oklch(0.9 0.02 254); /* Celeste muy pálido */
+  --muted-foreground: oklch(0.45 0.08 254); /* Celeste medio */
+
+  /* Acentos - Celeste medio-claro (L: 70%) */
+  --accent: oklch(0.7 0.12 254); /* Celeste suave */
+  --accent-foreground: oklch(0.2 0.08 254); /* Celeste oscuro */
+
+  /* Destructivo - Rojo (único color fuera de la paleta celeste) */
+  --destructive: oklch(0.55 0.22 25); /* Rojo para alertas */
+
+  /* Bordes y inputs - Celeste muy claro (L: 85%) */
+  --border: oklch(0.85 0.03 254); /* Celeste pálido */
+  --input: oklch(0.85 0.03 254); /* Igual que border */
+  --ring: oklch(0.62 0.15 254); /* Celeste primario para focus */
+
+  /* Gráficos - Gradiente de luminosidad del celeste */
+  --chart-1: oklch(0.62 0.15 254); /* Celeste base (L: 62%) */
+  --chart-2: oklch(0.55 0.15 254); /* Celeste oscuro (L: 55%) */
+  --chart-3: oklch(0.7 0.13 254); /* Celeste claro (L: 70%) */
+  --chart-4: oklch(0.48 0.14 254); /* Celeste muy oscuro (L: 48%) */
+  --chart-5: oklch(0.78 0.1 254); /* Celeste muy claro (L: 78%) */
+
+  /* Sidebar - Variaciones sutiles del celeste */
+  --sidebar: oklch(0.97 0.01 254); /* Celeste ultra claro (L: 97%) */
+  --sidebar-foreground: oklch(0.25 0.08 254); /* Celeste muy oscuro */
+  --sidebar-primary: oklch(0.62 0.15 254); /* Celeste base */
+  --sidebar-primary-foreground: oklch(0.99 0.01 254); /* Celeste casi blanco */
+  --sidebar-accent: oklch(0.9 0.02 254); /* Celeste pálido */
+  --sidebar-accent-foreground: oklch(0.25 0.08 254); /* Celeste muy oscuro */
+  --sidebar-border: oklch(0.85 0.03 254); /* Celeste claro */
+  --sidebar-ring: oklch(0.62 0.15 254); /* Celeste base */
+}
+
+.dark {
+  /* ===== MODO OSCURO ===== */
+  /* Paleta Gris Azulado Moderno - Coherente con modo claro */
+
+  /* Colores de fondo - Gris azulado muy oscuro */
+  --background: oklch(0.12 0.01 250); /* Gris azulado muy oscuro (L: 12%) */
+  --foreground: oklch(0.95 0.01 250); /* Blanco casi puro (L: 95%) */
+
+  /* Tarjetas - Elevación sutil sobre el fondo */
+  --card: oklch(0.18 0.02 250); /* Gris azulado oscuro (L: 18%) */
+  --card-foreground: oklch(0.95 0.01 250); /* Blanco casi puro */
+
+  /* Popovers - Igual que tarjetas */
+  --popover: oklch(0.18 0.02 250); /* Gris azulado oscuro */
+  --popover-foreground: oklch(0.95 0.01 250); /* Blanco casi puro */
+
+  /* Color primario - Azul claro */
+  --primary: oklch(0.65 0.10 250); /* Azul claro */
+  --primary-foreground: oklch(0.12 0.01 250); /* Gris azulado muy oscuro */
+
+  /* Color secundario - Azul medio */
+  --secondary: oklch(0.55 0.09 250); /* Azul medio */
+  --secondary-foreground: oklch(0.95 0.01 250); /* Blanco casi puro */
+
+  /* Estados apagados - Gris azulado oscuro desaturado */
+  --muted: oklch(0.22 0.02 250); /* Gris azulado oscuro apagado */
+  --muted-foreground: oklch(0.72 0.06 250); /* Gris azulado claro */
+
+  /* Acentos - Azul medio */
+  --accent: oklch(0.58 0.08 250); /* Azul medio-claro */
+  --accent-foreground: oklch(0.95 0.01 250); /* Blanco casi puro */
+
+  /* Destructivo - Rojo más brillante para modo oscuro */
+  --destructive: oklch(0.62 0.24 25); /* Rojo brillante */
+
+  /* Bordes y inputs - Gris azulado semi-transparente */
+  --border: oklch(0.28 0.02 250 / 40%); /* Gris azulado translúcido */
+  --input: oklch(0.28 0.02 250 / 50%); /* Gris azulado más opaco */
+  --ring: oklch(0.65 0.10 250); /* Azul claro para focus */
+
+  /* Gráficos - Gradiente de azul */
+  --chart-1: oklch(0.65 0.10 250); /* Azul claro (L: 65%) */
+  --chart-2: oklch(0.70 0.09 250); /* Azul claro brillante (L: 70%) */
+  --chart-3: oklch(0.58 0.08 250); /* Azul medio (L: 58%) */
+  --chart-4: oklch(0.75 0.08 250); /* Azul muy claro (L: 75%) */
+  --chart-5: oklch(0.52 0.09 250); /* Azul oscuro (L: 52%) */
+
+  /* Sidebar - Oscuro con separación sutil */
+  --sidebar: oklch(0.15 0.01 250); /* Gris azulado muy oscuro (L: 15%) */
+  --sidebar-foreground: oklch(0.95 0.01 250); /* Blanco casi puro */
+  --sidebar-primary: oklch(0.65 0.10 250); /* Azul claro */
+  --sidebar-primary-foreground: oklch(0.12 0.01 250); /* Gris azulado muy oscuro */
+  --sidebar-accent: oklch(0.22 0.02 250); /* Gris azulado oscuro apagado */
+  --sidebar-accent-foreground: oklch(0.95 0.01 250); /* Blanco casi puro */
+  --sidebar-border: oklch(0.28 0.02 250 / 40%); /* Gris azulado translúcido */
+  --sidebar-ring: oklch(0.65 0.10 250); /* Azul claro */
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Vista Sans", system-ui, -apple-system, BlinkMacSystemFont,
+      "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
+      "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+      "Noto Color Emoji";
+    /* Transiciones suaves para cambios de tema */
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 }
-.animate-fade-in {
-  animation: fade-in 0.4s ease-out forwards;
-}
 
-@keyframes bounce-slow {
-  0%,
-  100% {
-    transform: translateY(0);
+/* Mejoras adicionales para contraste y accesibilidad */
+@layer utilities {
+  /* Utilidad para texto con máximo contraste */
+  .text-high-contrast {
+    color: var(--foreground);
   }
-  50% {
-    transform: translateY(-8px);
+
+  /* Utilidad para fondos con buena visibilidad */
+  .bg-high-contrast {
+    background-color: var(--card);
   }
-}
-.animate-bounce-slow {
-  animation: bounce-slow 2s ease-in-out infinite;
-}
 
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
+  /* Utilidad para bordes visibles */
+  .border-visible {
+    border-color: var(--border);
+    border-width: 1px;
+  }
 
-/* Agregados estilos para ocultar scrollbar del textarea */
-/* Ocultar scrollbar en textarea del chat */
-textarea::-webkit-scrollbar {
-  display: none;
-}
+  /* ===== ESTILOS PERSONALIZADOS PARA MARKDOWN ===== */
 
-textarea {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
-}
+  /* Contenedor principal del contenido markdown */
+  .message-content {
+    color: var(--foreground);
+    line-height: 1.6;
+  }
 
-/* Estilos personalizados para scrollbars generales */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
+  /* Títulos */
+  .message-content h1,
+  .message-content h2,
+  .message-content h3,
+  .message-content h4,
+  .message-content h5,
+  .message-content h6 {
+    color: var(--foreground);
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+  }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+  .message-content h1 {
+    font-size: 1.5rem;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 0.5rem;
+  }
 
-::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.5);
-  border-radius: 3px;
-}
+  .message-content h2 {
+    font-size: 1.25rem;
+  }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(156, 163, 175, 0.7);
-}
+  .message-content h3 {
+    font-size: 1.125rem;
+  }
 
-.dark ::-webkit-scrollbar-thumb {
-  background: rgba(75, 85, 99, 0.5);
-}
+  .message-content h4,
+  .message-content h5,
+  .message-content h6 {
+    font-size: 1rem;
+  }
 
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(75, 85, 99, 0.7);
+  /* Párrafos */
+  .message-content p {
+    margin-bottom: 1rem;
+    color: var(--foreground);
+  }
+
+  /* Listas */
+  .message-content ul,
+  .message-content ol {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+  }
+
+  .message-content ul {
+    list-style-type: disc;
+  }
+
+  .message-content ol {
+    list-style-type: decimal;
+  }
+
+  .message-content li {
+    margin-bottom: 0.5rem;
+    color: var(--foreground);
+  }
+
+  .message-content li::marker {
+    color: var(--primary);
+  }
+
+  /* Listas anidadas */
+  .message-content ul ul,
+  .message-content ol ol,
+  .message-content ul ol,
+  .message-content ol ul {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Enlaces */
+  .message-content a {
+    color: var(--primary);
+    text-decoration: underline;
+    text-decoration-color: var(--primary);
+    text-underline-offset: 2px;
+    transition: all 0.2s ease;
+  }
+
+  .message-content a:hover {
+    color: var(--primary);
+    text-decoration-color: var(--primary-foreground);
+    filter: brightness(0.9);
+  }
+
+  /* Texto en negrita */
+  .message-content strong,
+  .message-content b {
+    font-weight: 600;
+    color: var(--foreground);
+  }
+
+  /* Texto en cursiva */
+  .message-content em,
+  .message-content i {
+    font-style: italic;
+    color: var(--foreground);
+  }
+
+  /* Código inline */
+  .message-content code {
+    background-color: var(--muted);
+    color: var(--primary);
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    font-family: "Courier New", monospace;
+    font-size: 0.875em;
+    font-weight: 500;
+    border: 1px solid var(--border);
+  }
+
+  /* Bloques de código */
+  .message-content pre {
+    background-color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+    font-family: "Courier New", monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .message-content pre code {
+    background: none;
+    padding: 0;
+    border: none;
+    color: var(--foreground);
+    font-weight: 400;
+  }
+
+  /* Citas (blockquote) */
+  .message-content blockquote {
+    border-left: 4px solid var(--primary);
+    padding-left: 1rem;
+    margin: 1rem 0;
+    background-color: var(--muted);
+    border-radius: 0.25rem;
+    padding: 0.75rem 1rem;
+    color: var(--muted-foreground);
+    font-style: italic;
+  }
+
+  /* Tablas */
+  .message-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    overflow: hidden;
+  }
+
+  .message-content th,
+  .message-content td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .message-content th {
+    background-color: var(--muted);
+    font-weight: 600;
+    color: var(--foreground);
+    border-bottom: 2px solid var(--border);
+  }
+
+  .message-content td {
+    color: var(--foreground);
+  }
+
+  .message-content tr:last-child td {
+    border-bottom: none;
+  }
+
+  .message-content tr:hover {
+    background-color: var(--muted);
+  }
+
+  /* Líneas horizontales */
+  .message-content hr {
+    border: none;
+    height: 1px;
+    background: var(--border);
+    margin: 2rem 0;
+    border-radius: 0.5rem;
+  }
+
+  /* Imágenes */
+  .message-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border);
+    margin: 1rem 0;
+  }
+
+  /* Elementos de tarea (checkboxes) */
+  .message-content input[type="checkbox"] {
+    margin-right: 0.5rem;
+  }
+
+  /* Texto tachado */
+  .message-content del,
+  .message-content s {
+    text-decoration: line-through;
+    color: var(--muted-foreground);
+  }
+
+  /* Mejorar la legibilidad en modo oscuro */
+  .dark .message-content {
+    color: var(--foreground);
+  }
+
+  .dark .message-content a:hover {
+    filter: brightness(1.2);
+  }
+
+  /* ===== ESTILOS PARA MENSAJES DEL USUARIO ===== */
+  .user-message h1,
+  .user-message h2,
+  .user-message h3,
+  .user-message h4,
+  .user-message h5,
+  .user-message h6 {
+    color: white;
+  }
+
+  .user-message p {
+    color: white;
+  }
+
+  .user-message strong,
+  .user-message b {
+    color: white;
+  }
+
+  .user-message em,
+  .user-message i {
+    color: white;
+  }
+
+  .user-message li {
+    color: white;
+  }
+
+  .user-message li::marker {
+    color: white;
+  }
+
+  .user-message a {
+    color: white;
+    text-decoration-color: white;
+  }
+
+  .user-message a:hover {
+    filter: brightness(0.8);
+  }
+
+  .user-message del,
+  .user-message s {
+    color: white;
+  }
+
+  .user-message blockquote {
+    color: white;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-left-color: white;
+  }
+
+  .user-message code {
+    color: white;
+    background-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
+  .user-message pre {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .user-message pre code {
+    color: white;
+  }
+
+  .user-message table {
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .user-message th {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+    border-bottom-color: rgba(255, 255, 255, 0.3);
+  }
+
+  .user-message td {
+    color: white;
+    border-bottom-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .user-message tr:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+
+  /* Responsive para elementos de markdown */
+  @media (max-width: 640px) {
+    .message-content h1 {
+      font-size: 1.25rem;
+    }
+
+    .message-content h2 {
+      font-size: 1.125rem;
+    }
+
+    .message-content h3 {
+      font-size: 1rem;
+    }
+
+    .message-content table {
+      font-size: 0.875rem;
+    }
+
+    .message-content th,
+    .message-content td {
+      padding: 0.5rem;
+    }
+  }
 }

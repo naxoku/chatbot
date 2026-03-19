@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mapa Mental Interactivo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: linear-gradient(135deg, #ffffff 0%, #e8f4fc 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .header {
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+      }
+
+      h1 {
+        color: #3e8bd6;
+        margin-bottom: 8px;
+        font-size: 2em;
+      }
+
+      .subtitle {
+        color: #64748b;
+        font-size: 0.95em;
+      }
+
+      .chart-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        height: 700px;
+      }
+
+      #main {
+        width: 100%;
+        height: 100%;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .modal.active {
+        display: flex;
+      }
+
+      .modal-content {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        max-width: 700px;
+        width: 100%;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+
+      .modal-header {
+        background: linear-gradient(135deg, #3e8bd6 0%, #2a6ba8 100%);
+        color: white;
+        padding: 24px;
+        border-radius: 12px 12px 0 0;
+      }
+
+      .modal-header h2 {
+        font-size: 1.5em;
+        margin-bottom: 8px;
+      }
+
+      .modal-header p {
+        font-size: 0.9em;
+        opacity: 0.9;
+      }
+
+      .modal-body {
+        padding: 24px;
+      }
+
+      .info-box {
+        padding: 16px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        border-left: 4px solid;
+      }
+
+      .info-box.document {
+        background: #e8f4fc;
+        border-color: #3e8bd6;
+      }
+
+      .info-box.quote {
+        background: #fff9e6;
+        border-color: #fcc200;
+      }
+
+      .info-box.citation {
+        background: #e8f4fc;
+        border-color: #3e8bd6;
+      }
+
+      .info-box-title {
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .info-box-content {
+        color: #475569;
+        line-height: 1.6;
+      }
+
+      .info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+
+      .info-card {
+        background: #f8fafc;
+        padding: 16px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+      }
+
+      .info-card-title {
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 6px;
+        font-size: 0.9em;
+      }
+
+      .info-card-value {
+        color: #475569;
+      }
+
+      .modal-footer {
+        background: #f8fafc;
+        padding: 16px 24px;
+        border-radius: 0 0 12px 12px;
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .btn-close {
+        background: #fcc200;
+        color: #1a1a1a;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .btn-close:hover {
+        background: #e5ae00;
+      }
+
+      .citation-code {
+        background: white;
+        padding: 12px;
+        border-radius: 6px;
+        border: 1px solid #3e8bd6;
+        font-family: "Courier New", monospace;
+        font-size: 0.85em;
+        color: #3e8bd6;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>📊 Mapa Mental Interactivo</h1>
+        <p class="subtitle">
+          Pasa el cursor sobre los nodos para ver las citas y referencias del
+          documento. Haz click para ver los detalles completos.
+        </p>
+      </div>
+
+      <div class="chart-container">
+        <div id="main"></div>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal" id="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="modalTitle"></h2>
+          <p>Referencia completa del documento</p>
+        </div>
+
+        <div class="modal-body">
+          <div class="info-box document">
+            <div class="info-box-title">
+              <span>📄</span>
+              <span>Documento</span>
+            </div>
+            <div class="info-box-content" id="modalDocument"></div>
+          </div>
+
+          <div class="info-grid">
+            <div class="info-card">
+              <div class="info-card-title">📍 Sección</div>
+              <div class="info-card-value" id="modalSection"></div>
+            </div>
+            <div class="info-card">
+              <div class="info-card-title">📖 Página</div>
+              <div class="info-card-value" id="modalPage"></div>
+            </div>
+          </div>
+
+          <div class="info-box quote">
+            <div class="info-box-title">
+              <span>💬</span>
+              <span>Cita textual</span>
+            </div>
+            <div class="info-box-content" id="modalQuote"></div>
+          </div>
+
+          <div class="info-box citation">
+            <div class="info-box-title">
+              <span>✅</span>
+              <span>Formato de citación</span>
+            </div>
+            <div class="citation-code" id="modalCitation"></div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-close" onclick="closeModal()">Cerrar</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const mapData = {
+        name: "Plan de Conciliación",
+        reference: {
+          document: "PLAN-DE-CONCILIACION-3.pdf",
+          section: "Introducción General",
+          page: "1-3",
+          quote:
+            "El Plan de Conciliación de la entidad tiene como propósito fundamental garantizar la compatibilidad entre la vida laboral, personal y familiar de toda la plantilla.",
+        },
+        children: [
+          {
+            name: "Objetivos",
+            reference: {
+              document: "PLAN-DE-CONCILIACION-3.pdf",
+              section: "Sección 1: Objetivos",
+              page: "4-5",
+              quote:
+                "Garantizar la compatibilidad entre la vida laboral, personal y familiar de la plantilla. Fomentar la igualdad de oportunidades y la prevención de la discriminación por razón de género.",
+            },
+            children: [
+              {
+                name: "Compatibilidad vida laboral-personal",
+                value: 100,
+                reference: {
+                  document: "PLAN-DE-CONCILIACION-3.pdf",
+                  section: "Sección 1.1",
+                  page: "4",
+                  quote:
+                    "Se establece como objetivo prioritario la garantía de compatibilidad entre las esferas laboral, personal y familiar.",
+                },
+              },
+              {
+                name: "Igualdad de oportunidades",
+                value: 100,
+                reference: {
+                  document: "PLAN-DE-CONCILIACION-3.pdf",
+                  section: "Sección 1.2",
+                  page: "5",
+                  quote:
+                    "Fomentar la igualdad de oportunidades entre todos los empleados, independientemente de su género o situación personal.",
+                },
+              },
+            ],
+          },
+          {
+            name: "Ámbitos y Destinatarios",
+            reference: {
+              document: "PLAN-DE-CONCILIACION-3.pdf",
+              section: "Sección 2: Ámbito de Aplicación",
+              page: "6-7",
+              quote:
+                "El Plan se aplica a toda la plantilla, independientemente de la modalidad contractual (fijo, temporal o interino), incluyendo dirección, RRHH y prevención de riesgos.",
+            },
+            children: [
+              {
+                name: "Toda la plantilla",
+                value: 150,
+                reference: {
+                  document: "PLAN-DE-CONCILIACION-3.pdf",
+                  section: "Sección 2.1",
+                  page: "6",
+                  quote:
+                    "Se incluye a personal fijo, temporal e interino sin distinción.",
+                },
+              },
+              {
+                name: "Dirección y unidades estratégicas",
+                value: 80,
+                reference: {
+                  document: "PLAN-DE-CONCILIACION-3.pdf",
+                  section: "Sección 2.2",
+                  page: "7",
+                  quote:
+                    "Incluye también a la dirección y a las unidades de recursos humanos y de prevención de riesgos laborales.",
+                },
+              },
+            ],
+          },
+          {
+            name: "Principios Rectores",
+            reference: {
+              document: "PLAN-DE-CONCILIACION-3.pdf",
+              section: "Sección 3: Principios",
+              page: "8-9",
+              quote:
+                "Transparencia, voluntariedad, equidad, flexibilidad y adaptación son los pilares del presente Plan.",
+            },
+            children: [
+              {
+                name: "Transparencia",
+                value: 90,
+                reference: {
+                  document: "PLAN-DE-CONCILIACION-3.pdf",
+                  section: "Sección 3.1",
+                  page: "8",
+                  quote:
+                    "Todas las medidas se comunicarán de forma clara y accesible a la plantilla.",
+                },
+              },
+              {
+                name: "Equidad",
+                value: 90,
+                reference: {
+                  document: "PLAN-DE-CONCILIACION-3.pdf",
+                  section: "Sección 3.2",
+                  page: "8",
+                  quote:
+                    "Acceso equitativo a las medidas, sin perjuicio de la operatividad del servicio.",
+                },
+              },
+              {
+                name: "Flexibilidad",
+                value: 90,
+                reference: {
+                  document: "PLAN-DE-CONCILIACION-3.pdf",
+                  section: "Sección 3.3",
+                  page: "9",
+                  quote:
+                    "Adaptación a circunstancias individuales y organizativas de cada caso.",
+                },
+              },
+            ],
+          },
+          {
+            name: "Líneas de Actuación",
+            reference: {
+              document: "PLAN-DE-CONCILIACION-3.pdf",
+              section: "Sección 4: Medidas",
+              page: "10-18",
+              quote:
+                "Se establecen cuatro líneas principales: horaria, espacios de trabajo, permisos y apoyos adicionales.",
+            },
+            children: [
+              {
+                name: "Medidas Horarias",
+                reference: {
+                  document: "PLAN-DE-CONCILIACION-3.pdf",
+                  section: "Sección 4.1",
+                  page: "10-12",
+                  quote:
+                    "Jornada flexible, reducciones proporcionales con reserva de puesto.",
+                },
+                children: [
+                  {
+                    name: "Jornada flexible",
+                    value: 120,
+                    reference: {
+                      document: "PLAN-DE-CONCILIACION-3.pdf",
+                      section: "Sección 4.1.1",
+                      page: "11",
+                      quote:
+                        "Franjas horarias flexibles de entrada y salida, respetando los mínimos establecidos.",
+                    },
+                  },
+                  {
+                    name: "Reducción de jornada",
+                    value: 100,
+                    reference: {
+                      document: "PLAN-DE-CONCILIACION-3.pdf",
+                      section: "Sección 4.1.2",
+                      page: "12",
+                      quote:
+                        "Reducción proporcional con reserva de puesto de trabajo.",
+                    },
+                  },
+                ],
+              },
+              {
+                name: "Espacios y Teletrabajo",
+                reference: {
+                  document: "PLAN-DE-CONCILIACION-3.pdf",
+                  section: "Sección 4.2",
+                  page: "13-14",
+                  quote:
+                    "Teletrabajo parcial o total, espacios de lactancia y zonas familiares.",
+                },
+                children: [
+                  {
+                    name: "Teletrabajo",
+                    value: 130,
+                    reference: {
+                      document: "PLAN-DE-CONCILIACION-3.pdf",
+                      section: "Sección 4.2.1",
+                      page: "13",
+                      quote:
+                        "Modalidad parcial o total según perfil del puesto y necesidades organizativas.",
+                    },
+                  },
+                  {
+                    name: "Espacios familiares",
+                    value: 80,
+                    reference: {
+                      document: "PLAN-DE-CONCILIACION-3.pdf",
+                      section: "Sección 4.2.2",
+                      page: "14",
+                      quote:
+                        "Habilitación de espacios de lactancia y zonas familiares en instalaciones.",
+                    },
+                  },
+                ],
+              },
+              {
+                name: "Permisos y Excedencias",
+                reference: {
+                  document: "PLAN-DE-CONCILIACION-3.pdf",
+                  section: "Sección 4.3",
+                  page: "15-16",
+                  quote:
+                    "Ampliación de permisos parentales y excedencias con reserva.",
+                },
+                children: [
+                  {
+                    name: "Permisos parentales",
+                    value: 110,
+                    reference: {
+                      document: "PLAN-DE-CONCILIACION-3.pdf",
+                      section: "Sección 4.3.1",
+                      page: "15",
+                      quote:
+                        "Ampliación de permisos por maternidad, paternidad y cuidado de familiares.",
+                    },
+                  },
+                  {
+                    name: "Excedencias",
+                    value: 95,
+                    reference: {
+                      document: "PLAN-DE-CONCILIACION-3.pdf",
+                      section: "Sección 4.3.2",
+                      page: "16",
+                      quote:
+                        "Excedencias voluntarias o forzosas con garantía de reserva de empleo.",
+                    },
+                  },
+                ],
+              },
+              {
+                name: "Apoyos Adicionales",
+                reference: {
+                  document: "PLAN-DE-CONCILIACION-3.pdf",
+                  section: "Sección 4.4",
+                  page: "17-18",
+                  quote:
+                    "Servicios de guardería y atención domiciliaria para dependientes.",
+                },
+                children: [
+                  {
+                    name: "Servicios de guardería",
+                    value: 90,
+                    reference: {
+                      document: "PLAN-DE-CONCILIACION-3.pdf",
+                      section: "Sección 4.4.1",
+                      page: "17",
+                      quote:
+                        "Servicio de guardería propio o ayudas económicas para cuidado infantil.",
+                    },
+                  },
+                  {
+                    name: "Atención domiciliaria",
+                    value: 75,
+                    reference: {
+                      document: "PLAN-DE-CONCILIACION-3.pdf",
+                      section: "Sección 4.4.2",
+                      page: "18",
+                      quote:
+                        "Bolsa de servicios de atención domiciliaria para personas dependientes.",
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            name: "Formación y Sensibilización",
+            reference: {
+              document: "PLAN-DE-CONCILIACION-3.pdf",
+              section: "Sección 5",
+              page: "19-20",
+              quote:
+                "Programas formativos en igualdad y campañas de comunicación.",
+            },
+            children: [
+              {
+                name: "Programas formativos",
+                value: 85,
+                reference: {
+                  document: "PLAN-DE-CONCILIACION-3.pdf",
+                  section: "Sección 5.1",
+                  page: "19",
+                  quote:
+                    "Formación interna en igualdad, corresponsabilidad y uso de medidas.",
+                },
+              },
+              {
+                name: "Campañas de comunicación",
+                value: 70,
+                reference: {
+                  document: "PLAN-DE-CONCILIACION-3.pdf",
+                  section: "Sección 5.2",
+                  page: "20",
+                  quote:
+                    "Visibilización de buenas prácticas y casos de éxito en conciliación.",
+                },
+              },
+            ],
+          },
+          {
+            name: "Seguimiento y Evaluación",
+            reference: {
+              document: "PLAN-DE-CONCILIACION-3.pdf",
+              section: "Sección 6",
+              page: "21-23",
+              quote:
+                "Comité de seguimiento, indicadores y informes anuales de avance.",
+            },
+            children: [
+              {
+                name: "Comité de seguimiento",
+                value: 95,
+                reference: {
+                  document: "PLAN-DE-CONCILIACION-3.pdf",
+                  section: "Sección 6.1",
+                  page: "21",
+                  quote:
+                    "Integrado por dirección, sindicatos y representantes de la plantilla.",
+                },
+              },
+              {
+                name: "Indicadores",
+                value: 100,
+                reference: {
+                  document: "PLAN-DE-CONCILIACION-3.pdf",
+                  section: "Sección 6.2",
+                  page: "22",
+                  quote:
+                    "Cuantitativos (tasa teletrabajo, uso permisos) y cualitativos (encuestas satisfacción).",
+                },
+              },
+              {
+                name: "Informes anuales",
+                value: 80,
+                reference: {
+                  document: "PLAN-DE-CONCILIACION-3.pdf",
+                  section: "Sección 6.3",
+                  page: "23",
+                  quote: "Informes de avance y propuestas de mejora continua.",
+                },
+              },
+            ],
+          },
+          {
+            name: "Cronograma",
+            reference: {
+              document: "PLAN-DE-CONCILIACION-3.pdf",
+              section: "Sección 7",
+              page: "24-25",
+              quote:
+                "Implantación en tres fases: diagnóstico, despliegue y evaluación continua.",
+            },
+            children: [
+              {
+                name: "Fase I (0-3 meses)",
+                value: 90,
+                reference: {
+                  document: "PLAN-DE-CONCILIACION-3.pdf",
+                  section: "Sección 7.1",
+                  page: "24",
+                  quote:
+                    "Diagnóstico de necesidades y aprobación formal del Plan.",
+                },
+              },
+              {
+                name: "Fase II (4-12 meses)",
+                value: 100,
+                reference: {
+                  document: "PLAN-DE-CONCILIACION-3.pdf",
+                  section: "Sección 7.2",
+                  page: "24",
+                  quote:
+                    "Despliegue de medidas prioritarias y comunicación a la plantilla.",
+                },
+              },
+              {
+                name: "Fase III (anual)",
+                value: 85,
+                reference: {
+                  document: "PLAN-DE-CONCILIACION-3.pdf",
+                  section: "Sección 7.3",
+                  page: "25",
+                  quote:
+                    "Evaluación periódica, ajustes necesarios y continuación del programa.",
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      const chart = echarts.init(document.getElementById("main"));
+
+      const option = {
+        backgroundColor: "#FFFFFF",
+        tooltip: {
+          trigger: "item",
+          triggerOn: "mousemove",
+          backgroundColor: "rgba(255, 255, 255, 0.98)",
+          borderColor: "#3E8BD6",
+          borderWidth: 2,
+          textStyle: { color: "#1a1a1a", fontSize: 12 },
+          padding: [12, 16],
+          formatter: function (params) {
+            const ref = params.data.reference;
+            if (ref) {
+              return `
+                            <div style="max-width: 350px;">
+                                <strong style="color: #3E8BD6; font-size: 14px;">${params.name}</strong>
+                                <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #E8F4FC;">
+                                    <div style="margin-bottom: 6px;">
+                                        <strong style="color: #3E8BD6;">📄 Documento:</strong><br/>
+                                        <span style="font-size: 11px;">${ref.document}</span>
+                                    </div>
+                                    <div style="margin-bottom: 6px;">
+                                        <strong style="color: #3E8BD6;">📍 Sección:</strong> ${ref.section}
+                                    </div>
+                                    <div style="margin-bottom: 6px;">
+                                        <strong style="color: #FCC200;">📖 Página:</strong> ${ref.page}
+                                    </div>
+                                    <div style="margin-top: 8px; padding: 8px; background: #FFF9E6; border-radius: 4px; font-style: italic; font-size: 11px; line-height: 1.4; border-left: 3px solid #FCC200;">
+                                        "${ref.quote}"
+                                    </div>
+                                </div>
+                                <div style="margin-top: 8px; font-size: 10px; color: #3E8BD6;">
+                                    💡 Click para ver detalles completos
+                                </div>
+                            </div>
+                        `;
+            }
+            return params.name;
+          },
+        },
+        series: [
+          {
+            type: "tree",
+            data: [mapData],
+            top: "5%",
+            left: "8%",
+            bottom: "5%",
+            right: "20%",
+            symbolSize: 10,
+            edgeShape: "curve",
+            edgeForkPosition: "60%",
+            initialTreeDepth: 2,
+            itemStyle: {
+              color: "#3E8BD6",
+              borderColor: "#2A6BA8",
+              borderWidth: 2,
+              shadowBlur: 8,
+              shadowColor: "rgba(62, 139, 214, 0.3)",
+            },
+            lineStyle: {
+              color: "#3E8BD6",
+              width: 2,
+              curveness: 0.5,
+            },
+            label: {
+              backgroundColor: "#FFFFFF",
+              borderColor: "#3E8BD6",
+              borderWidth: 1,
+              borderRadius: 6,
+              padding: [6, 10],
+              color: "#1a1a1a",
+              fontSize: 12,
+              fontWeight: 500,
+              position: "left",
+              verticalAlign: "middle",
+              align: "right",
+              shadowBlur: 6,
+              shadowColor: "rgba(62, 139, 214, 0.15)",
+            },
+            leaves: {
+              label: {
+                position: "right",
+                align: "left",
+                backgroundColor: "#FFF9E6",
+                borderColor: "#FCC200",
+              },
+              itemStyle: {
+                color: "#FCC200",
+                borderColor: "#E5AE00",
+                shadowColor: "rgba(252, 194, 0, 0.3)",
+              },
+            },
+            emphasis: {
+              focus: "descendant",
+              itemStyle: {
+                color: "#FCC200",
+                borderWidth: 3,
+                shadowBlur: 12,
+                shadowColor: "rgba(252, 194, 0, 0.5)",
+              },
+              label: {
+                backgroundColor: "#FFF9E6",
+                borderColor: "#FCC200",
+                fontWeight: 600,
+                fontSize: 13,
+              },
+            },
+            expandAndCollapse: true,
+            animationDuration: 600,
+            animationDurationUpdate: 800,
+          },
+        ],
+      };
+
+      chart.setOption(option);
+
+      chart.on("click", function (params) {
+        if (params.data.reference) {
+          showModal(params.data);
+        }
+      });
+
+      function showModal(nodeData) {
+        const modal = document.getElementById("modal");
+        const ref = nodeData.reference;
+
+        document.getElementById("modalTitle").textContent = nodeData.name;
+        document.getElementById("modalDocument").textContent = ref.document;
+        document.getElementById("modalSection").textContent = ref.section;
+        document.getElementById("modalPage").textContent = ref.page;
+        document.getElementById("modalQuote").textContent = `"${ref.quote}"`;
+        document.getElementById(
+          "modalCitation"
+        ).textContent = `${ref.document}, ${ref.section}, p. ${ref.page}`;
+
+        modal.classList.add("active");
+      }
+
+      function closeModal() {
+        document.getElementById("modal").classList.remove("active");
+      }
+
+      document.getElementById("modal").addEventListener("click", function (e) {
+        if (e.target === this) {
+          closeModal();
+        }
+      });
+
+      window.addEventListener("resize", function () {
+        chart.resize();
+      });
+    </script>
+  </body>
+</html>

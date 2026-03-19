@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Estilos de Botones - Chatbot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            animation: {
+              "pulse-glow": "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+              "bounce-subtle": "bounce 1s ease-in-out infinite",
+              wiggle: "wiggle 1s ease-in-out infinite",
+            },
+            keyframes: {
+              wiggle: {
+                "0%, 100%": { transform: "rotate(-1deg)" },
+                "50%": { transform: "rotate(1deg)" },
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+      body {
+        font-family: "Inter", sans-serif;
+      }
+
+      .glassmorphism {
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+      }
+
+      .neo-shadow {
+        box-shadow: 20px 20px 60px #d1d9e6, -20px -20px 60px #ffffff;
+      }
+
+      .inner-shadow {
+        box-shadow: inset 5px 5px 10px #d1d9e6, inset -5px -5px 10px #ffffff;
+      }
+
+      .glow-hover:hover {
+        box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+      }
+
+      .transform-gpu {
+        transform: translateZ(0);
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 p-8 min-h-screen">
+    <div class="max-w-7xl mx-auto">
+      <h1 class="text-4xl font-bold text-gray-800 mb-12 text-center">
+        Estilos de Botones para Chatbot
+      </h1>
+
+      <!-- Estilo 1: Minimalismo Vibrante -->
+      <section class="mb-16">
+        <h2
+          class="text-2xl font-semibold text-gray-700 mb-8 border-b-2 border-purple-200 pb-2"
+        >
+          1. Minimalismo Vibrante
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <button
+            class="bg-white hover:bg-purple-50 text-purple-600 font-medium py-4 px-8 rounded-xl border-2 border-purple-200 hover:border-purple-400 transition-all duration-300 transform hover:scale-105 glow-hover shadow-lg"
+          >
+            <div class="flex items-center justify-center space-x-3">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Mapa Mental</span>
+            </div>
+          </button>
+
+          <button
+            class="bg-white hover:bg-emerald-50 text-emerald-600 font-medium py-4 px-8 rounded-xl border-2 border-emerald-200 hover:border-emerald-400 transition-all duration-300 transform hover:scale-105 glow-hover shadow-lg"
+          >
+            <div class="flex items-center justify-center space-x-3">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  d="M7 4V2a1 1 0 011-1h4a1 1 0 011 1v2h4a1 1 0 110 2h-1v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6H3a1 1 0 010-2h4z"
+                />
+              </svg>
+              <span>Audio</span>
+            </div>
+          </button>
+
+          <button
+            class="bg-white hover:bg-orange-50 text-orange-600 font-medium py-4 px-8 rounded-xl border-2 border-orange-200 hover:border-orange-400 transition-all duration-300 transform hover:scale-105 glow-hover shadow-lg"
+          >
+            <div class="flex items-center justify-center space-x-3">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                <path
+                  fill-rule="evenodd"
+                  d="M4 5a2 2 0 012-2v1a1 1 0 001 1h6a1 1 0 001-1V3a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V5z"
+                />
+              </svg>
+              <span>Resumen</span>
+            </div>
+          </button>
+        </div>
+      </section>
+
+      <!-- Estilo 2: Neo-Glassmorphism -->
+      <section class="mb-16">
+        <h2
+          class="text-2xl font-semibold text-gray-700 mb-8 border-b-2 border-blue-200 pb-2"
+        >
+          2. Neo-Glassmorphism
+        </h2>
+        <div
+          class="bg-gradient-to-br from-indigo-400 via-purple-400 to-pink-400 rounded-2xl p-8"
+        >
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <button
+              class="glassmorphism bg-white/20 hover:bg-white/30 text-white font-medium py-4 px-8 rounded-2xl border border-white/20 hover:border-white/40 transition-all duration-300 backdrop-blur-sm shadow-xl"
+            >
+              <div class="flex items-center justify-center space-x-3">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Mapa Mental</span>
+              </div>
+            </button>
+
+            <button
+              class="glassmorphism bg-white/20 hover:bg-white/30 text-white font-medium py-4 px-8 rounded-2xl border border-white/20 hover:border-white/40 transition-all duration-300 backdrop-blur-sm shadow-xl"
+            >
+              <div class="flex items-center justify-center space-x-3">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    d="M7 4V2a1 1 0 011-1h4a1 1 0 011 1v2h4a1 1 0 110 2h-1v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6H3a1 1 0 010-2h4z"
+                  />
+                </svg>
+                <span>Audio</span>
+              </div>
+            </button>
+
+            <button
+              class="glassmorphism bg-white/20 hover:bg-white/30 text-white font-medium py-4 px-8 rounded-2xl border border-white/20 hover:border-white/40 transition-all duration-300 backdrop-blur-sm shadow-xl"
+            >
+              <div class="flex items-center justify-center space-x-3">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                  <path
+                    fill-rule="evenodd"
+                    d="M4 5a2 2 0 012-2v1a1 1 0 001 1h6a1 1 0 001-1V3a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V5z"
+                  />
+                </svg>
+                <span>Resumen</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Estilo 3: Flat Design 3.0 -->
+      <section class="mb-16">
+        <h2
+          class="text-2xl font-semibold text-gray-700 mb-8 border-b-2 border-green-200 pb-2"
+        >
+          3. Flat Design 3.0
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <button
+            class="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white font-semibold py-5 px-8 rounded-2xl transition-all duration-300 transform hover:translate-y-[-2px] shadow-lg hover:shadow-xl"
+          >
+            <div class="flex items-center justify-center space-x-3">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="text-lg">Mapa Mental</span>
+            </div>
+          </button>
+
+          <button
+            class="bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold py-5 px-8 rounded-2xl transition-all duration-300 transform hover:translate-y-[-2px] shadow-lg hover:shadow-xl"
+          >
+            <div class="flex items-center justify-center space-x-3">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  d="M7 4V2a1 1 0 011-1h4a1 1 0 011 1v2h4a1 1 0 110 2h-1v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6H3a1 1 0 010-2h4z"
+                />
+              </svg>
+              <span class="text-lg">Audio</span>
+            </div>
+          </button>
+
+          <button
+            class="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-semibold py-5 px-8 rounded-2xl transition-all duration-300 transform hover:translate-y-[-2px] shadow-lg hover:shadow-xl"
+          >
+            <div class="flex items-center justify-center space-x-3">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                <path
+                  fill-rule="evenodd"
+                  d="M4 5a2 2 0 012-2v1a1 1 0 001 1h6a1 1 0 001-1V3a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V5z"
+                />
+              </svg>
+              <span class="text-lg">Resumen</span>
+            </div>
+          </button>
+        </div>
+      </section>
+
+      <!-- Estilo 4: Modern Brutalism Soft -->
+      <section class="mb-16">
+        <h2
+          class="text-2xl font-semibold text-gray-700 mb-8 border-b-2 border-yellow-200 pb-2"
+        >
+          4. Modern Brutalism Soft
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <button
+            class="bg-black hover:bg-gray-900 text-white font-bold py-6 px-8 rounded-xl transition-all duration-200 transform hover:translate-x-1 hover:translate-y-[-1px] border-4 border-yellow-400 hover:border-yellow-300 shadow-[8px_8px_0px_0px_theme(colors.yellow.400)] hover:shadow-[4px_4px_0px_0px_theme(colors.yellow.300)]"
+          >
+            <div class="flex items-center justify-center space-x-3">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="text-lg tracking-wide">MAPA MENTAL</span>
+            </div>
+          </button>
+
+          <button
+            class="bg-black hover:bg-gray-900 text-white font-bold py-6 px-8 rounded-xl transition-all duration-200 transform hover:translate-x-1 hover:translate-y-[-1px] border-4 border-pink-400 hover:border-pink-300 shadow-[8px_8px_0px_0px_theme(colors.pink.400)] hover:shadow-[4px_4px_0px_0px_theme(colors.pink.300)]"
+          >
+            <div class="flex items-center justify-center space-x-3">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  d="M7 4V2a1 1 0 011-1h4a1 1 0 011 1v2h4a1 1 0 110 2h-1v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6H3a1 1 0 010-2h4z"
+                />
+              </svg>
+              <span class="text-lg tracking-wide">AUDIO</span>
+            </div>
+          </button>
+
+          <button
+            class="bg-black hover:bg-gray-900 text-white font-bold py-6 px-8 rounded-xl transition-all duration-200 transform hover:translate-x-1 hover:translate-y-[-1px] border-4 border-green-400 hover:border-green-300 shadow-[8px_8px_0px_0px_theme(colors.green.400)] hover:shadow-[4px_4px_0px_0px_theme(colors.green.300)]"
+          >
+            <div class="flex items-center justify-center space-x-3">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                <path
+                  fill-rule="evenodd"
+                  d="M4 5a2 2 0 012-2v1a1 1 0 001 1h6a1 1 0 001-1V3a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V5z"
+                />
+              </svg>
+              <span class="text-lg tracking-wide">RESUMEN</span>
+            </div>
+          </button>
+        </div>
+      </section>
+
+      <!-- Estilo 5: Organic Minimalism -->
+      <section class="mb-16">
+        <h2
+          class="text-2xl font-semibold text-gray-700 mb-8 border-b-2 border-indigo-200 pb-2"
+        >
+          5. Organic Minimalism
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <button
+            class="bg-gradient-to-br from-purple-100 to-purple-200 hover:from-purple-200 hover:to-purple-300 text-purple-800 font-medium py-5 px-8 rounded-[2rem] transition-all duration-500 transform hover:scale-105 hover:rotate-1 shadow-lg hover:shadow-xl border border-purple-200"
+          >
+            <div class="flex items-center justify-center space-x-3">
+              <div
+                class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center"
+              >
+                <svg
+                  class="w-4 h-4 text-white"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <span class="text-lg">Mapa Mental</span>
+            </div>
+          </button>
+
+          <button
+            class="bg-gradient-to-br from-emerald-100 to-emerald-200 hover:from-emerald-200 hover:to-emerald-300 text-emerald-800 font-medium py-5 px-8 rounded-[2rem] transition-all duration-500 transform hover:scale-105 hover:rotate-[-1deg] shadow-lg hover:shadow-xl border border-emerald-200"
+          >
+            <div class="flex items-center justify-center space-x-3">
+              <div
+                class="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center"
+              >
+                <svg
+                  class="w-4 h-4 text-white"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    d="M7 4V2a1 1 0 011-1h4a1 1 0 011 1v2h4a1 1 0 110 2h-1v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6H3a1 1 0 010-2h4z"
+                  />
+                </svg>
+              </div>
+              <span class="text-lg">Audio</span>
+            </div>
+          </button>
+
+          <button
+            class="bg-gradient-to-br from-amber-100 to-amber-200 hover:from-amber-200 hover:to-amber-300 text-amber-800 font-medium py-5 px-8 rounded-[2rem] transition-all duration-500 transform hover:scale-105 hover:rotate-1 shadow-lg hover:shadow-xl border border-amber-200"
+          >
+            <div class="flex items-center justify-center space-x-3">
+              <div
+                class="w-8 h-8 bg-amber-600 rounded-full flex items-center justify-center"
+              >
+                <svg
+                  class="w-4 h-4 text-white"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                  <path
+                    fill-rule="evenodd"
+                    d="M4 5a2 2 0 012-2v1a1 1 0 001 1h6a1 1 0 001-1V3a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V5z"
+                  />
+                </svg>
+              </div>
+              <span class="text-lg">Resumen</span>
+            </div>
+          </button>
+        </div>
+      </section>
+
+      <!-- Estilo 6: Neumorphism Modern -->
+      <section class="mb-16">
+        <h2
+          class="text-2xl font-semibold text-gray-700 mb-8 border-b-2 border-gray-300 pb-2"
+        >
+          6. Neumorphism Modern
+        </h2>
+        <div class="bg-gray-200 rounded-3xl p-8">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <button
+              class="bg-gray-200 hover:bg-gray-100 text-indigo-600 font-semibold py-6 px-8 rounded-2xl transition-all duration-300 neo-shadow hover:shadow-inner transform hover:scale-95"
+            >
+              <div class="flex items-center justify-center space-x-3">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="text-lg">Mapa Mental</span>
+              </div>
+            </button>
+
+            <button
+              class="bg-gray-200 hover:bg-gray-100 text-emerald-600 font-semibold py-6 px-8 rounded-2xl transition-all duration-300 neo-shadow hover:shadow-inner transform hover:scale-95"
+            >
+              <div class="flex items-center justify-center space-x-3">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    d="M7 4V2a1 1 0 011-1h4a1 1 0 011 1v2h4a1 1 0 110 2h-1v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6H3a1 1 0 010-2h4z"
+                  />
+                </svg>
+                <span class="text-lg">Audio</span>
+              </div>
+            </button>
+
+            <button
+              class="bg-gray-200 hover:bg-gray-100 text-orange-600 font-semibold py-6 px-8 rounded-2xl transition-all duration-300 neo-shadow hover:shadow-inner transform hover:scale-95"
+            >
+              <div class="flex items-center justify-center space-x-3">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                  <path
+                    fill-rule="evenodd"
+                    d="M4 5a2 2 0 012-2v1a1 1 0 001 1h6a1 1 0 001-1V3a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V5z"
+                  />
+                </svg>
+                <span class="text-lg">Resumen</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Selector -->
+      <div
+        class="fixed bottom-6 right-6 bg-white rounded-full shadow-2xl p-4 border-2 border-purple-200"
+      >
+        <div class="text-center">
+          <p class="text-sm text-gray-600 mb-2">¿Cuál prefieres?</p>
+          <div class="flex space-x-2">
+            <button
+              class="w-8 h-8 rounded-full bg-purple-500 hover:bg-purple-600 text-white text-xs font-bold"
+            >
+              1
+            </button>
+            <button
+              class="w-8 h-8 rounded-full bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold"
+            >
+              2
+            </button>
+            <button
+              class="w-8 h-8 rounded-full bg-green-500 hover:bg-green-600 text-white text-xs font-bold"
+            >
+              3
+            </button>
+            <button
+              class="w-8 h-8 rounded-full bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-bold"
+            >
+              4
+            </button>
+            <button
+              class="w-8 h-8 rounded-full bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-bold"
+            >
+              5
+            </button>
+            <button
+              class="w-8 h-8 rounded-full bg-gray-500 hover:bg-gray-600 text-white text-xs font-bold"
+            >
+              6
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,41 @@
+services:
+  backend:
+    build: ./backend
+    container_name: chatbot_backend
+    ports:
+      - "${BACKEND_PORT:-4000}:${BACKEND_PORT:-4000}"
+    env_file:
+      - .env
+    environment:
+      - PORT=${BACKEND_PORT:-4000}
+      - DB_HOST=${DB_HOST:-localhost}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_NAME=${DB_NAME:-postgres}
+      - DB_SSL=${DB_SSL:-true}
+    restart: always
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    networks:
+      - chatbot-network
+
+  frontend:
+    build: ./frontend
+    container_name: chatbot_frontend
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    env_file:
+      - .env
+    environment:
+      - BACKEND_PORT=${BACKEND_PORT:-4000}
+    depends_on:
+      - backend
+    restart: always
+    networks:
+      - chatbot-network
+
+networks:
+  chatbot-network:
+    driver: bridge
