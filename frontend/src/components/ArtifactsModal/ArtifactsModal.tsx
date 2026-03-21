@@ -38,20 +38,20 @@ const ArtifactItem: React.FC<ArtifactItemProps> = ({
     }
   };
 
-  const getColor = () => {
-    switch (artifact.type) {
-      case "mind-map":
-        return "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300";
-      case "document":
-        return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300";
-      default:
-        return "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300";
-    }
-  };
+   const getColor = () => {
+     switch (artifact.type) {
+       case "mind-map":
+         return "bg-accent/10 text-accent-foreground dark:bg-accent/20 dark:text-accent-foreground";
+       case "document":
+         return "bg-primary/10 text-primary-foreground dark:bg-primary/20 dark:text-primary-foreground";
+       default:
+         return "bg-muted/10 text-muted-foreground dark:bg-muted/20 dark:text-muted-foreground";
+     }
+   };
 
   return (
     <div
-      className="group flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg border transition-all border-border hover:border-primary/50 hover:bg-accent/50 dark:border-gray-700 dark:hover:border-gray-600 dark:bg-gray-900/30 dark:hover:bg-gray-900/50 cursor-pointer bg-card"
+       className="group flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg border transition-all border-border hover:border-primary/50 hover:bg-accent/50 dark:border-muted dark:hover:border-muted/80 dark:bg-muted/10 dark:hover:bg-muted/20 cursor-pointer bg-card"
       onClick={handleView}
     >
       <div

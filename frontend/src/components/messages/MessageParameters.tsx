@@ -19,7 +19,7 @@ export const MessageParameters: React.FC<MessageParametersProps> = ({
   }
 
   return (
-    <div className="mb-2 pb-2 border-b border-gray-200 dark:border-gray-700">
+     <div className="mb-2 pb-2 border-b border-muted dark:border-muted/80">
       <div className="flex flex-wrap gap-1.5">
         {parameters.map((param) => {
           const paramInfo = parameterLabels[param] || {
@@ -27,19 +27,19 @@ export const MessageParameters: React.FC<MessageParametersProps> = ({
             icon: "fas fa-tag",
           };
 
-          return (
-            <span
-              key={param}
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs ${
-                isUser
-                  ? "bg-white/20 text-white"
-                  : "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
-              }`}
-            >
-              <i className={`${paramInfo.icon} text-xs`}></i>
-              <span>{paramInfo.label}</span>
-            </span>
-          );
+           return (
+             <span
+               key={param}
+               className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs ${
+                 isUser
+                   ? "bg-muted/10 text-muted-foreground"
+                   : "bg-muted/10 text-muted-foreground dark:bg-muted/20 dark:text-muted-foreground/80"
+               }`}
+             >
+               <i className={`${paramInfo.icon} text-xs`}></i>
+               <span>{paramInfo.label}</span>
+             </span>
+           );
         })}
       </div>
     </div>

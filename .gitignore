@@ -49,3 +49,7 @@ temp/
 # OS files
 .DS_Store
 Thumbs.db
+
+frontend/specs/
+frontend/COLOR_USAGE_GUIDE.md
+frontend/docs/

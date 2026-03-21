@@ -2,8 +2,6 @@ import React from "react";
 import MarkdownRenderer from "./MarkdownRenderer";
 import MessageParameters from "./MessageParameters";
 import MessageArtifacts from "./MessageArtifacts";
-import MessageQuickActions from "./MessageQuickActions";
-import MessageActions from "./MessageActions";
 import { formatMessageTimestamp } from "./utils/messageUtils";
 import { type QuickAction } from "../config/quickActions";
 import type { Message } from "../../services/backendService";
@@ -17,19 +15,16 @@ interface UserMessageProps {
 
 export const UserMessage: React.FC<UserMessageProps> = ({
   message,
-  onQuoteMessage,
-  onQuickAction,
   onViewMindMap,
 }) => {
   return (
-    <div className="flex justify-center">
-      <div className="w-full max-w-4xl">
-        <div className="flex gap-3 justify-end">
-          <div className="w-full md:max-w-[70%]">
-            {/* Mensaje citado */}
+    <div className="group/msg mb-8 flex justify-center px-4">
+      <div className="w-full max-w-3xl">
+        <div className="flex justify-end gap-3">
+          <div className="w-full md:max-w-[85%]">
             {message.quotedMessageId && (
-              <div className="mb-2 px-3 py-2 rounded-lg border-l-2 text-xs bg-blue-50 border-blue-400 text-blue-700 dark:bg-blue-900/20 dark:border-blue-500 dark:text-blue-300">
-                <div className="flex items-center gap-1.5 mb-1 font-medium">
+              <div className="mb-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-xs text-primary">
+                <div className="mb-1 flex items-center gap-1.5 font-medium">
                   <i className="fas fa-reply text-xs"></i>
                   <span>
                     {message.quotedMessageSender === "user"
@@ -43,37 +38,24 @@ export const UserMessage: React.FC<UserMessageProps> = ({
               </div>
             )}
 
-            <div className="p-3 rounded-tl-lg rounded-tr-lg rounded-bl-md bg-primary text-primary-foreground">
-              {/* Parámetros del mensaje */}
+            <div className="rounded-3xl rounded-tr-md border border-primary/30 bg-primary px-4 py-3 text-primary-foreground shadow-sm">
               <MessageParameters parameters={undefined} isUser={true} />
-
-              {/* Contenido del mensaje */}
-              <MarkdownRenderer content={message.content} isUserMessage={true} />
-
-              {/* Artefactos (documentos y mapas mentales) */}
+              <MarkdownRenderer
+                content={message.content}
+                isUserMessage={true}
+              />
               <MessageArtifacts
                 documentLinks={message.documentLinks}
                 artifact={message.artifact}
                 artifactData={message.artifactData}
                 onViewMindMap={onViewMindMap}
               />
-              {/* Acciones horizontales debajo del mensaje */}
-              <div className="flex items-center justify-between gap-2 mt-2">
-                {/* Timestamp a la izquierda */}
-                <p className="text-xs text-white">
-                  {formatMessageTimestamp(message.timestamp)}
-                </p>
+            </div>
 
-                {/* Acciones en el centro-derecha */}
-                <div className="flex items-center gap-2">
-                  <MessageQuickActions
-                    message={message}
-                    onQuickAction={onQuickAction}
-                    onQuoteMessage={onQuoteMessage}
-                  />
-                  <MessageActions message={message} isUser={true} />
-                </div>
-              </div>
+            <div className="mr-1 mt-2 text-right">
+              <span className="text-[10px] text-zinc-400 font-medium uppercase tracking-wide self-center opacity-0 group-hover/msg:opacity-100 transition-opacity duration-300">
+                {formatMessageTimestamp(message.timestamp)}
+              </span>
             </div>
           </div>
         </div>

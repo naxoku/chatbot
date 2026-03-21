@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface LazyLoadingProps {
   children: string;
@@ -7,7 +7,7 @@ interface LazyLoadingProps {
 // Componente de loading skeleton para diferentes tipos de páginas
 const LoadingSkeleton: React.FC<{ type: string }> = ({ type }) => {
   switch (type) {
-    case 'chat':
+    case "chat":
       return (
         <div className="h-screen bg-background flex">
           {/* Sidebar skeleton */}
@@ -21,11 +21,14 @@ const LoadingSkeleton: React.FC<{ type: string }> = ({ type }) => {
             </div>
             <div className="space-y-2">
               {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="h-12 bg-sidebar-accent rounded animate-pulse"></div>
+                <div
+                  key={i}
+                  className="h-12 bg-sidebar-accent rounded animate-pulse"
+                ></div>
               ))}
             </div>
           </div>
-          
+
           {/* Chat area skeleton */}
           <div className="flex-1 flex flex-col">
             <div className="h-16 border-b border-border flex items-center px-6">
@@ -33,9 +36,13 @@ const LoadingSkeleton: React.FC<{ type: string }> = ({ type }) => {
             </div>
             <div className="flex-1 p-6 space-y-4">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className={`${i % 2 === 0 ? 'pr-24' : 'pl-24'} space-y-2`}>
-                  <div className="h-4 bg-muted rounded animate-pulse"></div>
-                  <div className="h-4 bg-muted rounded w-3/4 animate-pulse"></div>
+                <div key={i} className="mx-auto w-full max-w-3xl space-y-2">
+                  <div
+                    className={`h-4 rounded bg-muted animate-pulse ${i % 2 === 0 ? "w-3/4" : "ml-auto w-2/3"}`}
+                  ></div>
+                  <div
+                    className={`h-4 rounded bg-muted animate-pulse ${i % 2 === 0 ? "w-1/2" : "ml-auto w-1/3"}`}
+                  ></div>
                 </div>
               ))}
             </div>
@@ -45,8 +52,8 @@ const LoadingSkeleton: React.FC<{ type: string }> = ({ type }) => {
           </div>
         </div>
       );
-    
-    case 'home':
+
+    case "home":
       return (
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center space-y-6">
@@ -64,8 +71,8 @@ const LoadingSkeleton: React.FC<{ type: string }> = ({ type }) => {
           </div>
         </div>
       );
-    
-    case 'login':
+
+    case "login":
       return (
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="w-full max-w-md p-6">
@@ -82,7 +89,7 @@ const LoadingSkeleton: React.FC<{ type: string }> = ({ type }) => {
           </div>
         </div>
       );
-    
+
     default:
       return (
         <div className="min-h-screen flex items-center justify-center bg-background">

@@ -2,7 +2,7 @@
 import React, { useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Send, X, FileText, Plus } from "lucide-react";
+import { Send, X, FileText, Paperclip } from "lucide-react";
 
 interface QuotedMessage {
   id: string;
@@ -96,96 +96,89 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   return (
-    <div className="flex justify-center px-4 py-4 shrink-0 bg-background">
-      <div className="w-full max-w-4xl">
-        {/* Mensaje citado */}
-        {quotedMessage && (
-          <div className="mb-3 p-3 rounded-lg bg-muted/50 border-l-4 border-l-primary shadow-sm">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <span className="text-xs font-semibold text-primary uppercase tracking-wide">
-                    {quotedMessage.sender === "user" ? "Tú" : "Asistente"}
-                  </span>
-                  <div className="h-1 w-1 rounded-full bg-primary/60" />
+    <div className="sticky bottom-0 z-10 w-full shrink-0 bg-gradient-to-t from-background via-background to-transparent px-4 pb-6 pt-8">
+      <div className="mx-auto w-full max-w-3xl">
+        <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-white/80 dark:bg-zinc-900/80 shadow-sm backdrop-blur-md transition-all duration-300 focus-within:border-primary/50 focus-within:shadow-md dark:focus-within:shadow-primary/20">
+          {/* Mensaje citado */}
+          {quotedMessage && (
+            <div className="mx-4 mt-4 rounded-2xl border border-border/50 bg-muted/60 p-3 animate-in slide-in-from-bottom-2">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="mb-1.5 flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wide text-primary">
+                      {quotedMessage.sender === "user" ? "Tú" : "Asistente"}
+                    </span>
+                    <div className="h-1 w-1 rounded-full bg-primary/60" />
+                  </div>
+                  <p className="line-clamp-2 text-sm leading-relaxed text-foreground/80">
+                    {quotedMessage.content}
+                  </p>
                 </div>
-                <p className="text-sm text-foreground/80 line-clamp-2 leading-relaxed">
-                  {quotedMessage.content}
-                </p>
+                {onClearQuotedMessage && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onClearQuotedMessage}
+                    className="h-6 w-6 shrink-0 rounded-md p-0 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    type="button"
+                    aria-label="Eliminar mensaje citado"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                )}
               </div>
-              {onClearQuotedMessage && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onClearQuotedMessage}
-                  className="h-6 w-6 p-0 shrink-0 rounded-md hover:bg-destructive/10 hover:text-destructive transition-colors"
-                  type="button"
-                  aria-label="Eliminar mensaje citado"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </Button>
-              )}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Contenedor del input con sombra y borde */}
-        <div className="rounded-xl bg-card border border-border">
           {/* Tags de documentos */}
-          {(selectedDocuments.length > 0 || onAddDocuments) && (
-            <div className="px-4 pt-4">
-              {selectedDocuments.length === 0 ? (
-                <Badge
-                  variant="outline"
-                  className="cursor-pointer hover:bg-accent hover:border-primary/50 transition-all duration-200 px-3 py-1.5"
-                  onClick={onAddDocuments}
-                >
-                  <Plus className="h-3.5 w-3.5 mr-1.5" />
-                  <span className="text-xs font-medium">Añadir documentos</span>
-                </Badge>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {selectedDocuments.map((document) => (
-                    <Badge
-                      key={document.id}
-                      variant="secondary"
-                      className="group cursor-default text-xs px-3 py-1.5 hover:bg-secondary/80 transition-colors"
-                    >
-                      <FileText className="h-3.5 w-3.5 mr-1.5 text-secondary-foreground/70" />
-                      <span className="font-medium">{document.title}</span>
-                      {onRemoveDocument && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onRemoveDocument(document.id);
-                          }}
-                          className="h-4 w-4 p-0 ml-2 rounded-sm hover:bg-destructive hover:text-destructive-foreground transition-colors"
-                          aria-label={`Eliminar ${document.title}`}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      )}
-                    </Badge>
-                  ))}
-                  {onAddDocuments && (
-                    <Badge
-                      variant="outline"
-                      className="cursor-pointer hover:bg-accent hover:border-primary/50 transition-all duration-200 px-3 py-1.5"
-                      onClick={onAddDocuments}
-                    >
-                      <Plus className="h-3.5 w-3.5 mr-1.5" />
-                      <span className="text-xs font-medium">Añadir más</span>
-                    </Badge>
-                  )}
-                </div>
-              )}
+          {selectedDocuments.length > 0 && (
+            <div className="border-b border-border/50 px-4 pb-2 pt-3">
+              <div className="flex flex-wrap gap-2">
+                {selectedDocuments.map((document) => (
+                  <Badge
+                    key={document.id}
+                    variant="secondary"
+                    className="group cursor-default px-3 py-1.5 text-xs transition-colors hover:bg-secondary/80"
+                  >
+                    <FileText className="mr-1.5 h-3.5 w-3.5 text-secondary-foreground/70" />
+                    <span className="max-w-[150px] truncate font-medium">
+                      {document.title}
+                    </span>
+                    {onRemoveDocument && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRemoveDocument(document.id);
+                        }}
+                        className="ml-2 h-4 w-4 rounded-sm p-0 transition-colors hover:bg-destructive hover:text-destructive-foreground"
+                        aria-label={`Eliminar ${document.title}`}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </Badge>
+                ))}
+              </div>
             </div>
           )}
 
           {/* Área de input */}
-          <div className="flex gap-3 p-4">
+          <div className="flex items-end gap-2.5 p-3">
+            {onAddDocuments && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onAddDocuments}
+                className="mb-1 h-10 w-10 shrink-0 rounded-2xl text-muted-foreground transition-all hover:text-foreground hover:bg-accent"
+                type="button"
+                aria-label="Adjuntar documentos"
+              >
+                <Paperclip className="h-5 w-5" />
+              </Button>
+            )}
+
             <div className="flex-1">
               <textarea
                 ref={textareaRef}
@@ -193,27 +186,26 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 onChange={(e) => onInputChange(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Escribe tu mensaje aquí..."
-                className="flex min-h-[44px] w-full rounded-lg border border-input bg-background px-4 py-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent disabled:cursor-not-allowed disabled:opacity-50 resize-none transition-all"
+                className="flex min-h-[44px] w-full resize-none bg-transparent px-3 py-3 text-[15px] placeholder:text-muted-foreground transition-all focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={disabled || isTyping}
                 style={{
-                  maxHeight: "120px",
+                  maxHeight: "150px",
                   minHeight: "44px",
                 }}
                 aria-label="Campo de mensaje"
               />
             </div>
+
             <Button
               onClick={handleSendClick}
-              disabled={
-                !inputMessage.trim() || disabled || isTyping
-              }
-              className="h-[44px] w-[44px] shrink-0 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+              disabled={!inputMessage.trim() || disabled || isTyping}
+              className="mb-1 h-12 w-12 shrink-0 rounded-2xl transition-all duration-200"
               type="button"
               aria-label="Enviar mensaje"
             >
               {isTyping ? (
                 <div className="flex items-center justify-center">
-                  <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" />
                 </div>
               ) : (
                 <Send className="h-5 w-5" />

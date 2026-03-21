@@ -9,7 +9,10 @@ const { logger } = require("../logger");
 // Normaliza mensajes de diferentes formatos a una estructura estándar interna
 function normalizeMessages(messages) {
   if (!Array.isArray(messages)) {
-    logger.error({ type: typeof messages }, "normalizeMessages recibió datos inválidos");
+    logger.error(
+      { type: typeof messages },
+      "normalizeMessages recibió datos inválidos",
+    );
     return [];
   }
 
@@ -38,9 +41,6 @@ function normalizeMessages(messages) {
       };
 
       // Preservar campos adicionales si existen
-      if (msg.feedbackRequested !== undefined) {
-        normalizedMsg.feedbackRequested = msg.feedbackRequested;
-      }
       if (msg.documentLinks) {
         normalizedMsg.documentLinks = msg.documentLinks;
       }
@@ -81,7 +81,7 @@ function validateChatHistory(chatHistory) {
   }
 
   return chatHistory.every(
-    (msg) => msg.id && msg.sender && msg.content !== undefined && msg.timestamp
+    (msg) => msg.id && msg.sender && msg.content !== undefined && msg.timestamp,
   );
 }
 

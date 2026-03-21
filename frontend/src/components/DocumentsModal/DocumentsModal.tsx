@@ -4,14 +4,15 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Search,
-  X,
-  FolderOpen,
   AlertCircle,
   Loader2,
   Download,
-  ExternalLink,
-
   Eye,
+  FileText,
+  FileType,
+  Info,
+  ExternalLink,
+  X,
 } from "lucide-react";
 import { useDocuments } from "./hooks/useDocuments";
 import { useDebouncedSearch } from "./hooks/useDebouncedSearch";
@@ -44,6 +45,7 @@ export const DocumentsModal: React.FC<DocumentsModalProps> = ({
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedDocuments, setSelectedDocuments] = useState<DocumentData[]>(preselectedDocuments);
   const [previewDoc, setPreviewDoc] = useState<DocumentData | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   // Estados para la vista previa (carga vía fetch -> blob)
   const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
@@ -82,14 +84,6 @@ export const DocumentsModal: React.FC<DocumentsModalProps> = ({
   useEffect(() => {
     setSelectedDocuments(preselectedDocuments);
   }, [preselectedDocuments]);
-
-  // Establecer el primer documento como vista previa por defecto si hay resultados
-  useEffect(() => {
-    if (!previewDoc && filteredDocuments.length > 0) {
-      setPreviewDoc(filteredDocuments[0]);
-    }
-  }, [filteredDocuments, previewDoc]);
-
   // Limpiar vista previa cuando se cierre el modal
   useEffect(() => {
     if (!isOpen) {
@@ -97,45 +91,45 @@ export const DocumentsModal: React.FC<DocumentsModalProps> = ({
       setPreviewBlobUrl(null);
       setPreviewError(null);
       setPreviewLoading(false);
+      setShowPreview(false);
     }
   }, [isOpen]);
 
-  // Cargar vista previa (fetch -> blob) cuando previewDoc cambie
+  // Cargar vista previa (fetch -> blob) cuando previewDoc cambie Y showPreview esté activo
   useEffect(() => {
     let currentBlob: string | null = null;
     const controller = new AbortController();
 
-    async function loadPreview() {
-      setPreviewError(null);
+    if (!showPreview || !previewDoc) {
       setPreviewBlobUrl(null);
+      setPreviewError(null);
+      return;
+    }
 
-      if (!previewDoc) return;
+    const doc = previewDoc;
+    const extension = doc.url.split('.').pop()?.toLowerCase() || '';
+    const isImage = ["jpg", "jpeg", "png", "gif", "webp"].includes(extension);
+    const isPdf = extension === 'pdf' || doc.type === 'reglamento' || doc.title.toLowerCase().endsWith('.pdf');
 
-      const extension = previewDoc.url.split('.').pop()?.toLowerCase() || '';
-      const isImage = ["jpg", "jpeg", "png", "gif", "webp"].includes(extension);
-      const isPdf = extension === 'pdf' || previewDoc.type === 'reglamento' || previewDoc.title.toLowerCase().endsWith('.pdf');
+    if (!isImage && !isPdf) return;
 
-      // Solo intentamos cargar si el tipo es compatible con vista previa
-      if (!isImage && !isPdf) return;
+    setPreviewLoading(true);
 
-      setPreviewLoading(true);
+    async function loadPreview() {
       try {
-        const separator = previewDoc.url.includes('?') ? '&' : '?';
-        const url = `${previewDoc.url}${separator}inline=true`;
+        const separator = doc.url.includes('?') ? '&' : '?';
+        const url = `${doc.url}${separator}inline=true`;
 
         const resp = await fetch(url, { signal: controller.signal, credentials: 'same-origin' });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
         const contentType = resp.headers.get('content-type') || '';
-        // Validar que no sea HTML (página de error)
         if (contentType.includes('html')) {
           throw new Error('El servidor devolvió una página HTML en lugar del archivo');
         }
-        // Para PDFs, aceptar application/pdf o application/octet-stream
         if (isPdf && !contentType.includes('pdf') && !contentType.includes('octet-stream')) {
           console.warn(`Content-Type inesperado para PDF: ${contentType}`);
         }
-        // Para imágenes, validar que sea imagen
         if (isImage && !contentType.startsWith('image/') && !contentType.includes('octet-stream')) {
           console.warn(`Content-Type inesperado para imagen: ${contentType}`);
         }
@@ -161,7 +155,7 @@ export const DocumentsModal: React.FC<DocumentsModalProps> = ({
         URL.revokeObjectURL(currentBlob);
       }
     };
-  }, [previewDoc]);
+  }, [previewDoc, showPreview]);
 
   if (!isOpen) return null;
 
@@ -184,6 +178,11 @@ export const DocumentsModal: React.FC<DocumentsModalProps> = ({
     setPreviewDoc(doc);
   };
 
+  const handleViewPreview = (doc: DocumentData) => {
+    setPreviewDoc(doc);
+    setShowPreview(true);
+  };
+
   const handleCheckboxChange = (doc: DocumentData) => {
     toggleDocumentSelection(doc);
   };
@@ -200,8 +199,6 @@ export const DocumentsModal: React.FC<DocumentsModalProps> = ({
   const handleDownload = async (e: React.MouseEvent, doc: DocumentData) => {
     e.stopPropagation();
     try {
-      // Usar fetch para descargar como Blob, igual que en el ejemplo de referencia
-      // Esto evita problemas con popups bloqueados y maneja mejor la descarga
       const response = await fetch(doc.url);
       if (!response.ok) throw new Error('Error en la descarga');
       
@@ -209,18 +206,24 @@ export const DocumentsModal: React.FC<DocumentsModalProps> = ({
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = doc.title; // Usar el título del documento como nombre de archivo
+      a.download = doc.title;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
       console.error('Error al descargar:', error);
-      // Fallback a window.open si fetch falla
       window.open(doc.url, "_blank");
     }
   };
 
+  const getDocumentTypeIcon = (url: string) => {
+    const extension = url.split('.').pop()?.toLowerCase() || '';
+    if (extension === 'pdf' || url.toLowerCase().includes('.pdf')) {
+      return <FileType className="h-6 w-6" />;
+    }
+    return <FileText className="h-6 w-6" />;
+  };
 
   const renderPreviewContent = () => {
     if (!previewDoc) {
@@ -236,7 +239,6 @@ export const DocumentsModal: React.FC<DocumentsModalProps> = ({
     const isImage = ["jpg", "jpeg", "png", "gif", "webp"].includes(extension);
     const isPdf = extension === "pdf" || previewDoc.type === "reglamento" || previewDoc.title.toLowerCase().endsWith(".pdf");
 
-    // Estado de carga/error: mostrar mensajes claros
     if (previewLoading) {
       return (
         <div className="flex flex-col items-center justify-center h-full p-8">
@@ -296,7 +298,6 @@ export const DocumentsModal: React.FC<DocumentsModalProps> = ({
       );
     }
 
-    // Fallback para otros tipos de archivos
     return (
       <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-8 bg-slate-50">
         <div className="w-24 h-24 bg-white rounded-xl shadow-sm flex items-center justify-center mb-6">
@@ -315,58 +316,214 @@ export const DocumentsModal: React.FC<DocumentsModalProps> = ({
     );
   };
 
+  // Renderiza el item de documento para web
+  const renderWebDocumentItem = (doc: DocumentData) => {
+    const isSelected = isDocumentSelected(doc);
+    const isPreview = previewDoc?.id === doc.id;
+    
+    return (
+      <div
+        key={doc.id}
+        onClick={() => handleDocumentClick(doc)}
+        className={`group flex items-center gap-3 p-3 rounded-xl transition-all cursor-pointer ${
+          isSelected
+            ? "bg-blue-50 border border-blue-200 shadow-sm"
+            : isPreview
+            ? "bg-primary/5 border border-primary/20"
+            : "hover:bg-muted border border-transparent hover:shadow-sm"
+        }`}
+      >
+        <div onClick={(e) => e.stopPropagation()}>
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={() => handleCheckboxChange(doc)}
+            className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+          />
+        </div>
+        
+        <div className="text-primary">
+          {getDocumentTypeIcon(doc.url)}
+        </div>
+
+        <div className="flex-1 min-w-0">
+           <h4 className={`text-sm font-semibold truncate ${
+             isSelected ? 'text-primary' : isPreview ? 'text-primary' : 'text-foreground'
+           }`}>
+            {doc.title}
+          </h4>
+          <div className="flex items-center gap-2 mt-0.5">
+             <span className={`text-[10px] font-bold tracking-widest uppercase px-1.5 py-0.5 rounded-sm ${
+               isSelected ? 'bg-primary/10 text-primary-foreground' : 'bg-muted/10 text-muted-foreground'
+             }`}>
+              {doc.type}
+            </span>
+          </div>
+        </div>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-muted-foreground hover:text-primary"
+          onClick={(e) => handleDownload(e, doc)}
+          title="Descargar"
+        >
+          <Download className="h-4 w-4" />
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-muted-foreground hover:text-primary"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleViewPreview(doc);
+          }}
+          title="Ver Previa"
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  };
+
+  // Renderiza el item de documento para móvil
+  const renderMobileDocumentItem = (doc: DocumentData) => {
+    const isSelected = isDocumentSelected(doc);
+    
+    return (
+      <div
+        key={doc.id}
+        onClick={() => handleDocumentClick(doc)}
+        className="group flex items-center p-4 bg-background rounded-xl transition-all"
+      >
+        <div className="mr-4" onClick={(e) => e.stopPropagation()}>
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={() => handleCheckboxChange(doc)}
+            className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+          />
+        </div>
+        
+        <div className="h-12 w-12 flex items-center justify-center rounded-lg mr-4 bg-primary/5 text-primary">
+          {getDocumentTypeIcon(doc.url)}
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <h4 className="text-sm font-bold truncate tracking-tight text-foreground">
+            {doc.title}
+          </h4>
+          <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5">
+            {doc.type}
+          </p>
+        </div>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 text-primary hover:bg-primary/5 rounded-full mr-2"
+          onClick={(e) => handleDownload(e, doc)}
+          title="Descargar"
+        >
+          <Download className="h-5 w-5" />
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 text-primary hover:bg-primary/5 rounded-full"
+          onClick={async (e) => {
+            e.stopPropagation();
+            
+            // Cargar el documento y abrirlo en nueva pestaña
+            try {
+              const separator = doc.url.includes('?') ? '&' : '?';
+              const url = `${doc.url}${separator}inline=true`;
+              
+              const resp = await fetch(url, { credentials: 'same-origin' });
+              if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+              
+              const blob = await resp.blob();
+              const blobUrl = URL.createObjectURL(blob);
+              
+              const newWindow = window.open("", "_blank");
+              if (newWindow) {
+                const formattedTitle = doc.title
+                  .replace(/\.(pdf|jpg|jpeg|png|gif|webp)$/i, '')
+                  .split(/[\s_-]+/)
+                  .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                  .join(' ');
+                
+                newWindow.document.title = formattedTitle || doc.title;
+                newWindow.document.body.style.margin = "0";
+                newWindow.document.body.style.padding = "0";
+                newWindow.document.body.style.overflow = "hidden";
+                newWindow.document.body.style.backgroundColor = "#525659";
+                
+                const iframe = newWindow.document.createElement("iframe");
+                iframe.style.position = "absolute";
+                iframe.style.top = "0";
+                iframe.style.left = "0";
+                iframe.style.width = "100%";
+                iframe.style.height = "100%";
+                iframe.style.border = "none";
+                iframe.src = blobUrl;
+                newWindow.document.body.appendChild(iframe);
+              }
+            } catch (error) {
+              console.error('Error al abrir vista previa:', error);
+              // Fallback: abrir URL directa
+              const separator = doc.url.includes('?') ? '&' : '?';
+              window.open(`${doc.url}${separator}inline=true`, "_blank");
+            }
+          }}
+          title="Vista previa"
+        >
+          <Eye className="h-5 w-5" />
+        </Button>
+      </div>
+    );
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-12">
       {/* Overlay */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+        className="absolute inset-0 bg-background/40 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* Modal Container */}
-      <div className="relative w-full max-w-7xl h-[90vh] bg-background rounded-xl shadow-2xl border border-border flex flex-col animate-in zoom-in-95 fade-in duration-200 overflow-hidden">
-        {/* Header */}
-        <div className="shrink-0 flex items-center justify-between p-4 border-b border-border bg-card">
-          <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
-              <FolderOpen className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold tracking-tight">Documentos DDPER</h2>
-              <p className="text-xs text-muted-foreground">
-                {filteredDocuments.length} de {documents.length} documentos • {selectedDocuments.length} seleccionados
-              </p>
-            </div>
-          </div>
-          <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full">
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
-
-        {/* Main Content - Two Columns */}
-        <div className="flex-1 flex min-h-0 overflow-hidden">
-          {/* Left Sidebar - Document List */}
-          <div className="w-1/3 min-w-[320px] max-w-md border-r border-border flex flex-col bg-card/50">
-            {/* Search & Filters */}
-            <div className="p-4 space-y-4 border-b border-border bg-card">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      {/* Modal Container - Responsive */}
+      <div className="relative w-full max-w-7xl h-[90vh] md:max-h-[900px] bg-background rounded-xl shadow-2xl border border-border flex flex-col overflow-hidden">
+        
+        {/* ==================== WEB LAYOUT (md+) ==================== */}
+        <div className="hidden md:flex flex-1 min-h-0">
+          {/* Left Sidebar - 420px */}
+          <aside className={`bg-muted/30 flex flex-col border-r border-border transition-all duration-300 ease-in-out ${showPreview ? 'w-[420px]' : 'w-full'}`}>
+            <div className="p-6 pb-4">
+              <div className="relative flex items-center">
+                <Search className="absolute left-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="text"
                   placeholder="Buscar documentos..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 bg-background"
+                  className="pl-10 pr-4 py-2.5 bg-background border-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="mt-6 flex items-center justify-between">
+                <h2 className="text-sm font-bold tracking-wider uppercase text-muted-foreground">Biblioteca de Documentos</h2>
+                <span className="text-xs font-semibold text-primary px-2 py-0.5 bg-primary/10 rounded">
+                  {documents.length} Archivos
+                </span>
+              </div>
+              <div className="flex gap-2 mt-4 flex-wrap">
                 {safeCategories.map((category) => (
                   <Button
                     key={category}
                     variant={selectedCategory === category ? "default" : "outline"}
                     size="sm"
                     onClick={() => setSelectedCategory(category)}
-                    className="rounded-full text-xs h-7"
+                    className="px-3 py-1.5 text-xs font-medium rounded-lg"
                   >
                     {category === "all" ? "Todos" : category}
                   </Button>
@@ -374,8 +531,8 @@ export const DocumentsModal: React.FC<DocumentsModalProps> = ({
               </div>
             </div>
 
-            {/* Documents List */}
-            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+            {/* Document List */}
+            <div className="flex-1 overflow-y-auto px-3 pb-6">
               {loading ? (
                 <div className="flex flex-col items-center justify-center h-40 space-y-3">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -393,125 +550,186 @@ export const DocumentsModal: React.FC<DocumentsModalProps> = ({
                   <p className="text-sm text-muted-foreground">No se encontraron documentos</p>
                 </div>
               ) : (
-                filteredDocuments.map((doc) => {
-                  const isSelected = isDocumentSelected(doc);
-                  const isPreview = previewDoc?.id === doc.id;
-                  
-                  return (
-                    <div
-                      key={doc.id}
-                      onClick={() => handleDocumentClick(doc)}
-                      className={`group flex items-center p-3 rounded-lg border transition-all cursor-pointer ${
-                        isPreview
-                          ? "bg-primary/5 border-primary/20 ring-1 ring-primary/10"
-                          : "bg-background border-transparent hover:bg-accent hover:text-accent-foreground"
-                      }`}
-                    >
-                      <div className="mr-3" onClick={(e) => e.stopPropagation()}>
-                        <Checkbox
-                          checked={isSelected}
-                          onCheckedChange={() => handleCheckboxChange(doc)}
-                          className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                        />
-                      </div>
-                      
-                      <div className="mr-3 shrink-0 text-muted-foreground group-hover:text-primary transition-colors">
-                        {getDocumentIcon(doc.url)}
-                      </div>
-
-                      <div className="flex-1 min-w-0 mr-2">
-                        <h4 className={`text-sm font-medium truncate ${isPreview ? 'text-primary' : 'text-foreground'}`}>
-                          {doc.title}
-                        </h4>
-                        <div className="flex items-center gap-2 mt-0.5">
-                           <span className="text-[10px] uppercase tracking-wider text-muted-foreground px-1.5 py-0.5 rounded-sm bg-muted">
-                            {doc.type}
-                           </span>
-                        </div>
-                      </div>
-
-                      {isPreview && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 opacity-100 transition-opacity text-primary hover:text-primary hover:bg-primary/10"
-                          onClick={(e) => handleDownload(e, doc)}
-                          title="Descargar"
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  );
-                })
+                <div className="flex flex-col gap-1">
+                  {filteredDocuments.map(renderWebDocumentItem)}
+                </div>
               )}
             </div>
-          </div>
+          </aside>
 
           {/* Right Panel - Preview */}
-          <div className="flex-1 flex flex-col bg-muted/10 h-full min-w-0">
-            {/* Preview Toolbar */}
-            <div className="h-12 border-b border-border bg-card/50 flex items-center justify-between px-4">
-              <span className="text-xs font-semibold text-muted-foreground tracking-wider uppercase">
-                Vista Previa
-              </span>
-              
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-7 w-7 text-muted-foreground hover:text-primary"
-                onClick={() => {
-                  if (!previewDoc) return;
-                  if (previewBlobUrl) {
-                    window.open(previewBlobUrl, "_blank");
-                    return;
-                  }
-                  // Abrir URL con inline=true para intentar mostrar en navegador
-                  const separator = previewDoc.url.includes('?') ? '&' : '?';
-                  window.open(`${previewDoc.url}${separator}inline=true`, "_blank");
-                }}
-                disabled={!previewDoc}
-                title="Abrir en nueva pestaña"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-              </Button>
-            </div>
+          <main className={`bg-muted/10 flex flex-col relative transition-all duration-300 ease-in-out overflow-hidden ${showPreview ? 'flex-1 opacity-100' : 'w-0 opacity-0'}`}>
+            {!showPreview ? null : (
+              <>
+                {/* Viewer Header */}
+                <div className="flex items-center justify-between px-8 py-4 bg-background border-b border-border">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold tracking-widest text-muted-foreground uppercase">Vista Previa</span>
+                    <p className="text-sm font-bold text-foreground">
+                      {previewDoc?.title || "Ningún documento seleccionado"}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Button 
+                      variant="outline"
+                      className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-primary hover:bg-primary/5"
+                      onClick={() => {
+                        if (!previewDoc) return;
+                        
+                        // Si tenemos blobUrl, abrir en nueva ventana con título personalizado
+                        if (previewBlobUrl) {
+                          const newWindow = window.open("", "_blank");
+                          if (newWindow) {
+                            // Formatear el título: capitalizar primera letra de cada palabra
+                            const formattedTitle = previewDoc.title
+                              .replace(/\.(pdf|jpg|jpeg|png|gif|webp)$/i, '') // Quitar extensión
+                              .split(/[\s_-]+/) // Dividir por espacios, guiones y guiones bajos
+                              .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()) // Capitalizar
+                              .join(' '); // Unir con espacios
+                            
+                            newWindow.document.title = formattedTitle || previewDoc.title;
+                            newWindow.document.body.style.margin = "0";
+                            newWindow.document.body.style.padding = "0";
+                            newWindow.document.body.style.overflow = "hidden";
+                            newWindow.document.body.style.backgroundColor = "#525659";
+                            
+                            const iframe = newWindow.document.createElement("iframe");
+                            iframe.style.position = "absolute";
+                            iframe.style.top = "0";
+                            iframe.style.left = "0";
+                            iframe.style.width = "100%";
+                            iframe.style.height = "100%";
+                            iframe.style.border = "none";
+                            iframe.src = previewBlobUrl;
+                            newWindow.document.body.appendChild(iframe);
+                          }
+                          return;
+                        }
+                        
+                        // Fallback: abrir URL directa con inline=true
+                        const separator = previewDoc.url.includes('?') ? '&' : '?';
+                        window.open(`${previewDoc.url}${separator}inline=true`, "_blank");
+                      }}
+                      disabled={!previewDoc}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Abrir en nueva pestaña
+                    </Button>
+                    <div className="w-px h-6 bg-border mx-1"></div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-muted-foreground hover:text-foreground"
+                      onClick={() => setShowPreview(false)}
+                    >
+                      <X className="h-5 w-5" />
+                    </Button>
+                  </div>
+                </div>
 
-            {/* Preview Area */}
-            <div className="flex-1 overflow-auto relative bg-slate-100/50 p-6 flex flex-col items-center">
-              <div className="w-full flex-1 bg-white shadow-xl rounded-sm transition-all duration-300 overflow-hidden">
-                {renderPreviewContent()}
-              </div>
-            </div>
-
-            {/* Preview Footer / Pagination (Simulated) */}
-            {previewDoc && (
-              <div className="h-10 border-t border-border bg-card flex items-center justify-center text-xs text-muted-foreground gap-4">
-               {/* Si tuviéramos paginación real de PDF, iría aquí */}
-               <span>Mostrando documento completo</span>
-              </div>
+                {/* Preview Area */}
+                <div className="flex-1 overflow-auto bg-white">
+                  {renderPreviewContent()}
+                </div>
+              </>
             )}
-          </div>
+          </main>
         </div>
 
-        {/* Modal Footer */}
-        <div className="shrink-0 p-4 border-t border-border bg-card flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">
-                Selecciona documentos para usar como contexto.
+        {/* ==================== MOBILE LAYOUT (< md) ==================== */}
+        <div className="flex flex-col md:hidden h-full">
+          {/* Search & Filters */}
+          <div className="px-6 pt-6 pb-4 bg-muted/20 shrink-0">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Buscar documentos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-12 pl-12 pr-4 bg-background border-none focus:ring-2 focus:ring-primary/20"
+              />
             </div>
-          <div className="flex items-center space-x-3">
-            <Button variant="outline" onClick={onClose} className="min-w-[100px]">
+            <div className="flex gap-2 mt-4 overflow-x-auto pb-1">
+              {safeCategories.map((category) => (
+                <Button
+                  key={category}
+                  variant={selectedCategory === category ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedCategory(category)}
+                  className="flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider"
+                >
+                  {category === "all" ? "Todos" : category}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Document List */}
+          <main className="flex-1 overflow-y-auto px-6 py-4 pb-32">
+            {loading ? (
+              <div className="flex flex-col items-center justify-center h-40 space-y-3">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">Cargando...</p>
+              </div>
+            ) : error ? (
+              <div className="flex flex-col items-center justify-center h-40 space-y-3 text-center p-4">
+                <AlertCircle className="h-8 w-8 text-destructive" />
+                <p className="text-sm text-muted-foreground">Error al cargar documentos</p>
+                <Button variant="outline" size="sm" onClick={reloadDocuments}>Reintentar</Button>
+              </div>
+            ) : filteredDocuments.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-40 text-center p-4 space-y-2">
+                <Search className="h-8 w-8 text-muted-foreground/30" />
+                <p className="text-sm text-muted-foreground">No se encontraron documentos</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredDocuments.map(renderMobileDocumentItem)}
+              </div>
+            )}
+          </main>
+
+          {/* Mobile Footer */}
+          <footer className="bg-background px-4 py-4 flex gap-3 shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.05)] border-t border-border shrink-0">
+            <Button 
+              variant="outline" 
+              className="flex-1 h-11 text-xs font-semibold rounded-lg"
+              onClick={onClose}
+            >
               Cancelar
             </Button>
             <Button 
-              onClick={handleConfirmSelection} 
-              className="min-w-[140px]"
+              className="flex-[1.5] h-11 text-xs font-semibold rounded-lg shadow-md"
+              onClick={handleConfirmSelection}
+              disabled={selectedDocuments.length === 0}
+            >
+              <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+              Seleccionar {selectedDocuments.length > 0 && `(${selectedDocuments.length})`}
+            </Button>
+          </footer>
+        </div>
+
+        {/* ==================== WEB FOOTER (md+) ==================== */}
+        <footer className="hidden md:flex px-8 py-5 bg-background border-t border-border items-center justify-between shrink-0">
+          <div className="flex items-center gap-2 text-muted-foreground text-xs">
+            <Info className="h-4 w-4" />
+            <span>{selectedDocuments.length} documento(s) seleccionado(s) para procesar</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <Button variant="outline" onClick={onClose} className="px-6 py-2.5 text-sm font-semibold text-primary hover:bg-muted">
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleConfirmSelection}
+              className="px-8 py-2.5 text-sm font-semibold shadow-md hover:shadow-lg"
               disabled={selectedDocuments.length === 0}
             >
               Seleccionar {selectedDocuments.length > 0 && `(${selectedDocuments.length})`}
             </Button>
           </div>
-        </div>
+        </footer>
+
       </div>
     </div>
   );

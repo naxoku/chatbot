@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import EChartsTree from "../../utils/EChartsTree";
+import MindElixirMap from "../../utils/MindElixirMap";
 import {
   Dialog,
   DialogContent,
@@ -67,10 +67,11 @@ export const MindMapModal: React.FC<MindMapModalProps> = ({
   isOpen,
   onClose,
   artifact,
-  onNodeClick,
+  // onNodeClick no se usa actualmente
 }) => {
   const [referenceModalOpen, setReferenceModalOpen] = useState(false);
-  const [selectedNodeData, setSelectedNodeData] =
+  // setSelectedNodeData no se usa actualmente pero podría usarse en el futuro
+  const [selectedNodeData, _setSelectedNodeData] =
     useState<MindMapNodeData | null>(null);
 
   // Debug logs
@@ -84,35 +85,35 @@ export const MindMapModal: React.FC<MindMapModalProps> = ({
   if (!isOpen) return null;
   if (!artifact || !artifact.name || !artifact.data) {
     return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-red-600 dark:text-red-400">
-              Error
-            </DialogTitle>
-            <DialogDescription>
-              No se pudieron cargar los datos del mapa mental.
-            </DialogDescription>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
+       <Dialog open={isOpen} onOpenChange={onClose}>
+         <DialogContent className="max-w-md">
+           <DialogHeader>
+             <DialogTitle className="text-destructive dark:text-destructive/80">
+               Error
+             </DialogTitle>
+             <DialogDescription>
+               No se pudieron cargar los datos del mapa mental.
+             </DialogDescription>
+           </DialogHeader>
+         </DialogContent>
+       </Dialog>
     );
   }
 
   if (!artifact.data.name) {
     return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-red-600 dark:text-red-400">
-              Error
-            </DialogTitle>
-            <DialogDescription>
-              La estructura del mapa mental no es válida.
-            </DialogDescription>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
+       <Dialog open={isOpen} onOpenChange={onClose}>
+         <DialogContent className="max-w-md">
+           <DialogHeader>
+             <DialogTitle className="text-destructive dark:text-destructive/80">
+               Error
+             </DialogTitle>
+             <DialogDescription>
+               La estructura del mapa mental no es válida.
+             </DialogDescription>
+           </DialogHeader>
+         </DialogContent>
+       </Dialog>
     );
   }
 
@@ -124,9 +125,9 @@ export const MindMapModal: React.FC<MindMapModalProps> = ({
           <DialogHeader className="px-6 py-4 border-b border-border/50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center">
-                  <i className="fas fa-project-diagram text-blue-600 dark:text-blue-400"></i>
-                </div>
+                 <div className="w-9 h-9 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center">
+                   <i className="fas fa-project-diagram text-primary dark:text-primary/80"></i>
+                 </div>
                 <div>
                   <DialogTitle className="text-lg font-semibold">
                     {artifact.name}
@@ -151,19 +152,8 @@ export const MindMapModal: React.FC<MindMapModalProps> = ({
           </DialogHeader>
 
           {/* Contenedor del mapa */}
-          <div className="flex-1 w-full h-[calc(100%-70px)] p-4">
-            <EChartsTree
-              data={artifact.data}
-              onNodeClick={(nodeData) => {
-                if (nodeData.reference) {
-                  setSelectedNodeData(nodeData);
-                  setReferenceModalOpen(true);
-                }
-                if (onNodeClick) {
-                  onNodeClick(nodeData);
-                }
-              }}
-            />
+          <div className="flex-1 w-full h-[calc(100%-70px)] p-4" style={{ minHeight: '600px' }}>
+            <MindElixirMap data={artifact.data} />
           </div>
         </DialogContent>
       </Dialog>

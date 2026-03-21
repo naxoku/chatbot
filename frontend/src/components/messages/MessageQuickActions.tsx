@@ -1,101 +1,34 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
-import { createPortal } from "react-dom";
-import { Reply, Sparkles } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { MoreHorizontal, Sparkles } from "lucide-react";
 import { type QuickAction } from "../config/quickActions";
 import type { Message } from "../../services/backendService";
+import { useIsMobile } from "../../hooks/use-mobile";
 
 /**
  * Componente para acciones rápidas del mensaje.
- * Renderiza el menú en un portal con posición fija para evitar
- * que sea recortado por contenedores con overflow.
+ * Despliega acciones inline en la misma fila con transición suave.
  */
 interface MessageQuickActionsProps {
   message: Message;
   onQuickAction?: (action: QuickAction, message: Message) => void;
-  onQuoteMessage?: (message: Message) => void;
   quickActions?: QuickAction[];
 }
 
-interface MenuCoords {
-  top: number;
-  left: number;
-  direction: "above" | "below";
-}
+const quickActionLabels: Record<string, string> = {
+  resumen: "Resumir",
+  explicar: "Explicar",
+  ejemplo: "Ejemplo",
+  "mapa-mental": "Mapa mental",
+};
 
 export const MessageQuickActions: React.FC<MessageQuickActionsProps> = ({
   message,
   onQuickAction,
-  onQuoteMessage,
   quickActions = [],
 }) => {
+  const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
-  const [coords, setCoords] = useState<MenuCoords | null>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  const MENU_WIDTH = 224; // w-56 = 14rem = 224px
-  const MENU_GAP = 8;
-
-  const calculatePosition = useCallback(() => {
-    if (!buttonRef.current) return;
-
-    const rect = buttonRef.current.getBoundingClientRect();
-    const viewportH = window.innerHeight;
-    const viewportW = window.innerWidth;
-
-    // Estimate menu height: ~36px per item + 8px padding
-    const itemCount = quickActions.length + 1; // +1 for "Responder"
-    const estimatedMenuH = itemCount * 36 + 8;
-
-    const spaceBelow = viewportH - rect.bottom - MENU_GAP;
-    const spaceAbove = rect.top - MENU_GAP;
-
-    // Vertical: prefer above if not enough space below
-    let top: number;
-    let direction: "above" | "below";
-    if (spaceBelow >= estimatedMenuH) {
-      top = rect.bottom + MENU_GAP;
-      direction = "below";
-    } else if (spaceAbove >= estimatedMenuH) {
-      top = rect.top - MENU_GAP - estimatedMenuH;
-      direction = "above";
-    } else {
-      // Neither side has full space — pick the side with more room
-      if (spaceAbove > spaceBelow) {
-        top = Math.max(MENU_GAP, rect.top - MENU_GAP - estimatedMenuH);
-        direction = "above";
-      } else {
-        top = rect.bottom + MENU_GAP;
-        direction = "below";
-      }
-    }
-
-    // Horizontal: center on button, clamp to viewport
-    let left = rect.left + rect.width / 2 - MENU_WIDTH / 2;
-    left = Math.max(MENU_GAP, Math.min(left, viewportW - MENU_WIDTH - MENU_GAP));
-
-    setCoords({ top, left, direction });
-  }, [quickActions.length]);
-
-  // Recalculate on scroll/resize while open
-  useEffect(() => {
-    if (!isOpen) return;
-
-    calculatePosition();
-
-    const handleScrollOrResize = () => {
-      calculatePosition();
-    };
-
-    // Listen on capture phase to catch scroll events from any ancestor
-    window.addEventListener("scroll", handleScrollOrResize, true);
-    window.addEventListener("resize", handleScrollOrResize);
-
-    return () => {
-      window.removeEventListener("scroll", handleScrollOrResize, true);
-      window.removeEventListener("resize", handleScrollOrResize);
-    };
-  }, [isOpen, calculatePosition]);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Close on click outside
   useEffect(() => {
@@ -103,12 +36,7 @@ export const MessageQuickActions: React.FC<MessageQuickActionsProps> = ({
 
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
-      if (
-        menuRef.current &&
-        !menuRef.current.contains(target) &&
-        buttonRef.current &&
-        !buttonRef.current.contains(target)
-      ) {
+      if (containerRef.current && !containerRef.current.contains(target)) {
         setIsOpen(false);
       }
     };
@@ -118,16 +46,7 @@ export const MessageQuickActions: React.FC<MessageQuickActionsProps> = ({
   }, [isOpen]);
 
   const handleActionClick = (action: QuickAction) => {
-    if (action.id === "responder") {
-      onQuoteMessage?.(message);
-    } else if (action.id === "mapa-mental") {
-      onQuickAction?.(action, message);
-    } else {
-      onQuoteMessage?.(message);
-      setTimeout(() => {
-        onQuickAction?.(action, message);
-      }, 0);
-    }
+    onQuickAction?.(action, message);
     setIsOpen(false);
   };
 
@@ -135,87 +54,105 @@ export const MessageQuickActions: React.FC<MessageQuickActionsProps> = ({
     return null;
   }
 
-  const menu = isOpen && coords
-    ? createPortal(
-        <>
-          {/* Backdrop invisible para cerrar */}
-          <div
-            className="fixed inset-0 z-[9998]"
-            onClick={() => setIsOpen(false)}
-          />
+  if (!isMobile) {
+    return (
+      <div
+        ref={containerRef}
+        className="relative flex items-center gap-2 min-w-0"
+      >
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsOpen((prev) => !prev);
+          }}
+          className="rounded-lg border border-border/50 bg-background/60 p-1.5 text-muted-foreground transition-all duration-200 hover:bg-accent/60 hover:text-foreground"
+          title="Acciones rápidas"
+          aria-label="Mostrar acciones rápidas"
+          aria-expanded={isOpen}
+        >
+          <MoreHorizontal className="h-3.5 w-3.5" />
+        </button>
 
-          {/* Menu flotante */}
-          <div
-            ref={menuRef}
-            style={{
-              position: "fixed",
-              top: coords.top,
-              left: coords.left,
-              width: MENU_WIDTH,
-              zIndex: 9999,
-            }}
-            className={`rounded-lg shadow-lg border border-border bg-popover text-popover-foreground animate-in fade-in ${
-              coords.direction === "above"
-                ? "slide-in-from-bottom-2"
-                : "slide-in-from-top-2"
-            } zoom-in-95 duration-150`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="py-1">
-              {/* Acción de responder */}
-              <button
-                onClick={() =>
-                  handleActionClick({
-                    id: "responder",
-                    text: "Responder",
-                    icon: "fas fa-reply",
-                  })
-                }
-                className="w-full text-left px-3 py-2 text-sm font-normal transition-colors flex items-center gap-2 text-popover-foreground hover:bg-accent hover:text-accent-foreground min-h-[2.25rem]"
-              >
-                <Reply className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="flex-1">Responder</span>
-              </button>
-
-              {quickActions.map((action) => (
-                <button
-                  key={action.id}
-                  onClick={() => handleActionClick(action)}
-                  className="w-full text-left px-3 py-2 text-sm font-normal transition-colors flex items-center gap-2 text-popover-foreground hover:bg-accent hover:text-accent-foreground min-h-[2.25rem]"
-                >
-                  <i
-                    className={`${action.icon} text-sm text-muted-foreground`}
-                  ></i>
-                  <span className="flex-1">{action.text}</span>
-                  {action.generatesArtifact && (
-                    <Sparkles className="w-3.5 h-3.5 text-muted-foreground" />
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-        </>,
-        document.body
-      )
-    : null;
+        <div
+          className={`flex items-center gap-1 overflow-hidden transition-all duration-300 ease-out min-w-0 ${
+            isOpen
+              ? "max-w-[40rem] opacity-100 translate-x-0"
+              : "max-w-0 opacity-0 -translate-x-1 pointer-events-none"
+          }`}
+          aria-hidden={!isOpen}
+        >
+          {quickActions.map((action, index) => (
+            <button
+              key={action.id}
+              onClick={() => handleActionClick(action)}
+              className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-border/60 bg-background/70 px-2.5 py-1.5 text-xs font-medium text-foreground/80 transition-all duration-200 hover:bg-accent hover:text-foreground ${
+                isOpen ? "translate-y-0 opacity-100" : "translate-y-0 opacity-0"
+              }`}
+              style={{ transitionDelay: isOpen ? `${index * 30}ms` : "0ms" }}
+              title={action.text}
+              aria-label={action.text}
+            >
+              <i
+                className={`${action.icon} text-[10px] text-muted-foreground`}
+              ></i>
+              <span>{quickActionLabels[action.id] ?? action.text}</span>
+              {action.generatesArtifact && (
+                <Sparkles className="h-3 w-3 text-muted-foreground" />
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="relative">
+    <div
+      ref={containerRef}
+      className="relative flex items-center gap-2 min-w-0"
+    >
       <button
-        ref={buttonRef}
         onClick={(e) => {
           e.stopPropagation();
-          setIsOpen(!isOpen);
+          setIsOpen((prev) => !prev);
         }}
-        className="p-1.5 rounded-md transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-accent dark:hover:bg-accent/50"
+        className="rounded-lg border border-border/50 bg-background/60 p-1.5 text-muted-foreground transition-all duration-200 hover:bg-accent/60 hover:text-foreground"
         title="Acciones rápidas"
-        aria-label="Menú de acciones rápidas"
+        aria-label="Mostrar acciones rápidas"
         aria-expanded={isOpen}
       >
-        <Sparkles className="w-3.5 h-3.5" />
+        <MoreHorizontal className="h-3.5 w-3.5" />
       </button>
 
-      {menu}
+      <div
+        className={`absolute left-0 top-full z-20 mt-2 flex w-52 flex-col rounded-xl border border-border/70 bg-popover p-1 shadow-lg transition-all duration-200 ease-out ${
+          isOpen
+            ? "opacity-100 translate-y-0"
+            : "pointer-events-none opacity-0 -translate-y-1"
+        }`}
+        aria-hidden={!isOpen}
+      >
+        {quickActions.map((action, index) => (
+          <button
+            key={action.id}
+            onClick={() => handleActionClick(action)}
+            className={`inline-flex items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-foreground/85 transition-all duration-200 hover:bg-accent hover:text-foreground ${
+              isOpen ? "translate-y-0 opacity-100" : "translate-y-0 opacity-0"
+            }`}
+            style={{ transitionDelay: isOpen ? `${index * 25}ms` : "0ms" }}
+            title={action.text}
+            aria-label={action.text}
+          >
+            <i
+              className={`${action.icon} text-[11px] text-muted-foreground`}
+            ></i>
+            <span>{quickActionLabels[action.id] ?? action.text}</span>
+            {action.generatesArtifact && (
+              <Sparkles className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+            )}
+          </button>
+        ))}
+      </div>
     </div>
   );
 };

@@ -12,6 +12,183 @@ const { logger } = require("../logger");
 
 const router = express.Router();
 
+const MAX_REFERENCES = 12;
+
+const safeJsonParse = (value) => {
+  if (typeof value !== "string") return null;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+};
+
+const normalizeTextValue = (value) => String(value || "").trim();
+
+const inferFileType = (value = "") => {
+  const lower = String(value).toLowerCase();
+  if (lower.includes(".pdf")) return "pdf";
+  if (lower.includes(".doc") || lower.includes(".docx")) return "docx";
+  if (lower.includes(".xls") || lower.includes(".xlsx") || lower.includes(".csv")) {
+    return "xlsx";
+  }
+  if (lower.includes(".txt") || lower.includes(".md")) return "txt";
+  if (
+    lower.includes(".png") ||
+    lower.includes(".jpg") ||
+    lower.includes(".jpeg") ||
+    lower.includes(".webp") ||
+    lower.includes(".gif")
+  ) {
+    return "img";
+  }
+  return "other";
+};
+
+const normalizeQuote = (text) => {
+  const cleaned = String(text || "")
+    .replace(/\s+/g, " ")
+    .replace(/\\n/g, " ")
+    .trim();
+  if (!cleaned) return "";
+  return cleaned.length > 420 ? `${cleaned.slice(0, 417)}...` : cleaned;
+};
+
+const toReferenceDocument = (doc = {}, fallbackTitle = "Documento consultado") => {
+  const sourceName =
+    doc.title ||
+    doc.file_name ||
+    doc.fileName ||
+    doc.name ||
+    doc.filename ||
+    doc.file_id ||
+    doc.doc_id ||
+    doc.source;
+
+  const title =
+    normalizeTextValue(sourceName) || normalizeTextValue(fallbackTitle);
+
+  const docId =
+    normalizeTextValue(doc.id) ||
+    normalizeTextValue(doc.doc_id) ||
+    normalizeTextValue(doc.file_id) ||
+    normalizeTextValue(doc.url) ||
+    `${title.toLowerCase().replace(/\s+/g, "-")}-${nanoid(6)}`;
+
+  const docUrl = normalizeTextValue(doc.url);
+  const docType = normalizeTextValue(doc.type) || inferFileType(title || docUrl || "");
+  const docCategory = normalizeTextValue(doc.category) || "Citas recuperadas";
+
+  return {
+    id: docId,
+    title,
+    type: docType,
+    category: docCategory,
+    ...(docUrl && { url: docUrl }),
+  };
+};
+
+const extractObservationEntries = (observation) => {
+  if (!observation) return [];
+
+  if (Array.isArray(observation)) return observation;
+
+  if (typeof observation === "object") {
+    if (Array.isArray(observation.response)) return observation.response;
+    if (Array.isArray(observation.results)) return observation.results;
+    return [observation];
+  }
+
+  if (typeof observation === "string") {
+    const parsed = safeJsonParse(observation);
+    if (Array.isArray(parsed)) return parsed;
+    if (parsed && typeof parsed === "object") return [parsed];
+  }
+
+  return [];
+};
+
+const extractReferencesFromIntermediateSteps = (steps = []) => {
+  const references = [];
+  const seen = new Set();
+
+  for (const step of steps) {
+    const action = step?.action || {};
+    const queryInput = action?.toolInput?.input || "Consulta documental";
+    const entries = extractObservationEntries(step?.observation);
+
+    for (const entry of entries) {
+      let payload = entry;
+
+      if (entry?.text && typeof entry.text === "string") {
+        const parsedText = safeJsonParse(entry.text);
+        if (parsedText && typeof parsedText === "object") payload = parsedText;
+      }
+
+      const pageContent = payload?.pageContent || payload?.content || payload?.text;
+      const quote = normalizeQuote(pageContent);
+      if (!quote) continue;
+
+      const metadata = payload?.metadata || {};
+      const document = toReferenceDocument(metadata, `Resultado: ${queryInput}`);
+      const lineFrom = metadata?.loc?.lines?.from || payload?.loc?.lines?.from || "";
+      const lineTo = metadata?.loc?.lines?.to || payload?.loc?.lines?.to || "";
+      const dedupeDocId =
+        normalizeTextValue(document.id) ||
+        normalizeTextValue(document.url) ||
+        normalizeTextValue(document.title).toLowerCase();
+      const key = `${dedupeDocId}|${lineFrom}|${lineTo}|${quote.toLowerCase()}`;
+
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      references.push({
+        id: nanoid(),
+        document,
+        quote,
+        sourceTool: action?.tool || "tool",
+      });
+
+      if (references.length >= MAX_REFERENCES) return references;
+    }
+  }
+
+  return references;
+};
+
+const normalizeStructuredReferences = (rawReferences = []) => {
+  if (!Array.isArray(rawReferences)) return [];
+
+  const normalized = [];
+  const seen = new Set();
+
+  for (const item of rawReferences) {
+    if (!item || typeof item !== "object") continue;
+
+    const quote = normalizeQuote(item.quote || item.cita || item.pageContent || "");
+    if (!quote) continue;
+
+    const document = toReferenceDocument(
+      item.document || item.documento || item.metadata || {},
+      "Documento consultado",
+    );
+
+    const key = `${normalizeTextValue(document.id)}|${quote.toLowerCase()}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    normalized.push({
+      id: normalizeTextValue(item.id) || nanoid(),
+      document,
+      quote,
+    });
+
+    if (normalized.length >= MAX_REFERENCES) break;
+  }
+
+  return normalized;
+};
+
 // Normaliza la respuesta del servicio de chatbot.
 function normalizeChatbotResponse(data) {
   let respuesta =
@@ -30,7 +207,7 @@ function normalizeChatbotResponse(data) {
       d.url &&
       d.description &&
       typeof d.title === "string" &&
-      typeof d.url === "string"
+      typeof d.url === "string",
   );
 
   // Eliminar duplicados (por título o URL)
@@ -40,9 +217,19 @@ function normalizeChatbotResponse(data) {
     if (!unique.has(key)) unique.set(key, doc);
   }
 
+  let references =
+    data?.references || data?.output?.references || data?.output?.referencias || [];
+
+  references = normalizeStructuredReferences(references);
+
+  if (references.length === 0 && Array.isArray(data?.intermediateSteps)) {
+    references = extractReferencesFromIntermediateSteps(data.intermediateSteps);
+  }
+
   return {
     respuesta,
     documentosRecomendados: Array.from(unique.values()),
+    references,
   };
 }
 
@@ -69,6 +256,12 @@ const processN8nStream = async (reader, onChunk) => {
   const decoder = new TextDecoder();
   let accumulatedText = "";
   let buffer = "";
+  const streamMeta = {
+    references: [],
+    documentosRecomendados: [],
+    intermediateSteps: [],
+    output: null,
+  };
 
   try {
     while (true) {
@@ -89,8 +282,29 @@ const processN8nStream = async (reader, onChunk) => {
           if (data.type === "item" && data.content) {
             accumulatedText += data.content;
             onChunk(data.content, accumulatedText);
-          } else if (data.type === "end") {
-            return accumulatedText || "Respuesta completada";
+          } else {
+            if (Array.isArray(data.references)) {
+              streamMeta.references.push(...data.references);
+            }
+
+            if (Array.isArray(data.documentosRecomendados)) {
+              streamMeta.documentosRecomendados.push(...data.documentosRecomendados);
+            }
+
+            if (Array.isArray(data.intermediateSteps)) {
+              streamMeta.intermediateSteps.push(...data.intermediateSteps);
+            }
+
+            if (data.output && typeof data.output === "object") {
+              streamMeta.output = data.output;
+            }
+
+            if (data.type === "end") {
+              return {
+                respuesta: accumulatedText || "Respuesta completada",
+                streamMeta,
+              };
+            }
           }
         } catch {
           continue;
@@ -101,11 +315,20 @@ const processN8nStream = async (reader, onChunk) => {
     reader.releaseLock();
   }
 
-  return accumulatedText || "No hay respuesta disponible.";
+  return {
+    respuesta: accumulatedText || "No hay respuesta disponible.",
+    streamMeta,
+  };
 };
 
 // Crear mensajes para la conversación
-const createConversationMessages = (pregunta, respuesta, documentos, quotedData) => {
+const createConversationMessages = (
+  pregunta,
+  respuesta,
+  documentos,
+  references,
+  quotedData,
+) => {
   const userMessage = {
     id: nanoid(),
     sender: "user",
@@ -123,8 +346,8 @@ const createConversationMessages = (pregunta, respuesta, documentos, quotedData)
     sender: "bot",
     content: respuesta,
     timestamp: new Date().toISOString(),
-    feedbackRequested: true,
     documentos,
+    references,
   };
 
   return { userMessage, botMessage };
@@ -132,30 +355,37 @@ const createConversationMessages = (pregunta, respuesta, documentos, quotedData)
 
 // Crear conversación vacía para obtener ID (para memoria de n8n)
 const createEmptyConversation = async (userId, pregunta) => {
-  const titulo = pregunta.substring(0, 50) + (pregunta.length > 50 ? "..." : "");
+  const titulo =
+    pregunta.substring(0, 50) + (pregunta.length > 50 ? "..." : "");
   const result = await db.query(
     "INSERT INTO conversaciones (usuario_id, titulo, chat_history, mapas_mentales_ids) VALUES ($1, $2, $3, $4) RETURNING id",
-    [userId, titulo, JSON.stringify([]), JSON.stringify([])]
+    [userId, titulo, JSON.stringify([]), JSON.stringify([])],
   );
   return result.rows[0].id;
 };
 
 // Actualizar o crear conversación en BD
-const saveConversationMessages = async (conversacionId, userId, userMessage, botMessage, pregunta) => {
+const saveConversationMessages = async (
+  conversacionId,
+  userId,
+  userMessage,
+  botMessage,
+  pregunta,
+) => {
   if (conversacionId) {
     const result = await db.query(
       "SELECT chat_history FROM conversaciones WHERE id = $1 AND usuario_id = $2",
-      [conversacionId, userId]
+      [conversacionId, userId],
     );
 
     if (result.rows.length > 0) {
       let chatHistory = normalizeMessages(result.rows[0].chat_history || []);
       chatHistory.push(userMessage, botMessage);
 
-      await db.query("UPDATE conversaciones SET chat_history = $1 WHERE id = $2", [
-        JSON.stringify(chatHistory),
-        conversacionId,
-      ]);
+      await db.query(
+        "UPDATE conversaciones SET chat_history = $1 WHERE id = $2",
+        [JSON.stringify(chatHistory), conversacionId],
+      );
 
       logger.info({ conversacionId }, "Stream - Conversación actualizada");
       return conversacionId;
@@ -163,12 +393,13 @@ const saveConversationMessages = async (conversacionId, userId, userMessage, bot
   }
 
   // Crear nueva conversación (fallback si no existe el ID)
-  const titulo = pregunta.substring(0, 50) + (pregunta.length > 50 ? "..." : "");
+  const titulo =
+    pregunta.substring(0, 50) + (pregunta.length > 50 ? "..." : "");
   const nuevoChatHistory = [userMessage, botMessage];
 
   const newResult = await db.query(
     "INSERT INTO conversaciones (usuario_id, titulo, chat_history, mapas_mentales_ids) VALUES ($1, $2, $3, $4) RETURNING id",
-    [userId, titulo, JSON.stringify(nuevoChatHistory), JSON.stringify([])]
+    [userId, titulo, JSON.stringify(nuevoChatHistory), JSON.stringify([])],
   );
 
   const newId = newResult.rows[0].id;
@@ -178,8 +409,22 @@ const saveConversationMessages = async (conversacionId, userId, userMessage, bot
 
 // Endpoint de chat con streaming Server-Sent Events.
 router.post("/stream", requireLogin, async (req, res) => {
-  const { pregunta, conversacionId, documentosSeleccionados, quotedMessageContent, quotedMessageSender } = req.body;
-  logger.debug({ pregunta, conversacionId, docsCount: documentosSeleccionados?.length || 0, hasQuotedMessage: !!quotedMessageContent }, "Stream - Solicitud recibida");
+  const {
+    pregunta,
+    conversacionId,
+    documentosSeleccionados,
+    quotedMessageContent,
+    quotedMessageSender,
+  } = req.body;
+  logger.debug(
+    {
+      pregunta,
+      conversacionId,
+      docsCount: documentosSeleccionados?.length || 0,
+      hasQuotedMessage: !!quotedMessageContent,
+    },
+    "Stream - Solicitud recibida",
+  );
 
   setupSSEHeaders(res, req.headers.origin);
 
@@ -193,16 +438,26 @@ router.post("/stream", requireLogin, async (req, res) => {
     // Esto garantiza que cada conversación tenga un ID único para la memoria
     let effectiveConversacionId = conversacionId;
     if (!conversacionId) {
-      effectiveConversacionId = await createEmptyConversation(req.session.user.id, pregunta);
-      logger.info({ conversacionId: effectiveConversacionId }, "Stream - Conversación pre-creada para memoria");
+      effectiveConversacionId = await createEmptyConversation(
+        req.session.user.id,
+        pregunta,
+      );
+      logger.info(
+        { conversacionId: effectiveConversacionId },
+        "Stream - Conversación pre-creada para memoria",
+      );
     }
 
     // Construir la pregunta incluyendo el contexto del mensaje citado si existe
     let preguntaConContexto = pregunta;
     if (quotedMessageContent && quotedMessageContent.trim()) {
-      const senderLabel = quotedMessageSender === "user" ? "Usuario" : "Asistente";
+      const senderLabel =
+        quotedMessageSender === "user" ? "Usuario" : "Asistente";
       preguntaConContexto = `[Contexto del mensaje citado (${senderLabel}):\n"${quotedMessageContent.trim()}"]\n\nSolicitud del usuario: ${pregunta}`;
-      logger.info({ quotedContentLength: quotedMessageContent.length }, "Stream - Mensaje citado incluido en contexto");
+      logger.info(
+        { quotedContentLength: quotedMessageContent.length },
+        "Stream - Mensaje citado incluido en contexto",
+      );
     }
 
     const n8nRequestBody = {
@@ -214,11 +469,14 @@ router.post("/stream", requireLogin, async (req, res) => {
 
     logger.debug({ n8nRequestBody }, "Enviando a n8n");
 
-    const n8nResponse = await fetch("https://skynet.uct.cl/webhook/chat-streaming", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(n8nRequestBody),
-    });
+    const n8nResponse = await fetch(
+      "https://skynet.uct.cl/webhook/chat-streaming",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(n8nRequestBody),
+      },
+    );
 
     logger.info({ status: n8nResponse.status }, "Stream - Status Skynet");
 
@@ -230,15 +488,25 @@ router.post("/stream", requireLogin, async (req, res) => {
 
     try {
       const reader = n8nResponse.body.getReader();
-      
-      const finalResponse = await processN8nStream(reader, (textChunk, fullText) => {
-        sendEvent("chunk", { text: textChunk, fullText });
+
+      const streamResult = await processN8nStream(
+        reader,
+        (textChunk, fullText) => {
+          sendEvent("chunk", { text: textChunk, fullText });
+        },
+      );
+
+      const normalizedResponse = normalizeChatbotResponse({
+        respuesta: streamResult.respuesta,
+        documentosRecomendados: streamResult.streamMeta.documentosRecomendados,
+        references: streamResult.streamMeta.references,
+        intermediateSteps: streamResult.streamMeta.intermediateSteps,
+        output: streamResult.streamMeta.output,
       });
 
-      const normalizedDocs = normalizeChatbotResponse({
-        respuesta: finalResponse,
-        documentosRecomendados: [],
-      }).documentosRecomendados;
+      const normalizedDocs = normalizedResponse.documentosRecomendados;
+      const normalizedReferences = normalizedResponse.references;
+      const finalResponse = normalizedResponse.respuesta;
 
       const quotedData = {
         quotedMessageId: req.body.quotedMessageId,
@@ -250,7 +518,8 @@ router.post("/stream", requireLogin, async (req, res) => {
         pregunta,
         finalResponse,
         normalizedDocs,
-        quotedData
+        normalizedReferences,
+        quotedData,
       );
 
       // Usar effectiveConversacionId que ya tiene el ID correcto
@@ -259,12 +528,13 @@ router.post("/stream", requireLogin, async (req, res) => {
         req.session.user.id,
         userMessage,
         botMessage,
-        pregunta
+        pregunta,
       );
 
       sendEvent("complete", {
         respuesta: finalResponse,
         documentosRecomendados: normalizedDocs,
+        references: normalizedReferences,
         conversacionId: finalConversacionId,
       });
     } catch (streamError) {
@@ -300,14 +570,27 @@ router.post("/debug", (req, res) => {
 // Endpoint de chat estándar sin streaming.
 router.post("/", requireLogin, async (req, res) => {
   const { pregunta, conversacionId, documentosSeleccionados } = req.body;
-  logger.debug({ pregunta, conversacionId, docsCount: documentosSeleccionados?.length || 0 }, "Chat normal - Solicitud recibida");
+  logger.debug(
+    {
+      pregunta,
+      conversacionId,
+      docsCount: documentosSeleccionados?.length || 0,
+    },
+    "Chat normal - Solicitud recibida",
+  );
 
   try {
     // Si no hay conversacionId, crear una nueva conversación ANTES de enviar a n8n
     let effectiveConversacionId = conversacionId;
     if (!conversacionId) {
-      effectiveConversacionId = await createEmptyConversation(req.session.user.id, pregunta);
-      logger.info({ conversacionId: effectiveConversacionId }, "Chat normal - Conversación pre-creada para memoria");
+      effectiveConversacionId = await createEmptyConversation(
+        req.session.user.id,
+        pregunta,
+      );
+      logger.info(
+        { conversacionId: effectiveConversacionId },
+        "Chat normal - Conversación pre-creada para memoria",
+      );
     }
 
     // Preparar request body para n8n
@@ -326,7 +609,7 @@ router.post("/", requireLogin, async (req, res) => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(n8nRequestBody),
-      }
+      },
     );
 
     logger.info({ status: response.status }, "Status Skynet (Chat normal)");
@@ -335,7 +618,7 @@ router.post("/", requireLogin, async (req, res) => {
     logger.debug({ data }, "Data recibida (Semantic Search)");
 
     // Normalizar respuesta del chatbot
-    const { respuesta, documentosRecomendados } =
+    const { respuesta, documentosRecomendados, references } =
       normalizeChatbotResponse(data);
 
     // Crear mensajes normalizados
@@ -356,14 +639,14 @@ router.post("/", requireLogin, async (req, res) => {
       sender: "bot",
       content: respuesta,
       timestamp: new Date().toISOString(),
-      feedbackRequested: true,
       documentos: documentosRecomendados || [],
+      references: references || [],
     };
 
     // Siempre tenemos effectiveConversacionId (ya sea el original o el pre-creado)
     const result = await db.query(
       "SELECT chat_history FROM conversaciones WHERE id = $1 AND usuario_id = $2",
-      [effectiveConversacionId, req.session.user.id]
+      [effectiveConversacionId, req.session.user.id],
     );
 
     if (result.rows.length > 0) {
@@ -374,11 +657,19 @@ router.post("/", requireLogin, async (req, res) => {
 
       await db.query(
         "UPDATE conversaciones SET chat_history = $1 WHERE id = $2",
-        [JSON.stringify(chatHistory), effectiveConversacionId]
+        [JSON.stringify(chatHistory), effectiveConversacionId],
       );
 
-      logger.info({ conversacionId: effectiveConversacionId }, "Conversación actualizada");
-      return res.json({ respuesta, documentosRecomendados, conversacionId: effectiveConversacionId });
+      logger.info(
+        { conversacionId: effectiveConversacionId },
+        "Conversación actualizada",
+      );
+      return res.json({
+        respuesta,
+        documentosRecomendados,
+        references,
+        conversacionId: effectiveConversacionId,
+      });
     }
 
     // Fallback: crear nueva conversación si por alguna razón no existe
@@ -393,15 +684,19 @@ router.post("/", requireLogin, async (req, res) => {
         titulo,
         JSON.stringify(nuevoChatHistory),
         JSON.stringify([]),
-      ]
+      ],
     );
 
     const newConversacionId = newResult.rows[0].id;
-    logger.info({ conversacionId: newConversacionId }, "Nueva conversación creada (fallback)");
+    logger.info(
+      { conversacionId: newConversacionId },
+      "Nueva conversación creada (fallback)",
+    );
 
     res.json({
       respuesta,
       documentosRecomendados,
+      references,
       conversacionId: newConversacionId,
     });
   } catch (err) {
@@ -413,7 +708,10 @@ router.post("/", requireLogin, async (req, res) => {
 // Genera y almacena mapas mentales basados en el contexto de una conversación.
 router.post("/mapa-mental", requireLogin, async (req, res) => {
   const { contexto, titulo, conversacionId } = req.body;
-  logger.info({ contextoLength: contexto?.length }, "Contexto recibido para mapa mental");
+  logger.info(
+    { contextoLength: contexto?.length },
+    "Contexto recibido para mapa mental",
+  );
   logger.info({ conversacionId }, "ID de conversación para asociar mapa");
 
   if (!conversacionId) {
@@ -425,7 +723,8 @@ router.post("/mapa-mental", requireLogin, async (req, res) => {
 
   if (!contexto || contexto.trim().length < 50) {
     return res.status(400).json({
-      error: "El contexto debe tener al menos 50 caracteres para generar un mapa mental.",
+      error:
+        "El contexto debe tener al menos 50 caracteres para generar un mapa mental.",
     });
   }
 
@@ -436,52 +735,93 @@ router.post("/mapa-mental", requireLogin, async (req, res) => {
       body: JSON.stringify({ contexto }),
     });
 
-    logger.info({ status: response.status }, "Status respuesta Skynet mapa mental");
+    logger.info(
+      { status: response.status },
+      "Status respuesta Skynet mapa mental",
+    );
 
     if (!response.ok) {
-      logger.error({ status: response.status }, "Error HTTP de Skynet en mapa mental");
+      logger.error(
+        { status: response.status },
+        "Error HTTP de Skynet en mapa mental",
+      );
       return res.status(502).json({
-        error: "Error al comunicarse con el servicio de generación de mapas mentales",
+        error:
+          "Error al comunicarse con el servicio de generación de mapas mentales",
       });
     }
 
     // Leer la respuesta como texto primero para poder debuggear si hay errores
     const responseText = await response.text();
-    logger.debug({ responseTextLength: responseText.length }, "Respuesta raw de Skynet");
+    logger.debug(
+      { responseTextLength: responseText.length },
+      "Respuesta raw de Skynet",
+    );
 
     if (!responseText || responseText.trim().length === 0) {
       logger.error("Respuesta vacía de Skynet para mapa mental");
       return res.status(502).json({
-        error: "El servicio de generación de mapas mentales devolvió una respuesta vacía. Intenta de nuevo.",
+        error:
+          "El servicio de generación de mapas mentales devolvió una respuesta vacía. Intenta de nuevo.",
       });
     }
+
+    let cleanedResponse = responseText
+      .replace(/```json\n?/g, '')
+      .replace(/```\n?/g, '')
+      .replace(/^\s*/, '')
+      .replace(/\s*$/, '')
+      .trim();
 
     let data;
     try {
-      data = JSON.parse(responseText);
+      data = JSON.parse(cleanedResponse);
     } catch (parseError) {
-      logger.error({ err: parseError.message, responseText: responseText.substring(0, 500) }, "Error parseando JSON de Skynet");
+      logger.error(
+        {
+          err: parseError.message,
+          responseText: responseText.substring(0, 500),
+          cleanedResponse: cleanedResponse.substring(0, 500),
+        },
+        "Error parseando JSON de Skynet",
+      );
       return res.status(502).json({
-        error: "La respuesta del servicio de mapas mentales no es válida. Intenta de nuevo.",
+        error:
+          "La respuesta del servicio de mapas mentales no es válida. Intenta de nuevo.",
       });
     }
 
-    logger.info({ dataLength: JSON.stringify(data).length }, "Data recibida mapa mental");
+    logger.info(
+      { dataLength: JSON.stringify(data).length },
+      "Data recibida mapa mental",
+    );
 
-    const mapaMental = data.respuesta || {};
+    // Normalizar formato n8n: puede venir como array y/o con respuesta anidada.
+    const payload = Array.isArray(data) ? data[0] : data;
+    let respuestaData = payload?.respuesta;
+    while (respuestaData?.respuesta) {
+      respuestaData = respuestaData.respuesta;
+    }
+
+    const mapaMental = {
+      titulo: respuestaData?.titulo || "Mapa mental sin título",
+      mensaje: respuestaData?.mensaje || "",
+      estructura_json: respuestaData || {},
+    };
 
     // Guardar mapa mental
+    const finalTitulo = titulo || mapaMental.titulo || "Mapa mental sin título";
     const result = await db.query(
       `INSERT INTO mapas_mentales (usuario_id, titulo, contexto, estructura_json, conversacion_id)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING id, fecha_creacion`,
       [
         req.session.user.id,
-        titulo || "Mapa mental sin título",
+        finalTitulo,
         contexto,
-        JSON.stringify(mapaMental),
+        JSON.stringify(mapaMental.estructura_json),
         conversacionId,
-      ]
+      ],
     );
 
     const nuevoMapaId = result.rows[0].id;
@@ -492,16 +832,20 @@ router.post("/mapa-mental", requireLogin, async (req, res) => {
       `UPDATE conversaciones
        SET mapas_mentales_ids = COALESCE(mapas_mentales_ids, '[]'::jsonb) || $1::jsonb
        WHERE id = $2 AND usuario_id = $3`,
-      [JSON.stringify([nuevoMapaId]), conversacionId, req.session.user.id]
+      [JSON.stringify([nuevoMapaId]), conversacionId, req.session.user.id],
     );
 
     logger.info({ conversacionId }, "Mapa asociado a conversación");
 
-    mapaMental.id = nuevoMapaId;
-    mapaMental.fecha_creacion = result.rows[0].fecha_creacion;
+    const responseMapaMental = {
+      id: nuevoMapaId,
+      titulo: finalTitulo,
+      estructura_json: mapaMental.estructura_json,
+      fecha_creacion: result.rows[0].fecha_creacion,
+    };
 
     res.json({
-      mapaMental,
+      mapaMental: responseMapaMental,
       mensaje:
         "Mapa mental guardado y asociado a la conversación correctamente",
     });

@@ -1,0 +1,491 @@
+{
+  "name": "Chatbot Webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "keys": {
+          "key": [
+            {
+              "currentKey": "output",
+              "newKey": "=respuesta"
+            }
+          ]
+        },
+        "additionalOptions": {}
+      },
+      "type": "n8n-nodes-base.renameKeys",
+      "typeVersion": 1,
+      "position": [
+        1632,
+        1408
+      ],
+      "id": "d34ae610-82e4-4ff6-ba9f-7db95e519628",
+      "name": "Rename Keys"
+    },
+    {
+      "parameters": {
+        "content": "## Crear mapa mental en base a mensaje",
+        "height": 432,
+        "width": 1152,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        928,
+        1232
+      ],
+      "typeVersion": 1,
+      "id": "f20a9fa1-0e9e-445f-bcc8-77a82aafde86",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"respuesta\": $json.respuesta } }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        1856,
+        1408
+      ],
+      "id": "28052080-1bd8-4f3e-853f-f7fccb8dd841",
+      "name": "ResponderMapaMental"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1264,
+        1520
+      ],
+      "id": "ff701570-66a4-4292-b871-0298bc7c7015",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "RubZxzuo71mx7f1j",
+          "name": "Api Personal"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Contexto: {{ $json.body.contexto }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=Basado en el Contexto, genera SOLAMENTE una estructura de datos JSON para un mapa mental. El JSON debe tener la siguiente estructura:\n\n{\n  \"respuesta\": {\n    \"mensaje\": \"Aquí tienes el mapa mental generado según tu contexto.\",\n    \"titulo\": \"[Título descriptivo del tema]\",\n    \"datos\": {\n      \"name\": \"Nombre del tema principal\",\n      \"children\": [\n        {\n          \"name\": \"Concepto principal 1\",\n          \"children\": [\n            {\"name\": \"Detalle 1A\"},\n            {\"name\": \"Detalle 1B\"}\n          ]\n        },\n        {\n          \"name\": \"Concepto principal 2\",\n          \"children\": [\n            {\"name\": \"Detalle 2A\"}\n          ]\n        }\n      ]\n    }\n  }\n}\n\nREGLAS ESTRICTAS:\n1. Tu respuesta debe ser ÚNICAMENTE el código JSON del mapa mental (el AI NO debe añadir texto explicativo ni envolver el mapa en otras claves).\n2. NO incluyas ```json al principio ni ``` al final.\n3. NO agregues ningún texto explicativo.\n4. Asegúrate que el JSON esté bien formado.\n\nNOTA IMPORTANTE PARA EL FLUJO:\n- El texto de respuesta amistosa que verá el usuario será agregado por el nodo RespondToWebhook. Ese texto será: \"Aquí tienes el mapa mental generado según tu contexto.\" o algo del mismo estilo. Además, debes generar un título que describa el tema tratado en el mapa mental generado.Por favor **no** incluyas estos campos en tu salida; responde únicamente con el JSON del mapa mental."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        1280,
+        1296
+      ],
+      "id": "1f2489e5-40b2-4775-8e4b-41d66f9ce54c",
+      "name": "AI Agent4"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"respuesta\": {\n    \"mensaje\": \"Aquí tienes el mapa mental generado según tu contexto.\",\n    \"titulo\": \"El orden de las ideas\",\n    \"datos\": {\n      \"name\": \"Mapa Mental Principal\",\n      \"children\": [\n        {\n          \"name\": \"Idea Central 1\",\n          \"children\": [\n            { \"name\": \"Detalle A\" },\n            { \"name\": \"Detalle B\" }\n          ]\n        },\n        {\n          \"name\": \"Idea Central 2\",\n          \"children\": [\n            { \"name\": \"Detalle C\" }\n          ]\n        },\n        { \"name\": \"Idea Central 3\" }\n      ]\n    }\n  }\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1424,
+        1520
+      ],
+      "id": "f45491ab-714f-4a8b-94a7-092fee7d512d",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "mapa-mental",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        1056,
+        1408
+      ],
+      "id": "2ae678e4-ce66-44ab-80c7-5d5aeed56a67",
+      "name": "Webhook Mental Map",
+      "webhookId": "4cbf627b-0c3a-4b2d-bc6e-fb01a3f158e0"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body.conversation_id }}",
+        "tableName": "n8n_chat_memory",
+        "contextWindowLength": 15
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        1248,
+        896
+      ],
+      "id": "5d10ac00-33de-49fe-8ebf-010946fdbd5a",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "9yLDTBd6UlJjyqJ5",
+          "name": "Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Responder al usuario en el chatbot (streaming)",
+        "height": 592,
+        "width": 1152,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        928,
+        624
+      ],
+      "typeVersion": 1,
+      "id": "ec2df051-8a2b-4407-ad10-e7c24c110040",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.pregunta }}",
+        "options": {
+          "systemMessage": "=CONTEXTO INSTITUCIONAL:\nEres un asistente interno de la Vicerrectoría de Administración y Asuntos Económicos (VRAE) de la Universidad Católica de Temuco. Apoyas a funcionarios en consultas operativas, procedimentales y normativas.\n\nDIRECCIONES QUE CONFORMAN LA VRAE:\n• Dirección de Crédito y Recaudación (DCR)\n• Dirección de Desarrollo de Personas (DDPER)\n• Dirección de Informática (DI)\n• Dirección de Campus y Servicios Generales (DCSG)\n• Dirección de Finanzas (DF)\n\nCONTEXTO DE DOCUMENTOS SELECCIONADOS:\n{{ $json.body.documentosSeleccionados.length > 0 ? \n'Has recibido ' + $json.body.documentosSeleccionados.length + ' documento(s) seleccionado(s): ' + \n$json.body.documentosSeleccionados.map(d => '- ' + d.title + ': ' + d.description).join('\\n')\n: \n'Sin documentos pre-seleccionados' }}\n\n🎯 INSTRUCCIONES OPERATIVAS:\n\n1. USO DE HERRAMIENTAS DE BÚSQUEDA:\n   - Usar \"Supabase Vector Store2\" para documentos seleccionados o info específica de procedimientos/normativas.\n   - Para info estructurada: búsquedas múltiples con términos relacionados.\n   - Identificar área funcional y priorizar documentos de esa dirección.\n   - Si cruza áreas, buscar en ambas.\n\n2. ESTRATEGIA DE BÚSQUEDA OPERATIVA:\n   \n   PROCEDIMIENTOS:\n   - Buscar: [procedimiento] + [dirección] + \"flujo/pasos\"\n   - Buscar: \"responsables\" + [procedimiento]\n   - Buscar: \"requisitos/plazos\" + [procedimiento]\n   - Objetivo: Flujo completo con responsables, plazos, requisitos.\n   \n   NORMATIVAS/POLÍTICAS:\n   - Buscar: [política] + \"objetivos/alcance\"\n   - Buscar: [política] + \"medidas/lineamientos\"\n   - Buscar: anexos/protocolos asociados.\n   - Objetivo: Marco normativo completo.\n   \n   BENEFICIOS/SERVICIOS:\n   - Buscar: [beneficio] + \"requisitos/funcionarios\"\n   - Buscar: \"cómo solicitar\" + [beneficio]\n   - Buscar: formularios, plazos, contactos.\n   - Objetivo: Info accionable.\n   \n   SISTEMAS/HERRAMIENTAS:\n   - Buscar: [sistema] + \"acceso/manual\"\n   - Buscar: \"soporte\" + [sistema]\n   - Objetivo: Guía práctica.\n   \n   REGLA ANTI-FRAGMENTACIÓN: \n   - Si info incompleta (ej: enumeraciones cortadas), buscar de nuevo.\n   - Validar completitud antes de responder.\n\n3. PRIORIZACIÓN DE INFORMACIÓN:\n   - 1ra: Documentos oficiales vigentes.\n   - 2da: Protocolos operativos.\n   - 3ra: Guías/instructivos.\n   - Priorizar más reciente/jerarquía si conflicto.\n\n4. FORMATO DE RESPUESTA EJECUTIVA Y AMIGABLE:\n   \n   APERTURA: Frase amigable confirmando consulta (ej: \"¡Claro! Te ayudo con [tema]\").\n   \n   OPERATIVAS (\"¿Cómo hago X?\"):\n   ```\n   ¡Claro! Te explico cómo [acción]:\n   \n   PROCEDIMIENTO [NOMBRE]:\n   \n   REQUISITOS PREVIOS:\n   - [Lista]\n   \n   PASOS:\n   1. [Acción] → Responsable: [cargo/área] → Plazo: [tiempo]\n   \n   DOCUMENTOS NECESARIOS:\n   - [Lista]\n   \n   CONTACTO: [correo/extensión/área]\n   PLAZO TOTAL: [tiempo]\n   \n   💡 TIP: [Consejo]\n   \n   ¿Te ayudo con algo más?\n   \n   Fuente: [Documento], [sección], [vigencia]\n   ```\n   \n   NORMATIVAS (\"¿Qué dice...?\"):\n   ```\n   Perfecto, aquí está lo que dice la [política]:\n   \n   [NOMBRE]:\n   \n   ALCANCE: [A quién aplica]\n   \n   ASPECTOS CLAVE:\n   • [Punto]\n   \n   RESPONSABILIDADES:\n   - [Actor]: [Función]\n   \n   Si necesitas profundizar, pregúntame.\n   \n   Fuente: [Documento], [vigencia]\n   ```\n   \n   BENEFICIOS (\"¿Tengo derecho...?\"):\n   ```\n   ¡Sí! / [Según situación]:\n   \n   BENEFICIO: [Nombre]\n   \n   APLICABLE A: [Requisitos]\n   \n   EN QUÉ CONSISTE: [Descripción]\n   \n   CÓMO SOLICITARLO:\n   1. [Paso]\n   \n   PLAZO: [X días]\n   CONTACTO: [Área]\n   \n   💡 Si dudas, contacta [área].\n   \n   Fuente: [Documento]\n   ```\n   \n   URGENTES/COMPLEJAS:\n   ```\n   Entiendo que [es urgente], te ayudo:\n   \n   [Info]\n   \n   ⚠️ IMPORTANTE: [Info crítica]\n   \n   Contacta [área] para apoyo inmediato.\n   ```\n   \n   CIERRE: Abrir a seguir ayudando (ej: \"¿Necesitas algo más?\").\n\n5. CITACIÓN INTERNA:\n   - Formato: \"[Tipo] [Nombre] ([año/'vigente'])\"\n   - Ej: \"Según Manual DDPER (2023)...\"\n   - Incluir sección/artículo disponible.\n   - Citar cada documento en procedimientos transversales.\n\n6. MANEJO DE INFORMACIÓN SENSIBLE:\n   - Compartir info operativa interna (procedimientos, flujos, contactos).\n   - Incluir áreas/cargos/contactos relevantes.\n   - Indicar restricciones por rol.\n   - No inventar contactos; usar solo de documentos.\n\n7. LENGUAJE Y TONO INSTITUCIONAL INTERNO:\n   - Lenguaje cercano, amable, colaborativo.\n   - Tono compañero: \"Con gusto te ayudo\", \"Aquí está la info\".\n   - Usar siglas sin explicar.\n   - Frases apertura: \"¡Claro! Te explico...\", \"Perfecto, esto es lo que necesitas\".\n   - Empatía: \"Entiendo que puede ser urgente...\".\n   - Si no claro: \"Confirma con [área]\".\n   - Cierre: \"Si necesitas algo más, aquí estoy\".\n   - Emojis ocasionales: ✅ ⏱️ 📧 💡 ⚠️\n\n8. GESTIÓN DE CONSULTAS TRANSVERSALES:\n   - Identificar procesos multi-dirección.\n   - Presentar flujo con handoffs marcados.\n   - Ej: \"Inicia en tu Dirección → DDPER (validación) → Finanzas (aprobación)\".\n   - Coordinación: \"Coordina con [área] antes de [paso]\".\n\n9. VERACIDAD ABSOLUTA Y TRAZABILIDAD:\n   - PROHIBIDO INVENTAR: No crear info no en documentos.\n   - Si falta dato crítico: \"No encontré info específica. Confirma con [área]\".\n   - Transcribir listas exactamente.\n   - Si falta después de búsquedas: \"No encontré info. Contacta [área]: [contacto]\".\n   - Honesto constructivo: Ofrecer alternativa.\n\n10. PROTOCOLO DE COMPLETITUD OPERATIVA:\n    - Señales incompletitud:\n      * Pasos incompletos.\n      * Referencias a anexos no mostrados.\n      * Menciones \"entre otros\".\n      * Plazos faltantes.\n      * Falta contacto/responsable.\n    - Acción: Detectar → Buscar de nuevo.\n    - Validación: \"¿Puede ejecutar con esta info?\" Si no → buscar más.\n\n11. ACTUALIZACIÓN Y VIGENCIA:\n    - Mencionar fecha/año del documento.\n    - Usar versión más reciente.\n    - Si único disponible: \"Según último ([año])... Valida vigencia con [área]\".\n\n12. SITUACIONES ESPECIALES:\n    - Sin documentación: \"No hay procedimiento formal. Consulta [área]: [contacto]\".\n    - Consulta ambigua: \"Para ayudar mejor, ¿te refieres a [A] o [B]?\".\n    - Fuera ámbito: \"Corresponde a [área UCT]. Contacta [área]: [contacto]\".\n    - Más contexto: \"¿Me cuentas más sobre [aspecto]?\".\n    - Urgencia: \"Entiendo necesitas resolver pronto. [Info + contacto]\".\n    - Compleja: \"Situación con varios pasos. Te detallo uno por uno:\", seguido de info.",
+          "returnIntermediateSteps": true,
+          "enableStreaming": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        1216,
+        688
+      ],
+      "id": "99f6380a-3cb9-4eee-9911-f4d303d1a4f0",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5.4-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-5.4-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1088,
+        912
+      ],
+      "id": "68fd8493-442b-4c4e-8330-461d710b6196",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "ZY6Y2inrRXqmXmhg",
+          "name": "OpenAi account 10"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "dimensions": 1024
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1376,
+        1072
+      ],
+      "id": "1845dc2a-2571-47d7-b838-2cd7b2e775d9",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "ZY6Y2inrRXqmXmhg",
+          "name": "OpenAi account 10"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "chat-streaming",
+        "responseMode": "streaming",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        992,
+        688
+      ],
+      "id": "5490a39a-2f09-4c05-81c4-0618976486a8",
+      "name": "Webhook",
+      "webhookId": "af7e8c8b-f617-410f-b7c2-23207d5cbc56"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "=Esta herramienta busca documentos relevantes en la base de datos vectorial de Supabase.\n\nCuando el usuario solicite información respaldada o contextual, llama a esta herramienta para obtener los documentos más relacionados con la consulta.\n\n## Formato de salida requerido\n\nLa salida debe permitir trazabilidad completa e incluir los siguientes campos:\n\n* title\n* url\n* type\n* description\n* pageContent\n\n`pageContent` debe contener extractos textuales exactos utilizados para fundamentar la respuesta.\n\n## Política de filtrado\n\nAplicar las siguientes reglas al procesar los resultados:\n\n* Si varios resultados tienen el mismo `title` o `doc_id`, fusiónalos en un único documento representativo.\n* Omite duplicados de extractos textuales.\n* Omite resultados sin metadatos claros, por ejemplo:\n\n  * sin título\n  * sin contenido útil\n* Ordena los resultados por relevancia semántica.\n\n## Objetivo\n\nPermitir que el frontend pueda:\n\n* Mostrar referencias filtrables por documento.\n* Mostrar, para cada referencia, la cita textual exacta utilizada por el modelo.\n\n\n",
+        "tableName": {
+          "__rl": true,
+          "value": "documentos",
+          "mode": "list",
+          "cachedResultName": "documentos"
+        },
+        "topK": 15,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        1376,
+        912
+      ],
+      "id": "d4a5391d-282c-4289-951f-f6dc108767e1",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ddQ9UToe0YIB4xqQ",
+          "name": "Supabase"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Webhook Mental Map": [
+      {
+        "json": {
+          "headers": {
+            "host": "skynet.uct.cl",
+            "user-agent": "node",
+            "content-length": "3384",
+            "accept": "*/*",
+            "accept-encoding": "br, gzip, deflate",
+            "accept-language": "*",
+            "content-type": "application/json",
+            "sec-fetch-mode": "cors",
+            "x-forwarded-for": "190.102.240.100",
+            "x-forwarded-host": "skynet.uct.cl",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "d3e1bda2afe0",
+            "x-real-ip": "190.102.240.100"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "contexto": "Basándome en los documentos que seleccionaste:\n\nSegún el documento \"PLAN-DE-CONCILIACION-3.pdf\", el Plan de Conciliación de la entidad se estructura en las siguientes partes clave:\n\n1. Objetivos  \n   - Garantizar la compatibilidad entre la vida laboral, personal y familiar de la plantilla.  \n   - Fomentar la igualdad de oportunidades y la prevención de la discriminación por razón de género.  \n\n2. Ámbitos y destinatarios  \n   - Se aplica a toda la plantilla, independientemente de la modalidad contractual (fijo, temporal o interino).  \n   - Incluye también a la dirección y a las unidades de recursos humanos y de prevención de riesgos.\n\n3. Principios rectores  \n   - Transparencia y voluntariedad en la solicitud de medidas de conciliación.  \n   - Equidad en el acceso y disfrute de las medidas, sin perjuicio de la operatividad del servicio.  \n   - Flexibilidad y adaptación a las circunstancias individuales y organizativas.\n\n4. Líneas de actuación y medidas  \n   a) Horaria  \n      • Jornada flexible de entrada y salida (franjas horarias mínimas).  \n      • Reducción proporcional de jornada con reserva de puesto.  \n   b) Espacios y modalidades de trabajo  \n      • Teletrabajo parcial o total según perfil y necesidades organizativas.  \n      • Espacios de lactancia y zonas familiares en las instalaciones.  \n   c) Permisos y excedencias  \n      • Ampliación de permisos por maternidad, paternidad y cuidado de familiares.  \n      • Excedencias voluntarias o forzosas con reserva de empleo.  \n   d) Apoyos adicionales  \n      • Servicio de guardería o ayudas económicas para el cuidado infantil.  \n      • Bolsa de servicios de atención domiciliaria para personas dependientes.\n\n5. Formación y sensibilización  \n   - Programas de formación interna en igualdad y corresponsabilidad.  \n   - Campañas de comunicación para visibilizar buenas prácticas de conciliación.\n\n6. Seguimiento y evaluación  \n   - Comité de seguimiento integrado por representantes de la dirección, sindicatos y plantilla.  \n   - Indicadores cuantitativos (tasa de teletrabajo, uso de permisos, absentismo) y cualitativos (encuestas de satisfacción).  \n   - Informes anuales de avance y propuestas de mejora.\n\n7. Cronograma de implantación  \n   - Fase I (0-3 meses): diagnóstico de necesidades y aprobación del Plan.  \n   - Fase II (4-12 meses): despliegue de medidas prioritarias.  \n   - Fase III (anual): evaluación, ajustes y continuación.\n\nReferencias  \n• Documento “PLAN-DE-CONCILIACION-3.pdf”, secciones 1 a 7, Plan de Conciliación y Protocolo de Implantación.\n\nBasándome en los documentos que seleccionaste:\n\nHe revisado el documento “PLAN-DE-CONCILIACION-3.pdf” y, lamentablemente, en la descripción proporcionada no aparece el índice ni el detalle explícito de sus secciones. Para darte un conteo preciso, necesitaría que me indiques el listado de títulos de sección o el índice de contenidos tal como aparece en el PDF.  \n\n¿Podrías copiar aquí el índice de secciones o confirmarme cuántos apartados principales identificas? Así podré responderte con exactitud.\n\nNo dispongo de documentos seleccionados ni de contexto específico para responder. Por favor, proporciona el material o indica sobre qué tema en concreto necesitas información."
+          },
+          "webhookUrl": "https://skynet.uct.cl/webhook/mapa-mental",
+          "executionMode": "production"
+        }
+      }
+    ],
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "skynet.uct.cl",
+            "user-agent": "node",
+            "content-length": "413",
+            "accept": "*/*",
+            "accept-encoding": "br, gzip, deflate",
+            "accept-language": "*",
+            "content-type": "application/json",
+            "sec-fetch-mode": "cors",
+            "x-forwarded-for": "191.116.138.19",
+            "x-forwarded-host": "skynet.uct.cl",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "72082f78a896",
+            "x-real-ip": "191.116.138.19"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "user_id": "iortiz2020",
+            "conversation_id": "183",
+            "pregunta": "Se menciona algo en el decreto de rectoría sobre robos?",
+            "documentosSeleccionados": [
+              {
+                "id": 1,
+                "title": "DECRETO DE RECTORÍA 93.pdf",
+                "description": "Descripción de DECRETO DE RECTORÍA 93.pdf",
+                "keywords": [
+                  "DECRETO DE RECTORÍA 93",
+                  "General"
+                ],
+                "category": "General",
+                "type": "reglamento",
+                "url": "/api/minio/download?key=DECRETO%20DE%20RECTOR%C3%8DA%2093.pdf"
+              }
+            ]
+          },
+          "webhookUrl": "https://skynet.uct.cl/webhook/chat-streaming",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Rename Keys": {
+      "main": [
+        [
+          {
+            "node": "ResponderMapaMental",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent4",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent4": {
+      "main": [
+        [
+          {
+            "node": "Rename Keys",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent4",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Mental Map": {
+      "main": [
+        [
+          {
+            "node": "AI Agent4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "339d4554-2b2a-4b2d-91a8-3cf38f2dc053",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9dc77685c123f72110ec2479109edd39a0557c8cc90b56a8d8702f6216f232d0"
+  },
+  "id": "ONprJffczvwsSkj0",
+  "tags": []
+}

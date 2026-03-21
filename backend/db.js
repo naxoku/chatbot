@@ -23,12 +23,17 @@ if (!connectionString) {
   if (DB_HOST && DB_USER && DB_PASSWORD && DB_NAME) {
     connectionString = `postgres://${encodeURIComponent(DB_USER)}:${encodeURIComponent(DB_PASSWORD)}@${DB_HOST}:${DB_PORT || 5432}/${DB_NAME}`;
   } else {
-    logger.warn("No se encontró DATABASE_URL ni variables DB_* completas en .env. Usando valores por defecto");
+    logger.warn(
+      "No se encontró DATABASE_URL ni variables DB_* completas en .env. Usando valores por defecto",
+    );
   }
 }
 
 // Configura SSL según el entorno y variables de configuración
-const sslConfig = DB_SSL === 'true' || DB_SSL === '1' || (!DB_SSL && !!DATABASE_URL) ? { rejectUnauthorized: false } : false;
+const sslConfig =
+  DB_SSL === "true" || DB_SSL === "1" || (!DB_SSL && !!DATABASE_URL)
+    ? { rejectUnauthorized: false }
+    : false;
 
 // Crea el pool de conexiones PostgreSQL con configuración optimizada para conexiones remotas (Supabase)
 const db = new Pool({
@@ -40,7 +45,7 @@ const db = new Pool({
   idleTimeoutMillis: 60000, // Tiempo de inactividad antes de cerrar conexión (1 min)
   connectionTimeoutMillis: 30000, // Timeout para conectar (30 segundos para conexiones remotas)
   allowExitOnIdle: false, // No permitir que el proceso termine con conexiones inactivas
-  
+
   // Configuración adicional para conexiones remotas
   statement_timeout: 30000, // Timeout para statements (30 seg)
   query_timeout: 30000, // Timeout para queries (30 seg)
@@ -62,7 +67,6 @@ const isConnectionError = (error) => {
   );
 };
 
-// Maneja errores del pool de conexiones
 // Maneja errores del pool de conexiones
 db.on("error", (err, client) => {
   logger.error({ err }, "Error en el pool de la DB");
@@ -91,7 +95,7 @@ db.on("release", (client) => {
   }
 });
 
-// Ejecuta consultas SQL con mecanismo de reintentos automático
+// Ejecuta consultas SQL con reintentos automático
 const queryWithRetry = async (text, params, retryCount = 0) => {
   try {
     return await db.query(text, params);
@@ -117,30 +121,44 @@ module.exports = {
   queryWithRetry,
 };
 
-// Verifica la conexión a la base de datos al iniciar la aplicación con reintentos
+// Verifica conexión a la DB al iniciar la aplicación
 const testConnection = async (attempt = 1, maxAttempts = 5) => {
   try {
-    logger.info({ attempt, maxAttempts }, "Intentando conectar a la base de datos...");
+    logger.info(
+      { attempt, maxAttempts },
+      "Intentando conectar a la base de datos...",
+    );
     const client = await db.connect();
     try {
-      const res = await client.query('SELECT NOW()');
-      logger.info({ timestamp: res.rows[0], attempt }, "DB: Conexión a la base de datos OK");
+      const res = await client.query("SELECT NOW()");
+      logger.info(
+        { timestamp: res.rows[0], attempt },
+        "DB: Conexión a la base de datos OK",
+      );
     } finally {
       client.release();
     }
   } catch (err) {
-    logger.error({ err, attempt }, "Error de conexión a la base de datos (startup check)");
-    
-    if (err.message && err.message.includes('password authentication failed')) {
-      logger.error("Autenticación fallida: revisa DATABASE_URL o DB_USER/DB_PASSWORD en .env");
+    logger.error(
+      { err, attempt },
+      "Error de conexión a la base de datos (startup check)",
+    );
+
+    if (err.message && err.message.includes("password authentication failed")) {
+      logger.error(
+        "Autenticación fallida: revisa DATABASE_URL o DB_USER/DB_PASSWORD en .env",
+      );
       return; // No reintentar si es error de autenticación
     }
-    
+
     // Reintentar si no hemos alcanzado el máximo de intentos
     if (attempt < maxAttempts) {
       const delay = 5000 * attempt; // Delay incremental: 5s, 10s, 15s, etc.
-      logger.warn({ delay, nextAttempt: attempt + 1 }, "Reintentando conexión a la base de datos...");
-      await new Promise(resolve => setTimeout(resolve, delay));
+      logger.warn(
+        { delay, nextAttempt: attempt + 1 },
+        "Reintentando conexión a la base de datos...",
+      );
+      await new Promise((resolve) => setTimeout(resolve, delay));
       return testConnection(attempt + 1, maxAttempts);
     } else {
       logger.error("Se agotaron los intentos de conexión a la base de datos");
@@ -148,5 +166,4 @@ const testConnection = async (attempt = 1, maxAttempts = 5) => {
   }
 };
 
-// Iniciar la prueba de conexión de forma asíncrona
 testConnection();

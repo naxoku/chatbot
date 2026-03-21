@@ -187,7 +187,7 @@
   --popover-foreground: oklch(0.95 0.01 250); /* Blanco casi puro */
 
   /* Color primario - Azul claro */
-  --primary: oklch(0.65 0.10 250); /* Azul claro */
+  --primary: oklch(0.65 0.1 250); /* Azul claro */
   --primary-foreground: oklch(0.12 0.01 250); /* Gris azulado muy oscuro */
 
   /* Color secundario - Azul medio */
@@ -208,11 +208,11 @@
   /* Bordes y inputs - Gris azulado semi-transparente */
   --border: oklch(0.28 0.02 250 / 40%); /* Gris azulado translúcido */
   --input: oklch(0.28 0.02 250 / 50%); /* Gris azulado más opaco */
-  --ring: oklch(0.65 0.10 250); /* Azul claro para focus */
+  --ring: oklch(0.65 0.1 250); /* Azul claro para focus */
 
   /* Gráficos - Gradiente de azul */
-  --chart-1: oklch(0.65 0.10 250); /* Azul claro (L: 65%) */
-  --chart-2: oklch(0.70 0.09 250); /* Azul claro brillante (L: 70%) */
+  --chart-1: oklch(0.65 0.1 250); /* Azul claro (L: 65%) */
+  --chart-2: oklch(0.7 0.09 250); /* Azul claro brillante (L: 70%) */
   --chart-3: oklch(0.58 0.08 250); /* Azul medio (L: 58%) */
   --chart-4: oklch(0.75 0.08 250); /* Azul muy claro (L: 75%) */
   --chart-5: oklch(0.52 0.09 250); /* Azul oscuro (L: 52%) */
@@ -220,12 +220,14 @@
   /* Sidebar - Oscuro con separación sutil */
   --sidebar: oklch(0.15 0.01 250); /* Gris azulado muy oscuro (L: 15%) */
   --sidebar-foreground: oklch(0.95 0.01 250); /* Blanco casi puro */
-  --sidebar-primary: oklch(0.65 0.10 250); /* Azul claro */
-  --sidebar-primary-foreground: oklch(0.12 0.01 250); /* Gris azulado muy oscuro */
+  --sidebar-primary: oklch(0.65 0.1 250); /* Azul claro */
+  --sidebar-primary-foreground: oklch(
+    0.12 0.01 250
+  ); /* Gris azulado muy oscuro */
   --sidebar-accent: oklch(0.22 0.02 250); /* Gris azulado oscuro apagado */
   --sidebar-accent-foreground: oklch(0.95 0.01 250); /* Blanco casi puro */
   --sidebar-border: oklch(0.28 0.02 250 / 40%); /* Gris azulado translúcido */
-  --sidebar-ring: oklch(0.65 0.10 250); /* Azul claro */
+  --sidebar-ring: oklch(0.65 0.1 250); /* Azul claro */
 }
 
 @layer base {
@@ -234,35 +236,30 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: "Vista Sans", system-ui, -apple-system, BlinkMacSystemFont,
-      "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
-      "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+    font-family:
+      "Vista Sans",
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      "Helvetica Neue",
+      Arial,
+      "Noto Sans",
+      sans-serif,
+      "Apple Color Emoji",
+      "Segoe UI Emoji",
+      "Segoe UI Symbol",
       "Noto Color Emoji";
     /* Transiciones suaves para cambios de tema */
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
   }
 }
 
-/* Mejoras adicionales para contraste y accesibilidad */
+/* ===== ESTILOS PERSONALIZADOS PARA MARKDOWN ===== */
 @layer utilities {
-  /* Utilidad para texto con máximo contraste */
-  .text-high-contrast {
-    color: var(--foreground);
-  }
-
-  /* Utilidad para fondos con buena visibilidad */
-  .bg-high-contrast {
-    background-color: var(--card);
-  }
-
-  /* Utilidad para bordes visibles */
-  .border-visible {
-    border-color: var(--border);
-    border-width: 1px;
-  }
-
-  /* ===== ESTILOS PERSONALIZADOS PARA MARKDOWN ===== */
-
   /* Contenedor principal del contenido markdown */
   .message-content {
     color: var(--foreground);
@@ -417,27 +414,42 @@
   }
 
   /* Tablas */
+  .message-content .table-wrapper {
+    overflow-x: auto;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border);
+    margin: 1rem 0;
+    background: transparent;
+  }
+
   .message-content table {
     width: 100%;
     border-collapse: collapse;
-    margin: 1rem 0;
-    border: 1px solid var(--border);
-    border-radius: 0.5rem;
-    overflow: hidden;
+    min-width: 520px;
+    background: transparent;
   }
 
   .message-content th,
   .message-content td {
-    padding: 0.75rem;
+    padding: 0.75rem 0.9rem;
     text-align: left;
     border-bottom: 1px solid var(--border);
+    vertical-align: middle;
   }
 
   .message-content th {
-    background-color: var(--muted);
-    font-weight: 600;
+    background: linear-gradient(
+      180deg,
+      var(--muted),
+      color-mix(in srgb, var(--muted) 80%, transparent)
+    );
+    font-weight: 700;
     color: var(--foreground);
     border-bottom: 2px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    text-align: left;
   }
 
   .message-content td {
@@ -448,8 +460,20 @@
     border-bottom: none;
   }
 
-  .message-content tr:hover {
-    background-color: var(--muted);
+  .message-content tr:nth-child(even) td {
+    background-color: color-mix(in srgb, var(--muted) 10%, transparent);
+  }
+
+  .message-content tr:hover td {
+    background-color: color-mix(in srgb, var(--muted) 18%, transparent);
+  }
+
+  .message-content table caption {
+    caption-side: top;
+    text-align: left;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--foreground);
   }
 
   /* Líneas horizontales */
@@ -489,92 +513,6 @@
 
   .dark .message-content a:hover {
     filter: brightness(1.2);
-  }
-
-  /* ===== ESTILOS PARA MENSAJES DEL USUARIO ===== */
-  .user-message h1,
-  .user-message h2,
-  .user-message h3,
-  .user-message h4,
-  .user-message h5,
-  .user-message h6 {
-    color: white;
-  }
-
-  .user-message p {
-    color: white;
-  }
-
-  .user-message strong,
-  .user-message b {
-    color: white;
-  }
-
-  .user-message em,
-  .user-message i {
-    color: white;
-  }
-
-  .user-message li {
-    color: white;
-  }
-
-  .user-message li::marker {
-    color: white;
-  }
-
-  .user-message a {
-    color: white;
-    text-decoration-color: white;
-  }
-
-  .user-message a:hover {
-    filter: brightness(0.8);
-  }
-
-  .user-message del,
-  .user-message s {
-    color: white;
-  }
-
-  .user-message blockquote {
-    color: white;
-    background-color: rgba(255, 255, 255, 0.1);
-    border-left-color: white;
-  }
-
-  .user-message code {
-    color: white;
-    background-color: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
-  }
-
-  .user-message pre {
-    background-color: rgba(0, 0, 0, 0.2);
-    border-color: rgba(255, 255, 255, 0.2);
-  }
-
-  .user-message pre code {
-    color: white;
-  }
-
-  .user-message table {
-    border-color: rgba(255, 255, 255, 0.2);
-  }
-
-  .user-message th {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: white;
-    border-bottom-color: rgba(255, 255, 255, 0.3);
-  }
-
-  .user-message td {
-    color: white;
-    border-bottom-color: rgba(255, 255, 255, 0.2);
-  }
-
-  .user-message tr:hover {
-    background-color: rgba(255, 255, 255, 0.08);
   }
 
   /* Responsive para elementos de markdown */

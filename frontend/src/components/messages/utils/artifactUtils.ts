@@ -50,26 +50,26 @@ export const getDocumentIcon = (url: string): string => {
  * @returns Clases CSS para el color de fondo y texto
  */
 export const getDocumentColor = (type?: string): string => {
-  switch (type) {
-    case 'pdf':
-      return 'text-red-500 bg-red-100';
-    case 'doc':
-    case 'docx':
-      return 'text-blue-500 bg-blue-100';
-    case 'txt':
-      return 'text-gray-500 bg-gray-100';
-    case 'xls':
-    case 'xlsx':
-      return 'text-green-500 bg-green-100';
-    case 'png':
-    case 'jpg':
-    case 'jpeg':
-    case 'gif':
-      return 'text-purple-500 bg-purple-100';
-    default:
-      return 'text-blue-600 bg-blue-100';
-  }
-};
+   switch (type) {
+     case 'pdf':
+       return 'text-destructive/80 bg-destructive/10';
+     case 'doc':
+     case 'docx':
+       return 'text-primary/80 bg-primary/10';
+     case 'txt':
+       return 'text-muted/80 bg-muted/10';
+     case 'xls':
+     case 'xlsx':
+       return 'text-accent/80 bg-accent/10';
+     case 'png':
+     case 'jpg':
+     case 'jpeg':
+     case 'gif':
+       return 'text-accent/80 bg-accent/10';
+     default:
+       return 'text-primary/80 bg-primary/10';
+   }
+ };
 
 /**
  * Determina si un artefacto es un mapa mental
